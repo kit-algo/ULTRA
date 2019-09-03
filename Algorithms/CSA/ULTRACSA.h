@@ -135,9 +135,9 @@ private:
         sourceVertex = noVertex;
         targetVertex = noVertex;
         targetStop = noStop;
-        std::vector<int>(arrivalTime.size(), never).swap(arrivalTime);
-        std::vector<TripFlag>(tripReached.size(), TripFlag()).swap(tripReached);
-        std::vector<ParentLabel>(parentLabel.size()).swap(parentLabel);
+        Vector::fill(arrivalTime, never);
+        Vector::fill(tripReached, TripFlag());
+        Vector::fill(parentLabel, ParentLabel());
     }
 
     inline bool connectionIsReachable(const Connection& connection) const noexcept {
