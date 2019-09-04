@@ -50,10 +50,7 @@ using TransferGraph = ::TransferGraph;
 class Data {
 
 private:
-    Data() :
-        implicitDepartureBufferTimes(false),
-        implicitArrivalBufferTimes(false) {
-    }
+    Data() { }
 
 public:
     inline static Data FromBinary(const std::string& fileName) noexcept {
@@ -107,40 +104,6 @@ public:
     }
 
 public:
-    inline void useImplicitDepartureBufferTimes() noexcept {
-        if (implicitDepartureBufferTimes | implicitArrivalBufferTimes) return;
-        for (Connection& connection : connections) {
-            connection.departureTime -= minTransferTime(connection.departureStopId);
-        }
-        implicitDepartureBufferTimes = true;
-    }
-
-    inline void dontUseImplicitDepartureBufferTimes() noexcept {
-        if (!implicitDepartureBufferTimes) return;
-        for (Connection& connection : connections) {
-            connection.departureTime += minTransferTime(connection.departureStopId);
-        }
-        implicitDepartureBufferTimes = false;
-    }
-
-    inline void useImplicitArrivalBufferTimes() noexcept {
-        if (implicitDepartureBufferTimes | implicitArrivalBufferTimes) return;
-        for (Connection& connection : connections) {
-            connection.arrivalTime += minTransferTime(connection.arrivalStopId);
-        }
-        implicitArrivalBufferTimes = true;
-    }
-
-    inline void dontUseImplicitArrivalBufferTimes() noexcept {
-        if (!implicitArrivalBufferTimes) return;
-        for (Connection& connection : connections) {
-            connection.arrivalTime -= minTransferTime(connection.arrivalStopId);
-        }
-        implicitArrivalBufferTimes = false;
-    }
-
-    inline bool hasImplicitBufferTimes() const noexcept {return implicitDepartureBufferTimes | implicitArrivalBufferTimes;}
-
     inline size_t numberOfStops() const noexcept {return stopData.size();}
     inline bool isStop(const Vertex stop) const noexcept {return stop < numberOfStops();}
     inline Range<StopId> stops() const noexcept {return Range<StopId>(StopId(0), StopId(numberOfStops()));}
@@ -275,9 +238,6 @@ public:
     std::vector<Trip> tripData;
 
     TransferGraph transferGraph;
-
-    bool implicitDepartureBufferTimes;
-    bool implicitArrivalBufferTimes;
 
 };
 

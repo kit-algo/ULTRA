@@ -25,6 +25,16 @@
 namespace Graph {
 
     template<typename GRAPH>
+    inline bool hasLoops(const GRAPH& graph) noexcept {
+        for (const Vertex vertex : graph.vertices()) {
+            for (const Edge edge : graph.edgesFrom(vertex)) {
+                if (graph.get(ToVertex, edge) == vertex) return true;
+            }
+        }
+        return false;
+    }
+
+    template<typename GRAPH>
     inline void computeTravelTimes(GRAPH& graph, const double speedInKMH, const bool maximize = false, const size_t timeFactor = 1) noexcept {
         static_assert(GRAPH::HasVertexAttribute(Coordinates), "GRAPH has no coordinates!");
         static_assert(GRAPH::HasEdgeAttribute(TravelTime), "GRAPH has no travel time!");

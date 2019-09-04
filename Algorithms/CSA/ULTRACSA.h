@@ -66,11 +66,14 @@ public:
         data(data),
         initialTransfers(forwardGraph, backwardGraph, data.numberOfStops(), weight),
         sourceVertex(noVertex),
+        sourceDepartureTime(never),
         targetVertex(noVertex),
         tripReached(data.numberOfTrips(), TripFlag()),
         arrivalTime(data.numberOfStops() + 1, never),
+        arrivalTimeByTrip(data.numberOfStops(), never),
         parentLabel(data.numberOfStops() + 1),
         debugger(debuggerTemplate) {
+        AssertMsg(!Graph::hasLoops(data.transferGraph), "Shortcut graph may not have loops!");
         AssertMsg(Vector::isSorted(data.connections), "Connections must be sorted in ascending order!");
         debugger.initialize(data);
     }
@@ -87,31 +90,23 @@ public:
 
         debugger.startInitialization();
         sourceVertex = source;
+        sourceDepartureTime = departureTime;
         targetVertex = target;
         if (target == noVertex) {
             targetStop = noStop;
         } else {
             targetStop = data.isStop(target) ? StopId(target) : StopId(data.numberOfStops());
         }
-        if (data.isStop(source)) {
-            arrivalByTrip<true>(StopId(source), departureTime, noTripId);
+        if (data.isStop(sourceVertex)) {
+            arrivalTime[sourceVertex] = departureTime;
+            arrivalTimeByTrip[sourceVertex] = departureTime;
         }
-        runInitialTransfers(departureTime);
-        const ConnectionId firstConnection(Vector::lowerBound(data.connections, departureTime, [](const Connection& connection, const int time) {
-            return connection.departureTime < time;
-        }));
+        runInitialTransfers();
+        const ConnectionId firstConnection = firstReachableConnection(departureTime);
         debugger.doneInitialization();
 
         debugger.startConnectionScan();
-        for (ConnectionId i = firstConnection; i < data.connections.size(); i++) {
-            const Connection& connection = data.connections[i];
-            if (target != noVertex && connection.departureTime > getEarliestArrivalTime(targetStop)) break;
-            if (connectionIsReachable(connection)) {
-                debugger.scanConnection(connection);
-                useTrip(connection.tripId, i);
-                arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
-            }
-        }
+        scanConnections(firstConnection, ConnectionId(data.connections.size()));
         debugger.doneConnectionScan();
         debugger.done();
     }
@@ -133,53 +128,75 @@ public:
 private:
     inline void clear() {
         sourceVertex = noVertex;
+        sourceDepartureTime = never;
         targetVertex = noVertex;
         targetStop = noStop;
         Vector::fill(arrivalTime, never);
+        Vector::fill(arrivalTimeByTrip, never);
         Vector::fill(tripReached, TripFlag());
         Vector::fill(parentLabel, ParentLabel());
     }
 
-    inline bool connectionIsReachable(const Connection& connection) const noexcept {
-        return tripReached[connection.tripId] != TripFlag() || arrivalTime[connection.departureStopId] <= connection.departureTime;
+    inline ConnectionId firstReachableConnection(const int departureTime) const noexcept {
+        return ConnectionId(Vector::lowerBound(data.connections, departureTime, [](const Connection& connection, const int time) {
+            return connection.departureTime < time;
+        }));
     }
 
-    inline void useTrip(const TripId trip, const ConnectionId connection) noexcept {
-        if (tripReached[trip] == noConnection) {
-            tripReached[trip] = connection;
+    inline void scanConnections(const ConnectionId begin, const ConnectionId end) noexcept {
+        for (ConnectionId i = begin; i < end; i++) {
+            const Connection& connection = data.connections[i];
+            if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) break;
+            if (connectionIsReachable(connection, i)) {
+                debugger.scanConnection(connection);
+                arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
+            }
         }
     }
 
-    template<bool INITIAL_ARRIVAL = false>
+    inline bool connectionIsReachableFromStop(const Connection& connection) const noexcept {
+        return arrivalTime[connection.departureStopId] <= connection.departureTime - data.minTransferTime(connection.departureStopId);
+    }
+
+    inline bool connectionIsReachableFromTrip(const Connection& connection) const noexcept {
+        return tripReached[connection.tripId] != TripFlag();
+    }
+
+    inline bool connectionIsReachable(const Connection& connection, const ConnectionId id) noexcept {
+        if (connectionIsReachableFromTrip(connection)) return true;
+        if (connectionIsReachableFromStop(connection)) {
+            tripReached[connection.tripId] = id;
+            return true;
+        }
+        return false;
+    }
+
     inline void arrivalByTrip(const StopId stop, const int time, const TripId trip) noexcept {
-        if (arrivalTime[stop] <= time) return;
+        if (arrivalTimeByTrip[stop] <= time) return;
         debugger.updateStopByTrip(stop, time);
-        arrivalTime[stop] = time;
-        if constexpr (INITIAL_ARRIVAL) {
-            parentLabel[stop].parent = noStop;
-        } else {
-            parentLabel[stop].parent = data.connections[tripReached[trip]].departureStopId;
+        arrivalTimeByTrip[stop] = time;
+
+        for (const Edge edge : data.transferGraph.edgesFrom(stop)) {
+            debugger.relaxEdge(edge);
+            const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
+            const int newArrivalTime = time + data.transferGraph.get(TravelTime, edge);
+            arrivalByTransfer(toStop, newArrivalTime, stop, edge);
         }
+
+        if (arrivalTime[stop] <= time) return;
+        arrivalTime[stop] = time;
+        parentLabel[stop].parent = data.connections[tripReached[trip]].departureStopId;
         parentLabel[stop].reachedByTransfer = false;
         parentLabel[stop].tripId = trip;
 
-        if constexpr (!INITIAL_ARRIVAL) {
-            for (const Edge edge : data.transferGraph.edgesFrom(stop)) {
-                debugger.relaxEdge(edge);
-                const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
-                const int newArrivalTime = time + data.transferGraph.get(TravelTime, edge);
-                arrivalByTransfer(toStop, newArrivalTime, stop, edge);
-            }
-
-            if (initialTransfers.getBackwardDistance(stop) != INFTY) {
-                debugger.relaxEdge(noEdge);
-                const int newArrivalTime = time + initialTransfers.getBackwardDistance(stop);
-                arrivalByTransfer(targetStop, newArrivalTime, stop, noEdge);
-            }
+        if (initialTransfers.getBackwardDistance(stop) != INFTY) {
+            debugger.relaxEdge(noEdge);
+            const int newArrivalTime = time + initialTransfers.getBackwardDistance(stop);
+            arrivalByTransfer(targetStop, newArrivalTime, stop, noEdge);
         }
     }
 
-    inline void runInitialTransfers(const int sourceDepartureTime) noexcept {
+    inline void runInitialTransfers() noexcept {
         initialTransfers.run(sourceVertex, targetVertex);
         for (const Vertex stop : initialTransfers.getForwardPOIs()) {
             AssertMsg(data.isStop(stop), "Reached POI " << stop << " is not a stop!");
@@ -209,11 +226,13 @@ private:
     RAPTOR::BucketCHInitialTransfers initialTransfers;
 
     Vertex sourceVertex;
+    int sourceDepartureTime;
     Vertex targetVertex;
     StopId targetStop;
 
     std::vector<TripFlag> tripReached;
     std::vector<int> arrivalTime;
+    std::vector<int> arrivalTimeByTrip;
     std::vector<ParentLabel> parentLabel;
 
     Debugger debugger;

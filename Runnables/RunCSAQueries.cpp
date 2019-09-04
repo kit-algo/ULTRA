@@ -151,7 +151,6 @@ int main(int argc, char** argv) {
 
     const std::string csaFile = argv[2];
     CSA::Data data = CSA::Data::FromBinary(csaFile);
-    data.useImplicitDepartureBufferTimes();
     data.sortConnectionsAscending();
     data.printInfo();
     const size_t numberOfQueries = String::lexicalCast<size_t>(argv[3]);

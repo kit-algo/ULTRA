@@ -66,6 +66,10 @@ public:
     }
 
     // Access
+    inline const CHGraph& getGraph(const int direction) const noexcept {
+        return (direction == FORWARD) ? forward : backward;
+    }
+
     inline size_t numVertices() const noexcept {
         return forward.numVertices();
     }

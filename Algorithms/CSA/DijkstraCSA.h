@@ -47,14 +47,12 @@ public:
 
 private:
     struct ParentLabel {
-        ParentLabel(const Vertex parent = noVertex, const bool reachedByTransfer = false, const TripId tripId = noTripId) :
+        ParentLabel(const Vertex parent = noVertex, const TripId tripId = noTripId) :
             parent(parent),
-            reachedByTransfer(reachedByTransfer),
             tripId(tripId) {
         }
 
         Vertex parent;
-        bool reachedByTransfer;
         TripId tripId;
     };
 
@@ -73,6 +71,7 @@ public:
         data(data),
         initialTransfers(forwardGraph, backwardGraph, data.numberOfStops(), weight),
         sourceVertex(noVertex),
+        sourceDepartureTime(never),
         targetVertex(noVertex),
         tripReached(data.numberOfTrips(), TripFlag()),
         arrivalTime(data.numberOfStops() + 1, never),
@@ -80,7 +79,6 @@ public:
         dijkstraLabels(data.transferGraph.numVertices()),
         debugger(debuggerTemplate) {
         AssertMsg(Vector::isSorted(data.connections), "Connections must be sorted in ascending order!");
-        AssertMsg(data.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
         debugger.initialize(data);
     }
 
@@ -96,6 +94,7 @@ public:
 
         debugger.startInitialization();
         sourceVertex = source;
+        sourceDepartureTime = departureTime;
         targetVertex = target;
         if (target == noVertex) {
             targetStop = noStop;
@@ -103,25 +102,14 @@ public:
             targetStop = data.isStop(target) ? StopId(target) : StopId(data.numberOfStops());
         }
         if (data.isStop(source)) {
-            arrivalByTrip<true>(StopId(source), departureTime, noTripId);
+            arrivalTime[source] = departureTime;
         }
-        runInitialTransfers(departureTime);
-        const ConnectionId firstConnection(Vector::lowerBound(data.connections, departureTime, [](const Connection& connection, const int time) {
-            return connection.departureTime < time;
-        }));
+        runInitialTransfers();
+        const ConnectionId firstConnection = firstReachableConnection(departureTime);
         debugger.doneInitialization();
 
         debugger.startConnectionScan();
-        for (ConnectionId i = firstConnection; i < data.connections.size(); i++) {
-            const Connection& connection = data.connections[i];
-            runDijkstra(connection.departureTime);
-            if (target != noVertex && connection.departureTime > getEarliestArrivalTime(targetStop)) break;
-            if (connectionIsReachable(connection)) {
-                debugger.scanConnection(connection);
-                useTrip(connection.tripId, i);
-                arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
-            }
-        }
+        scanConnections(firstConnection, ConnectionId(data.connections.size()));
         debugger.doneConnectionScan();
         debugger.done();
     }
@@ -138,6 +126,7 @@ public:
 private:
     inline void clear() {
         sourceVertex = noVertex;
+        sourceDepartureTime = never;
         targetVertex = noVertex;
         targetStop = noStop;
         Vector::fill(arrivalTime, never);
@@ -147,40 +136,57 @@ private:
         Vector::fill(parentLabel, ParentLabel());
     }
 
-    inline bool connectionIsReachable(const Connection& connection) const noexcept {
-        return tripReached[connection.tripId] != TripFlag() || arrivalTime[connection.departureStopId] <= connection.departureTime;
+    inline ConnectionId firstReachableConnection(const int departureTime) const noexcept {
+        return ConnectionId(Vector::lowerBound(data.connections, departureTime, [](const Connection& connection, const int time) {
+            return connection.departureTime < time;
+        }));
     }
 
-    inline void useTrip(const TripId trip, const ConnectionId connection) noexcept {
-        if (tripReached[trip] == noConnection) {
-            tripReached[trip] = connection;
-        }
-    }
-
-    template<bool INITIAL_ARRIVAL = false>
-    inline void arrivalByTrip(const StopId stop, const int time, const TripId trip) noexcept {
-        if (arrivalTime[stop] <= time) return;
-        debugger.updateStopByTrip(stop, time);
-        arrivalTime[stop] = time;
-        if constexpr (INITIAL_ARRIVAL) {
-            parentLabel[stop].parent = noStop;
-        } else {
-            parentLabel[stop].parent = data.connections[tripReached[trip]].departureStopId;
-        }
-        parentLabel[stop].reachedByTransfer = false;
-        parentLabel[stop].tripId = trip;
-
-        if constexpr (!INITIAL_ARRIVAL) {
-            arrivalByEdge(stop, time, stop);
-            if (initialTransfers.getBackwardDistance(stop) != INFTY) {
-                debugger.relaxEdge(noEdge);
-                const int newArrivalTime = time + initialTransfers.getBackwardDistance(stop);
-                arrivalByTransfer(targetStop, newArrivalTime, stop);
+    inline void scanConnections(const ConnectionId begin, const ConnectionId end) noexcept {
+        for (ConnectionId i = begin; i < end; i++) {
+            const Connection& connection = data.connections[i];
+            runDijkstra(connection.departureTime);
+            if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) break;
+            if (connectionIsReachable(connection, i)) {
+                debugger.scanConnection(connection);
+                arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
             }
         }
     }
 
-    inline void runInitialTransfers(const int sourceDepartureTime) noexcept {
+    inline bool connectionIsReachableFromStop(const Connection& connection) const noexcept {
+        return arrivalTime[connection.departureStopId] <= connection.departureTime - data.minTransferTime(connection.departureStopId);
+    }
+
+    inline bool connectionIsReachableFromTrip(const Connection& connection) const noexcept {
+        return tripReached[connection.tripId] != TripFlag();
+    }
+
+    inline bool connectionIsReachable(const Connection& connection, const ConnectionId id) noexcept {
+        if (connectionIsReachableFromTrip(connection)) return true;
+        if (connectionIsReachableFromStop(connection)) {
+            tripReached[connection.tripId] = id;
+            return true;
+        }
+        return false;
+    }
+
+    inline void arrivalByTrip(const StopId stop, const int time, const TripId trip) noexcept {
+        if (arrivalTime[stop] <= time) return;
+        debugger.updateStopByTrip(stop, time);
+        arrivalTime[stop] = time;
+        parentLabel[stop].parent = data.connections[tripReached[trip]].departureStopId;
+        parentLabel[stop].tripId = trip;
+
+        arrivalByEdge(stop, time, stop);
+        if (initialTransfers.getBackwardDistance(stop) != INFTY) {
+            debugger.relaxEdge(noEdge);
+            const int newArrivalTime = time + initialTransfers.getBackwardDistance(stop);
+            arrivalByTransfer(targetStop, newArrivalTime, stop);
+        }
+    }
+
+    inline void runInitialTransfers() noexcept {
         initialTransfers.run(sourceVertex, targetVertex);
         for (const Vertex stop : initialTransfers.getForwardPOIs()) {
             AssertMsg(data.isStop(stop), "Reached POI " << stop << " is not a stop!");
@@ -197,10 +203,10 @@ private:
     }
 
     inline void runDijkstra(const int nextDepartureTime) noexcept {
-        while ((!queue.empty()) && (queue.min().arrivalTime >= nextDepartureTime)) {
+        while ((!queue.empty()) && (queue.min().arrivalTime <= nextDepartureTime)) {
             DijkstraLabel* const uLabel = queue.extractFront();
             const int time = uLabel->arrivalTime;
-            if (targetStop != noStop && time > getEarliestArrivalTime(targetStop)) break;
+            if (targetStop != noStop && time > arrivalTime[targetStop]) break;
             const Vertex u = Vertex(uLabel - &(dijkstraLabels[0]));
             for (const Edge edge : data.transferGraph.edgesFrom(u)) {
                 debugger.relaxEdge(edge);
@@ -227,7 +233,7 @@ private:
         debugger.updateStopByTransfer(stop, time);
         arrivalTime[stop] = time;
         parentLabel[stop].parent = parent;
-        parentLabel[stop].reachedByTransfer = true;
+        parentLabel[stop].tripId = noTripId;
     }
 
 private:
@@ -235,6 +241,7 @@ private:
     RAPTOR::CoreCHInitialTransfers initialTransfers;
 
     Vertex sourceVertex;
+    int sourceDepartureTime;
     Vertex targetVertex;
     StopId targetStop;
 

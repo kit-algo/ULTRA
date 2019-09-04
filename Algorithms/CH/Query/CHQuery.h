@@ -77,7 +77,7 @@ public:
     }
 
     Query(const CH& ch, const int direction = FORWARD, const Vertex::ValueType endOfPOIs = 0) :
-        Query((direction == FORWARD) ? ch.forward : ch.backward, (direction == FORWARD) ? ch.backward : ch.forward, endOfPOIs, Weight) {
+        Query(ch.getGraph(direction), ch.getGraph(!direction), endOfPOIs, Weight) {
     }
 
     template<bool TARGET_PRUNING = true>

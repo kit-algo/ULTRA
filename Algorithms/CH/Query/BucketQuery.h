@@ -59,7 +59,7 @@ public:
     }
 
     BucketQuery(const CH& ch, const int direction = FORWARD, const Vertex::ValueType endOfPOIs = 0) :
-        BucketQuery((direction == FORWARD) ? ch.forward : ch.backward, (direction == FORWARD) ? ch.backward : ch.forward, endOfPOIs, Weight) {
+        BucketQuery(ch.getGraph(direction), ch.getGraph(!direction), endOfPOIs, Weight) {
     }
 
     template<bool TARGET_PRUNING = true>
