@@ -26,4 +26,5 @@ A detailed introduction to the ULTRA approach as well as an in-depth evaluation 
 
 * *UnLimited TRAnsfers for Multi-Modal Route Planning: An Efficient Solution*  
   Moritz Baum, Valentin Buchhold, Jonas Sauer, Dorothea Wagner, Tobias Zündorf  
-  [pdf](https://arxiv.org/pdf/1906.04832.pdf) [arXiv](https://arxiv.org/abs/1906.04832)
+  In: Proceedings of the 27th Annual European Symposium on Algorithms (ESA'19), Leibniz International Proceedings in Informatics, pages 14:1–14:16, 2019  
+  [pdf](https://drops.dagstuhl.de/opus/volltexte/2019/11135/pdf/LIPIcs-ESA-2019-14.pdf) [arXiv](https://arxiv.org/abs/1906.04832)
