@@ -99,13 +99,13 @@ public:
         witnessTransferLimit(witnessTransferLimit),
         earliestDepartureTime(data.getMinDepartureTime()) {
         AssertMsg(data.hasImplicitBufferTimes(), "Shortcut search requires implicit departure buffer times!");
-        Dijkstra<DynamicTransferGraph, false> dijkstra(shortcutGraph);
+        Dijkstra<TransferGraph, false> dijkstra(data.transferGraph);
         for (const StopId stop : data.stops()) {
             dijkstra.run(stop, noVertex, [&](const Vertex u) {
                 if (!data.isStop(u)) return;
                 stationOfStop[stop].add(StopId(u));
             }, NoOperation, [&](const Vertex, const Edge edge) {
-                return shortcutGraph.get(TravelTime, edge) > 0;
+                return data.transferGraph.get(TravelTime, edge) > 0;
             });
         }
     }
@@ -135,6 +135,7 @@ private:
         clear();
         sourceStation = stationOfStop[sourceStop];
         dijkstra<-1>();
+        sort(stopsReachedByDirectTransfer);
         if constexpr (Debug) std::cout << "   Source stop: " << sourceStop << std::endl;
         if constexpr (Debug) std::cout << "   Number of stops reached by direct transfer: " << String::prettyInt(stopsReachedByDirectTransfer.size()) << std::endl;
     }
@@ -200,7 +201,7 @@ private:
             const size_t tripSize = data.numberOfStopsInRoute(route);
             int minimalTransferTime = never;
             for (size_t stopIndex = 0; stopIndex + 1 < tripSize; stopIndex++) {
-                if (directTransferArrivalLabels[stops[stopIndex]].arrivalTime >= minimalTransferTime) continue;
+                if (directTransferArrivalLabels[stops[stopIndex]].arrivalTime > minimalTransferTime) continue;
                 minimalTransferTime = directTransferArrivalLabels[stops[stopIndex]].arrivalTime;
                 for (const RAPTOR::StopEvent* trip = data.firstTripOfRoute(route); trip <= data.lastTripOfRoute(route); trip += tripSize) {
                     const int departureTime = trip[stopIndex].departureTime - minimalTransferTime;
@@ -336,7 +337,6 @@ private:
     inline void relaxTransfers() noexcept {
         AssertMsg(stopsUpdatedByTransfer.empty(), "StopsUpdatedByTransfer is not empty!");
         if constexpr (ROUND == 0) {
-            sort(stopsReachedByDirectTransfer);
             for (const StopId stop : stopsReachedByDirectTransfer) {
                 const int newArrivalTime = sourceDepartureTime + directTransferArrivalLabels[stop].arrivalTime;
                 if (newArrivalTime < zeroTripsArrivalLabels[stop].arrivalTime) {

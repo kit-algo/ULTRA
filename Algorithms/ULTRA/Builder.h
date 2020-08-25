@@ -48,7 +48,7 @@ public:
         }
     }
 
-    void computeShortcuts(const ThreadPinning& threadPinning, const int maxInitialWalking = 15 * 60, const int minDepartureTime = -never, const int maxDepartureTime = never, const bool verbose = true) noexcept {
+    void computeShortcuts(const ThreadPinning& threadPinning, const int witnessTransferLimit = 15 * 60, const int minDepartureTime = -never, const int maxDepartureTime = never, const bool verbose = true) noexcept {
         if (verbose) std::cout << "Computing shortcuts with " << threadPinning.numberOfThreads << " threads." << std::endl;
 
         Progress progress(data.numberOfStops(), verbose);
@@ -58,7 +58,7 @@ public:
             threadPinning.pinThread();
 
             DynamicTransferGraph localShortcutGraph = shortcutGraph;
-            RangeSearchUsingStations<Debug, RequireDirectTransfer> rangeSearch(data, localShortcutGraph, maxInitialWalking);
+            RangeSearchUsingStations<Debug, RequireDirectTransfer> rangeSearch(data, localShortcutGraph, witnessTransferLimit);
 
             #pragma omp for schedule(dynamic)
             for (size_t i = 0; i < data.numberOfStops(); i++) {
