@@ -110,7 +110,7 @@ private:
             std::vector<int>(earliestArrival.size(), never).swap(earliestArrival);
         } else {
             rounds.clear();
-            Vector::fill(earliestArrival);
+            Vector::fill(earliestArrival, never);
         }
     }
 
