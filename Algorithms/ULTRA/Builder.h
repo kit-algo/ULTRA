@@ -27,7 +27,7 @@
 #include "../../Helpers/Timer.h"
 #include "../../Helpers/Console/Progress.h"
 
-#include "RangeSearchUsingStations.h"
+#include "ShortcutSearch.h"
 
 namespace ULTRA {
 
@@ -58,11 +58,11 @@ public:
             threadPinning.pinThread();
 
             DynamicTransferGraph localShortcutGraph = shortcutGraph;
-            RangeSearchUsingStations<Debug, RequireDirectTransfer> rangeSearch(data, localShortcutGraph, witnessTransferLimit);
+            ShortcutSearch<Debug, RequireDirectTransfer> shortcutSearch(data, localShortcutGraph, witnessTransferLimit);
 
             #pragma omp for schedule(dynamic)
             for (size_t i = 0; i < data.numberOfStops(); i++) {
-                rangeSearch.run(StopId(i), minDepartureTime, maxDepartureTime);
+                shortcutSearch.run(StopId(i), minDepartureTime, maxDepartureTime);
                 progress++;
             }
 
