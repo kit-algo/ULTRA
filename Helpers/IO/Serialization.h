@@ -178,8 +178,12 @@ namespace IO {
             checkStream(is, fileName);
             int header;
             deserialize(header);
-            Ensure(header == FileHeader, "File header not found!");
-            operator()(object);
+            if (header == FileHeader) {         // Assume that the following vector was serialized using this code
+                operator()(object);
+            } else {                            // The following data was not serialized using this code
+                warning("Trying to deserialize a file (", fileName, ") without magic header,!");
+                exit(1);
+            }
         }
 
     public:

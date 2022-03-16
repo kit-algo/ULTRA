@@ -3,7 +3,6 @@
 #include <vector>
 #include <type_traits>
 
-#include "../../Helpers/Helpers.h"
 #include "../../Helpers/Assert.h"
 
 class ExternalKHeapElement {
@@ -42,7 +41,7 @@ public:
     inline bool empty() const {return size() == 0;}
 
     inline ElementType* extractFront() {
-        AssertMsg(!empty(), "Heap is empty!");
+        Assert(!empty());
         ElementType* front = heap[0];
         front->setHeapPosition(-1);
         numberOfElements--;
@@ -78,8 +77,8 @@ public:
     inline void push(ElementType& element) {update(&element);}
 
     inline void remove(ElementType* const element) {
-        AssertMsg(element->getHeapPosition() != -1, "Element is not in heap!");
-        AssertMsg(heap[element->getHeapPosition()] == element, "Heap is broken!");
+        Assert(element->getHeapPosition() != -1);
+        Assert(heap[element->getHeapPosition()] == element);
         siftDownHole(element->getHeapPosition());
     }
 
@@ -135,10 +134,10 @@ protected:
     }
 
     inline int parent(const int i) const {return (i - 1) >> logK;}
-    inline int fistChild(const int i) const {return (i << logK) + 1;}
+    inline int firstChild(const int i) const {return (i << logK) + 1;}
 
     inline void siftUp(const int i) {
-        AssertMsg(i < numberOfElements, "Index i is too large!");
+        Assert(i < numberOfElements);
         int currentIndex = i;
         while (currentIndex > 0) {
             int parentIndex = parent(currentIndex);
@@ -152,11 +151,11 @@ protected:
     }
 
     inline void siftDown(int i) {
-        AssertMsg(i < numberOfElements, "Index i is too large!");
+        Assert(i < numberOfElements);
         while (true) {
             int minIndex = i;
             ElementType* minElement = heap[i];
-            int childIndexLower = fistChild(i);
+            int childIndexLower = firstChild(i);
             int childIndexUpper = std::min(childIndexLower + K, numberOfElements);
             for (int j = childIndexLower; j < childIndexUpper; ++j) {
                 if (heap[j]->hasSmallerKey(minElement)) {
@@ -174,10 +173,10 @@ protected:
     }
 
     inline void siftDownHole(int i) {
-        AssertMsg(i < numberOfElements, "Index i is too large!");
+        Assert(i < numberOfElements);
         heap[i]->setHeapPosition(-1);
         while (true) {
-            int childIndexLower = fistChild(i);
+            int childIndexLower = firstChild(i);
             int childIndexUpper = std::min(childIndexLower + K, numberOfElements);
             if (childIndexLower >= childIndexUpper) {
                 numberOfElements--;

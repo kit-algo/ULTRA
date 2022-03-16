@@ -217,6 +217,13 @@ public:
         return result;
     }
 
+    inline long long memoryUsageInBytes() const noexcept {
+        long long result = sizeof(size_t);
+        result += vertexAttributes.memoryUsageInBytes();
+        result += edgeAttributes.memoryUsageInBytes();
+        return result;
+    }
+
     // Manipulation:
     inline void clear() noexcept {
         edgeCount = 0;
@@ -317,6 +324,13 @@ public:
         deleteEdge(get(FromVertex, edge), get(ToVertex, edge), edge);
     }
 
+    inline void deleteEdge(const Vertex from, const Edge edge) noexcept {
+        AssertMsg(isVertex(from), from << " is not a valid vertex!");
+        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        AssertMsg(from == get(FromVertex, edge), from << " is not the from vertex of edge " << edge << " !");
+        deleteEdge(from, get(ToVertex, edge), edge);
+    }
+
     inline void deleteEdge(const Vertex from, const Vertex to) noexcept {
         AssertMsg(isVertex(from), from << " is not a valid vertex!");
         AssertMsg(isVertex(to), to << " is not a valid vertex!");
@@ -335,6 +349,16 @@ public:
     template<typename T>
     inline void deleteEdges(const std::vector<T>& edgeMap, const T& deleteValue) {
         deleteEdges([&](Edge edge){return edgeMap[edge] == deleteValue;});
+    }
+
+    template<typename DELETE_EDGE>
+    inline void deleteEdgesFrom(const Vertex from, const DELETE_EDGE& deleteEdge) {
+        for (size_t i = get(BeginOut, from) + get(OutDegree, from); i > get(BeginOut, from); i--) {
+            const Edge edge = Edge(i - 1);
+            if (deleteEdge(edge)) {
+                this->deleteEdge(from, get(ToVertex, edge), edge);
+            }
+        }
     }
 
     inline void applyVertexPermutation(const Permutation& permutation) noexcept {
@@ -401,7 +425,7 @@ public:
     }
 
     inline void packEdges() noexcept {
-        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(satisfiesInvariants());
         size_t i = 0;
         Permutation permutation(edgeAttributes.size());
         for (const Vertex vertex : vertices()) {
@@ -425,7 +449,7 @@ public:
             permutation.permutate(values);
         });
         edgeAttributes.resize(edgeCount);
-        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(satisfiesInvariants());
     }
 
     inline void revert() noexcept {
@@ -464,17 +488,15 @@ public:
             get(IncomingEdges, get(ToVertex, edge)).emplace_back(edge);
         }
         checkVectorSize();
-        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(satisfiesInvariants());
     }
 
-    template<AttributeNameType ATTRIBUTE_NAME>
-    inline void sortEdges(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName) noexcept {
+    template<typename LESS>
+    inline void sortEdges(const LESS& less) noexcept {
         std::vector<Edge> edgeOrder = Vector::id<Edge>(edgeAttributes.size());
         for (const Vertex vertex : vertices()) {
             if (get(OutDegree, vertex) == 0) continue;
-            std::stable_sort(edgeOrder.begin() + get(BeginOut, vertex), edgeOrder.begin() + get(BeginOut, vertex) + get(OutDegree, vertex), [&](const Edge a, const Edge b){
-                return get(attributeName, a) < get(attributeName, b);
-            });
+            std::stable_sort(edgeOrder.begin() + get(BeginOut, vertex), edgeOrder.begin() + get(BeginOut, vertex) + get(OutDegree, vertex), less);
         }
         Permutation edgePermutation(Construct::Invert, Order(edgeOrder));
         edgePermutation.mapPermutation(get(IncomingEdges));
@@ -489,7 +511,14 @@ public:
             if (attribute == Valid) return;
             edgePermutation.permutate(values);
         });
-        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(satisfiesInvariants());
+    }
+
+    template<AttributeNameType ATTRIBUTE_NAME>
+    inline void sortEdges(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName) noexcept {
+        sortEdges([&](const Edge a, const Edge b){
+            return get(attributeName, a) < get(attributeName, b);
+        });
     }
 
     // Utilities
@@ -711,11 +740,11 @@ public:
         vertexAttributes.deserialize(fileName, separator);
         edgeAttributes.deserialize(fileName, separator);
         for (const Vertex vertex : vertices()) edgeCount += outDegree(vertex);
-        AssertMsg(satisfiesInvariants(), "Invariants not fulfilled!");
+        Assert(satisfiesInvariants());
     }
 
     inline void printAnalysis(std::ostream& out = std::cout) const noexcept {
-        AssertMsg(satisfiesInvariants(), "Invariants not fulfilled!");
+        Assert(satisfiesInvariants());
         size_t vertexCount = 0;
         size_t isolatedVertexCount = 0;
         size_t degreeOneVertexCount = 0;
@@ -878,6 +907,17 @@ public:
             out << "                boundingBox : " << std::setw(tabSize) << boundingBox << std::endl;
         }
         out << "                       hash : " << std::setw(tabSize) << String::prettyInt(hash) << std::endl;
+    }
+
+    inline void printAdjacencyList(std::ostream& out = std::cout) const noexcept {
+        for (const Vertex vertex : vertices()) {
+            out << std::setw(log10(numVertices()) + 1) << std::left << vertex << std::right << " -> ";
+            Enumeration edgeList;
+            for (const Edge edge : edgesFrom(vertex)) {
+                edgeList << "(" << Graph::edgeToString(*this, edge) << ")" << sep;
+            }
+            out << edgeList << std::endl;
+        }
     }
 
 private:

@@ -54,6 +54,18 @@ public:
         return order.size();
     }
 
+    inline void applyVertexPermutation(const Permutation& permutation) noexcept {
+        core.applyVertexPermutation(permutation);
+        forwardCH.applyVertexPermutation(permutation);
+        backwardCH.applyVertexPermutation(permutation);
+        permutation.permutate(level);
+        permutation.mapPermutation(order);
+    }
+
+    inline void applyVertexOrder(const Order& vertexOrder) noexcept {
+        applyVertexPermutation(Permutation(Construct::Invert, vertexOrder));
+    }
+
 public:
     size_t numVertices;
     CHCoreGraph core;

@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <iostream>
+
 #include "Assert.h"
 
 #include "Meta.h"
@@ -17,6 +18,12 @@ public:
     using AdditionalCasts = Meta::List<ADDITIONAL_CASTS...>;
     using Type = TaggedInteger<TAG, ValueType, InvalidValue, DefaultValue, ADDITIONAL_CASTS...>;
 
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = ValueType;
+    using difference_type = ValueType;
+    using pointer = Type;
+    using reference = ValueType&;
+
 public:
     constexpr TaggedInteger() : internalValue(DefaultValue) {}
 
@@ -28,6 +35,7 @@ public:
     constexpr inline operator T() const noexcept {return T(internalValue);}
 
     constexpr inline const ValueType& value() const noexcept {return internalValue;}
+    constexpr inline const Type& operator*() const noexcept {return *this;}
 
     constexpr static Type Invalid() {return TaggedInteger(InvalidValue);}
 

@@ -4,7 +4,6 @@
 #include <ostream>
 #include <sstream>
 
-#include "../../Helpers/Helpers.h"
 #include "../../Helpers/Types.h"
 #include "../../Helpers/ConstructorTags.h"
 
@@ -167,7 +166,17 @@ inline double geoDistanceInCM(const Point& from, const Point& to) {
     double heightTo(degreesToRadians(to.longitude));
     double widthFrom(degreesToRadians(from.latitude));
     double widthTo(degreesToRadians(to.latitude));
-    return acos(std::min(1.0, sin(widthFrom) * sin(widthTo) + cos(widthFrom) * cos(widthTo) * cos(heightTo - heightFrom))) * 637813700;
+    return acos(std::min(1.0, sin(widthFrom) * sin(widthTo) + cos(widthFrom) * cos(widthTo) * cos(heightTo - heightFrom))) * EARTH_RADIUS_IN_CENTIMETRE;
+}
+
+inline double euclideanDistanceSquared(const Point& a, const Point& b) {
+    const double dx = a.x - b.x;
+    const double dy = a.y - b.y;
+    return (dx * dx) + (dy * dy);
+}
+
+inline double euclideanDistance(const Point& a, const Point& b) {
+    return std::sqrt(euclideanDistanceSquared(a, b));
 }
 
 static_assert(sizeof(Point) == 2 * sizeof(double), "Point layout is broken");

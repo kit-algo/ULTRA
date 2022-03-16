@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../../Geometry/Point.h"
+#include "../../Intermediate/Entities/Stop.h"
 #include "../../../Helpers/IO/Serialization.h"
 
 namespace RAPTOR {

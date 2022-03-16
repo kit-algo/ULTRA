@@ -47,7 +47,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        Assert(to.satisfiesInvariants());
+        AssertMsg(to.satisfiesInvariants(), "Invariants not satisfied!");
         from.clear();
     }
 
@@ -78,7 +78,7 @@ namespace Graph {
         if constexpr (!FromType::HasEdgeAttribute(ReverseEdge)) {
             computeReverseEdgePointers(to);
         }
-        AssertMsg(to.satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(to.satisfiesInvariants());
         from.clear();
     }
 
@@ -126,7 +126,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        AssertMsg(to.satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(to.satisfiesInvariants());
         from.clear();
     }
 
@@ -142,7 +142,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        AssertMsg(to.satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(to.satisfiesInvariants());
         from.clear();
     }
 
@@ -194,7 +194,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        AssertMsg(to.satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(to.satisfiesInvariants());
         from.clear();
     }
 

@@ -5,27 +5,29 @@
 #include <string>
 
 #include "CHData.h"
+#include "WitnessSearch.h"
 
 #include "../../../assert.h"
 #include "../../../Helpers/Ranges/Range.h"
+#include "../../../Helpers/Vector/Permutation.h"
 
 namespace CH {
 
-template<typename WITNESS_SEARCH, int SHORTCUT_WEIGHT = 1024, int LEVEL_WEIGHT = 1024, int DEGREE_WEIGHT = 0>
+template<typename WITNESS_SEARCH>
 class GreedyKey {
 
 public:
     using WitnessSearch = WITNESS_SEARCH;
-    constexpr static int shortcutWeight = SHORTCUT_WEIGHT;
-    constexpr static int levelWeight = LEVEL_WEIGHT;
-    constexpr static int degreeWeight = DEGREE_WEIGHT;
     using KeyType = int;
-    using Type = GreedyKey<WitnessSearch, shortcutWeight, levelWeight>;
+    using Type = GreedyKey<WitnessSearch>;
 
 public:
-    GreedyKey() :
+    GreedyKey(const int shortcutWeight = 1024, const int levelWeight = 1024, const int degreeWeight = 0) :
         data(nullptr),
-        witnessSearch(nullptr) {
+        witnessSearch(nullptr),
+        shortcutWeight(shortcutWeight),
+        levelWeight(levelWeight),
+        degreeWeight(degreeWeight) {
     }
 
     inline KeyType operator() (const Vertex vertex) noexcept {
@@ -40,7 +42,7 @@ public:
         const int key = ((shortcutWeight * shortcutsAdded) / (inDegree + outDegree))
                       + ((levelWeight * data->level[vertex]))
                       + ((degreeWeight * inDegree * outDegree));
-        AssertMsg(key >= 0, "Key may not be negative!");
+        Assert(key >= 0);
         return key;
     }
 
@@ -70,6 +72,48 @@ private:
 private:
     const Data* data;
     WITNESS_SEARCH* witnessSearch;
+    const int shortcutWeight;
+    const int levelWeight;
+    const int degreeWeight;
+
+};
+
+template<typename WITNESS_SEARCH>
+class PermutationKey {
+
+public:
+    using WitnessSearch = WITNESS_SEARCH;
+    using KeyType = int;
+    using Type = PermutationKey<WitnessSearch>;
+
+public:
+    PermutationKey() {Assert(false);}
+    PermutationKey(const Permutation& permutation) :
+        permutation(permutation) {
+    }
+
+    inline KeyType operator() (const Vertex vertex) noexcept {
+        return permutation[vertex];
+    }
+
+    template<typename T> inline void update(T&) noexcept {}
+
+    inline void initialize(const Data* data, WitnessSearch*) noexcept {
+        AssertMsg(permutation.size() == data->numVertices, "Permutation of size " << permutation.size() << " cannot be used for a graph with " << data->numVertices << " vertices!");
+    }
+
+private:
+    const Permutation permutation;
+
+};
+
+template<typename WITNESS_SEARCH>
+class OrderKey : public PermutationKey<WITNESS_SEARCH> {
+
+public:
+    OrderKey() : PermutationKey<WITNESS_SEARCH>() {Assert(false);}
+    OrderKey(const Order& order) : PermutationKey<WITNESS_SEARCH>(Permutation(Construct::Invert, order)) {}
+    OrderKey(Order&& order) : PermutationKey<WITNESS_SEARCH>(Permutation(Construct::Invert, std::move(order))) {}
 
 };
 
@@ -120,6 +164,91 @@ private:
     std::vector<bool> contractable;
     KeyFunction keyFunction;
     size_t minOrderIndex;
+};
+
+template<typename WITNESS_SEARCH, typename KEY_FUNCTION = GreedyKey<WITNESS_SEARCH>>
+class StaggeredKey {
+
+public:
+    using WitnessSearch = WITNESS_SEARCH;
+    using KeyFunction = KEY_FUNCTION;
+    using KeyType = typename KeyFunction::KeyType;
+    using Type = StaggeredKey<WitnessSearch, KeyFunction>;
+
+public:
+    StaggeredKey(const std::vector<size_t>& firstContractableRound, const std::vector<size_t>& coreSizes, const KeyFunction& keyFunction = KeyFunction()) :
+        data(nullptr),
+        firstContractableRound(firstContractableRound),
+        keyFunction(keyFunction),
+        coreSizes(coreSizes),
+        round(0) {
+    }
+
+    inline KeyType operator() (const Vertex vertex) noexcept {
+        return (firstContractableRound[vertex] <= round) ? keyFunction(vertex) : intMax;
+    }
+
+    template<typename T>
+    inline void update(T& t) noexcept {
+        if (round < coreSizes.size() && data->coreSize() <= coreSizes[round]) {
+            round++;
+            for (Vertex v = Vertex(firstContractableRound.size() - 1); v < firstContractableRound.size(); v--) {
+                if (firstContractableRound[v] == round) {
+                    t.reKey(v);
+                }
+            }
+        }
+    }
+
+    inline void initialize(const Data* data, WitnessSearch* witnessSearch) noexcept {
+        this->data = data;
+        keyFunction.initialize(data, witnessSearch);
+    }
+
+private:
+    const Data* data;
+    std::vector<size_t> firstContractableRound;
+    KeyFunction keyFunction;
+    std::vector<size_t> coreSizes;
+    size_t round;
+};
+
+template<typename WITNESS_SEARCH, typename KEY_FUNCTION = GreedyKey<WITNESS_SEARCH>>
+class FactorKey {
+
+public:
+    using WitnessSearch = WITNESS_SEARCH;
+    using KeyFunction = KEY_FUNCTION;
+    using KeyType = typename KeyFunction::KeyType;
+    using Type = FactorKey<WitnessSearch, KeyFunction>;
+
+public:
+    FactorKey(std::vector<float> factor, const KeyFunction& keyFunction = KeyFunction()) :
+        data(nullptr),
+        factor(factor),
+        keyFunction(keyFunction) {
+    }
+
+    inline KeyType operator() (const Vertex vertex) noexcept {
+        KeyType key = keyFunction(vertex);
+        if (key > 0) {
+            key *= factor[vertex];
+            if (key < 0) key = intMax;
+        }
+        return key;
+    }
+
+    template<typename T> inline void update(T&) noexcept {}
+
+    inline void initialize(const Data* data, WitnessSearch* witnessSearch) noexcept {
+        this->data = data;
+        keyFunction.initialize(data, witnessSearch);
+    }
+
+private:
+    const Data* data;
+    std::vector<float> factor;
+    KeyFunction keyFunction;
 
 };
 

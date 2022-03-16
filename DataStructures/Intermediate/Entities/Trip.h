@@ -46,6 +46,8 @@ public:
         for (size_t i = 0; i < stopEvents.size(); i++) {
             if (stopEvents[i].departureTime < t.stopEvents[i].departureTime) return true;
             if (stopEvents[i].departureTime > t.stopEvents[i].departureTime) return false;
+            if (stopEvents[i].arrivalTime > t.stopEvents[i].arrivalTime) return true;
+            if (stopEvents[i].arrivalTime < t.stopEvents[i].arrivalTime) return false;
         }
         return false;
     }
@@ -112,6 +114,12 @@ public:
         for (StopEvent& stopEvent : stopEvents) {
             stopEvent.departureTime += amount;
             stopEvent.arrivalTime += amount;
+        }
+    }
+
+    inline void applyStopPermutation(const Permutation& permutation) noexcept {
+        for (StopEvent& stopEvent : stopEvents) {
+            stopEvent.applyStopPermutation(permutation);
         }
     }
 

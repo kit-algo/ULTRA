@@ -26,7 +26,7 @@ public:
         baseQuery(forward, backward, forwardWeight, backwardWeight, forward.numVertices()),
         bucketGraph {CHGraph(), CHGraph()},
         distance {std::vector<int>(forward.numVertices(), INFTY), std::vector<int>(backward.numVertices(), INFTY)},
-        root({noVertex, noVertex}),
+        root {noVertex, noVertex},
         endOfPOIs(endOfPOIs),
         reachedPOIs {std::vector<Vertex>(), std::vector<Vertex>()} {
         buildBucketGraph<FORWARD, BACKWARD>();
@@ -43,7 +43,7 @@ public:
     }
 
     template<bool TARGET_PRUNING = true>
-    inline void run(const Vertex from, const Vertex to) noexcept {
+    inline void run(const Vertex from, const Vertex to, const double targetPruningFactor = 1) noexcept {
         if (root[FORWARD] == from && root[BACKWARD] == to) return;
         if constexpr (Debug) {
             std::cout << "Starting bucket query" << std::endl;
@@ -56,10 +56,10 @@ public:
         clear<FORWARD>();
         clear<BACKWARD>();
 
-        baseQuery.template run<TARGET_PRUNING>(from, to);
+        baseQuery.template run<TARGET_PRUNING>(from, to, targetPruningFactor);
 
-        collectPOIs<FORWARD>();
-        collectPOIs<BACKWARD>();
+        collectPOIs<FORWARD>(targetPruningFactor);
+        collectPOIs<BACKWARD>(targetPruningFactor);
 
         if constexpr (Debug) std::cout << "   Time = " << String::msToString(timer.elapsedMilliseconds()) << std::endl;
     }
@@ -194,8 +194,8 @@ private:
     }
 
     template<int DIRECTION>
-    inline void collectPOIs() noexcept {
-        const int maxDistance = baseQuery.getDistance();
+    inline void collectPOIs(const double targetPruningFactor = 1) noexcept {
+        const int maxDistance = baseQuery.getDistance() * targetPruningFactor;
         for (const Vertex vertex : baseQuery.template getPOIs<DIRECTION>()) {
             if (baseQuery.template getDistanceToPOI<DIRECTION>(vertex) > maxDistance) break;
             for (const Edge edge : bucketGraph[DIRECTION].edgesFrom(vertex)) {

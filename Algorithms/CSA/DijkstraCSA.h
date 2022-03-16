@@ -13,17 +13,22 @@
 #include "../../Helpers/Types.h"
 #include "../../Helpers/Vector/Vector.h"
 #include "../../DataStructures/CSA/Data.h"
+#include "../../DataStructures/CSA/Entities/Journey.h"
 #include "../../DataStructures/Container/ExternalKHeap.h"
+#include "Profiler.h"
 
 namespace CSA {
 
-template<typename DEBUGGER>
+template<typename INITIAL_TRANSFERS, bool PATH_RETRIEVAL = true, typename PROFILER = NoProfiler>
 class DijkstraCSA {
 
 public:
-    using Debugger = DEBUGGER;
-    using Type = DijkstraCSA<Debugger>;
-    using TripFlag = ConnectionId;
+    using InitialTransferType = INITIAL_TRANSFERS;
+    using InitialTransferGraph = typename InitialTransferType::Graph;
+    constexpr static bool PathRetrieval = PATH_RETRIEVAL;
+    using Profiler = PROFILER;
+    using Type = DijkstraCSA<InitialTransferType, PathRetrieval, Profiler>;
+    using TripFlag = Meta::IF<PathRetrieval, ConnectionId, bool>;
 
 private:
     struct ParentLabel {
@@ -47,7 +52,7 @@ private:
 
 public:
     template<typename ATTRIBUTE>
-    DijkstraCSA(const Data& data, const CHGraph& forwardGraph, const CHGraph& backwardGraph, const ATTRIBUTE weight, const Debugger& debuggerTemplate = Debugger()) :
+    DijkstraCSA(const Data& data, const InitialTransferGraph& forwardGraph, const InitialTransferGraph& backwardGraph, const ATTRIBUTE weight, const Profiler& profilerTemplate = Profiler()) :
         data(data),
         initialTransfers(forwardGraph, backwardGraph, data.numberOfStops(), weight),
         sourceVertex(noVertex),
@@ -55,43 +60,54 @@ public:
         targetVertex(noVertex),
         tripReached(data.numberOfTrips(), TripFlag()),
         arrivalTime(data.numberOfStops() + 1, never),
-        parentLabel(data.numberOfStops() + 1),
+        parentLabel(PathRetrieval ? data.numberOfStops() + 1 : 0),
         dijkstraLabels(data.transferGraph.numVertices()),
-        debugger(debuggerTemplate) {
+        profiler(profilerTemplate) {
         AssertMsg(Vector::isSorted(data.connections), "Connections must be sorted in ascending order!");
-        debugger.initialize(data);
+        profiler.registerPhases({PHASE_CLEAR, PHASE_INITIALIZATION, PHASE_CONNECTION_SCAN});
+        profiler.registerMetrics({METRIC_CONNECTIONS, METRIC_EDGES, METRIC_STOPS_BY_TRIP, METRIC_STOPS_BY_TRANSFER});
+        profiler.initialize();
     }
 
-    DijkstraCSA(const Data& data, const CH::CH& chData, const Debugger& debuggerTemplate = Debugger()) :
-        DijkstraCSA(data, chData.forward, chData.backward, Weight, debuggerTemplate) {
+    template<typename T = CHGraph, typename = std::enable_if_t<Meta::Equals<T, CHGraph>() && Meta::Equals<T, InitialTransferGraph>()>>
+    DijkstraCSA(const Data& data, const CH::CH& chData, const Profiler& profilerTemplate = Profiler()) :
+        DijkstraCSA(data, chData.forward, chData.backward, Weight, profilerTemplate) {
     }
 
-    inline void run(const Vertex source, const int departureTime, const Vertex target = noVertex) noexcept {
-        debugger.start();
-        debugger.startClear();
+    template<typename T = TransferGraph, typename = std::enable_if_t<Meta::Equals<T, TransferGraph>() && Meta::Equals<T, InitialTransferGraph>()>>
+    DijkstraCSA(const Data& data, const TransferGraph& forwardGraph, const TransferGraph& backwardGraph, const Profiler& profilerTemplate = Profiler()) :
+        DijkstraCSA(data, forwardGraph, backwardGraph, TravelTime, profilerTemplate) {
+    }
+
+    inline void run(const Vertex source, const int departureTime, const Vertex target) noexcept {
+        profiler.start();
+
+        profiler.startPhase();
         clear();
-        debugger.doneClear();
+        profiler.donePhase(PHASE_CLEAR);
 
-        debugger.startInitialization();
+        profiler.startPhase();
         sourceVertex = source;
         sourceDepartureTime = departureTime;
         targetVertex = target;
-        if (target == noVertex) {
-            targetStop = noStop;
-        } else {
-            targetStop = data.isStop(target) ? StopId(target) : StopId(data.numberOfStops());
-        }
+        targetStop = data.isStop(target) ? StopId(target) : StopId(data.numberOfStops());
         if (data.isStop(source)) {
             arrivalTime[source] = departureTime;
         }
         runInitialTransfers();
         const ConnectionId firstConnection = firstReachableConnection(departureTime);
-        debugger.doneInitialization();
+        profiler.donePhase(PHASE_INITIALIZATION);
 
-        debugger.startConnectionScan();
+        profiler.startPhase();
         scanConnections(firstConnection, ConnectionId(data.connections.size()));
-        debugger.doneConnectionScan();
-        debugger.done();
+        profiler.donePhase(PHASE_CONNECTION_SCAN);
+
+        profiler.done();
+    }
+
+    inline bool reachable(const Vertex vertex) const noexcept {
+        const StopId stop = (vertex == targetVertex) ? (targetStop) : (StopId(vertex));
+        return arrivalTime[stop] < never;
     }
 
     inline int getEarliestArrivalTime(const Vertex vertex) const noexcept {
@@ -99,8 +115,40 @@ public:
         return arrivalTime[stop];
     }
 
-    inline const Debugger& getDebugger() const noexcept {
-        return debugger;
+    template<bool T = PathRetrieval, typename = std::enable_if_t<T == PathRetrieval && T>>
+    inline Journey getJourney() noexcept {
+        return getJourney(targetStop);
+    }
+
+    template<bool T = PathRetrieval, typename = std::enable_if_t<T == PathRetrieval && T>>
+    inline Journey getJourney(const Vertex vertex) noexcept {
+        StopId stop = (vertex == targetVertex) ? (targetStop) : (StopId(vertex));
+        Journey journey;
+        if (!reachable(stop)) return journey;
+        while (stop != sourceVertex) {
+            const ParentLabel& label = parentLabel[stop];
+            if (label.tripId == noTripId) {
+                const int parentDepartureTime = (label.parent == sourceVertex) ? sourceDepartureTime : arrivalTime[label.parent];
+                journey.emplace_back(label.parent, (stop == targetStop) ? targetVertex : stop, parentDepartureTime, arrivalTime[stop]);
+            } else {
+                journey.emplace_back(label.parent, stop, data.connections[tripReached[label.tripId]].departureTime, arrivalTime[stop], label.tripId);
+            }
+            stop = StopId(label.parent);
+        };
+        Vector::reverse(journey);
+        return journey;
+    }
+
+    inline std::vector<Vertex> getPath(const Vertex vertex) noexcept {
+        return journeyToPath(getJourney(vertex));
+    }
+
+    inline std::vector<std::string> getRouteDescription(const Vertex vertex) noexcept {
+        return data.journeyToText(getJourney(vertex));
+    }
+
+    inline const Profiler& getProfiler() const noexcept {
+        return profiler;
     }
 
 private:
@@ -113,7 +161,9 @@ private:
         Vector::fill(tripReached, TripFlag());
         Vector::fill(dijkstraLabels, DijkstraLabel());
         queue.clear();
-        Vector::fill(parentLabel, ParentLabel());
+        if constexpr (PathRetrieval) {
+            Vector::fill(parentLabel, ParentLabel());
+        }
     }
 
     inline ConnectionId firstReachableConnection(const int departureTime) const noexcept {
@@ -128,7 +178,7 @@ private:
             runDijkstra(connection.departureTime);
             if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) break;
             if (connectionIsReachable(connection, i)) {
-                debugger.scanConnection(connection);
+                profiler.countMetric(METRIC_CONNECTIONS);
                 arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
             }
         }
@@ -145,7 +195,12 @@ private:
     inline bool connectionIsReachable(const Connection& connection, const ConnectionId id) noexcept {
         if (connectionIsReachableFromTrip(connection)) return true;
         if (connectionIsReachableFromStop(connection)) {
-            tripReached[connection.tripId] = id;
+            if constexpr (PathRetrieval) {
+                tripReached[connection.tripId] = id;
+            } else {
+                suppressUnusedParameterWarning(id);
+                tripReached[connection.tripId] = true;
+            }
             return true;
         }
         return false;
@@ -153,14 +208,18 @@ private:
 
     inline void arrivalByTrip(const StopId stop, const int time, const TripId trip) noexcept {
         if (arrivalTime[stop] <= time) return;
-        debugger.updateStopByTrip(stop, time);
+        profiler.countMetric(METRIC_STOPS_BY_TRIP);
         arrivalTime[stop] = time;
-        parentLabel[stop].parent = data.connections[tripReached[trip]].departureStopId;
-        parentLabel[stop].tripId = trip;
+        if constexpr (PathRetrieval) {
+            parentLabel[stop].parent = data.connections[tripReached[trip]].departureStopId;
+            parentLabel[stop].tripId = trip;
+        } else {
+            suppressUnusedParameterWarning(trip);
+        }
 
         arrivalByEdge(stop, time, stop);
         if (initialTransfers.getBackwardDistance(stop) != INFTY) {
-            debugger.relaxEdge(noEdge);
+            profiler.countMetric(METRIC_EDGES);
             const int newArrivalTime = time + initialTransfers.getBackwardDistance(stop);
             arrivalByTransfer(targetStop, newArrivalTime, stop);
         }
@@ -171,13 +230,13 @@ private:
         for (const Vertex stop : initialTransfers.getForwardPOIs()) {
             AssertMsg(data.isStop(stop), "Reached POI " << stop << " is not a stop!");
             AssertMsg(initialTransfers.getForwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
-            debugger.relaxEdge(noEdge);
+            profiler.countMetric(METRIC_EDGES);
             const int newArrivalTime = sourceDepartureTime + initialTransfers.getForwardDistance(stop);
             arrivalByTransfer(StopId(stop), newArrivalTime, sourceVertex);
         }
         if (initialTransfers.getDistance() != INFTY) {
             const int newArrivalTime = sourceDepartureTime + initialTransfers.getDistance();
-            debugger.relaxEdge(noEdge);
+            profiler.countMetric(METRIC_EDGES);
             arrivalByTransfer(targetStop, newArrivalTime, sourceVertex);
         }
     }
@@ -189,7 +248,7 @@ private:
             if (targetStop != noStop && time > arrivalTime[targetStop]) break;
             const Vertex u = Vertex(uLabel - &(dijkstraLabels[0]));
             for (const Edge edge : data.transferGraph.edgesFrom(u)) {
-                debugger.relaxEdge(edge);
+                profiler.countMetric(METRIC_EDGES);
                 const Vertex v = data.transferGraph.get(ToVertex, edge);
                 if (v == targetVertex || v == uLabel->parent) continue;
                 const int newArrivalTime = time + data.transferGraph.get(TravelTime, edge);
@@ -210,15 +269,19 @@ private:
 
     inline void arrivalByTransfer(const StopId stop, const int time, const Vertex parent) noexcept {
         if (arrivalTime[stop] <= time) return;
-        debugger.updateStopByTransfer(stop, time);
+        profiler.countMetric(METRIC_STOPS_BY_TRANSFER);
         arrivalTime[stop] = time;
-        parentLabel[stop].parent = parent;
-        parentLabel[stop].tripId = noTripId;
+        if constexpr (PathRetrieval) {
+            parentLabel[stop].parent = parent;
+            parentLabel[stop].tripId = noTripId;
+        } else {
+            suppressUnusedParameterWarning(parent);
+        }
     }
 
 private:
     const Data& data;
-    RAPTOR::CoreCHInitialTransfers initialTransfers;
+    InitialTransferType initialTransfers;
 
     Vertex sourceVertex;
     int sourceDepartureTime;
@@ -231,7 +294,7 @@ private:
     std::vector<DijkstraLabel> dijkstraLabels;
     ExternalKHeap<2, DijkstraLabel> queue;
 
-    Debugger debugger;
+    Profiler profiler;
 
 };
 }

@@ -2,6 +2,7 @@
 
 #include <map>
 
+#include "../../Helpers/Vector/Vector.h"
 #include "../../Helpers/Types.h"
 #include "../../Helpers/Ranges/SimultaneousRange.h"
 
@@ -78,15 +79,15 @@ public:
 
     inline bool contains(const KeyType key) noexcept {
         if (Resizeable) {
-            if (key >= capacity()) indices.resize(key + 1, NotContained);
+            if ((size_t)key >= capacity()) indices.resize(key + 1, NotContained);
         } else {
-            AssertMsg(key < capacity(), "Key " << key << " is out of range!");
+            AssertMsg((size_t)key < capacity(), "Key " << key << " is out of range!");
         }
         return indices[key] != NotContained;
     }
 
     inline const Value& operator[](const KeyType key) const noexcept {
-        AssertMsg(key < capacity(), "No value for key " << key << " contained!");
+        AssertMsg((size_t)key < capacity(), "No value for key " << key << " contained!");
         return values[indices[key]];
     }
 
@@ -124,6 +125,38 @@ public:
         }
         keys.clear();
         values.clear();
+    }
+
+    inline bool isSortedByKeys() const noexcept {
+        return Vector::isSorted(keys);
+    }
+
+    inline void sortKeys() noexcept {
+        std::sort(keys.begin(), keys.end());
+        std::vector<Value> valuesCopy(values);
+        for (size_t i = 0; i < keys.size(); i++) {
+            values[i] = valuesCopy[indices[keys[i]]];
+            indices[keys[i]] = i;
+        }
+    }
+
+    inline void sortLastNKeys(const size_t n) noexcept {
+        sortLastNKeys(n, [&](const KeyType& a, const KeyType& b) {
+            return a < b;
+        });
+    }
+
+    template<typename LESS>
+    inline void sortLastNKeys(const size_t n, const LESS& less) noexcept {
+        AssertMsg(n <= indices.size(), "n = " << n << " is greater than the number of keys = " << indices.size());
+        if (n == 0) return;
+        std::sort(keys.end() - n, keys.end(), less);
+        std::vector<Value> valuesCopy(values.end() - n, values.end());
+        size_t firstIndex = keys.size() - n;
+        for (size_t i = firstIndex; i < firstIndex + n; i++) {
+            values[i] = valuesCopy[indices[keys[i]] - firstIndex];
+            indices[keys[i]] = i;
+        }
     }
 
 private:

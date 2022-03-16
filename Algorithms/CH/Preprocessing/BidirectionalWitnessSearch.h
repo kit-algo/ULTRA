@@ -10,18 +10,18 @@
 #include "../../../Helpers/Vector/Vector.h"
 
 #include "../../../DataStructures/Container/ExternalKHeap.h"
-#include "../../../DataStructures/Graph/Graph.h"
 
 namespace CH {
 
-template<typename GRAPH, int Q_POP_LIMIT = -1, bool ONE_HOP_HEURISTIC = true>
+template<typename GRAPH, typename PROFILER, int Q_POP_LIMIT = -1, bool ONE_HOP_HEURISTIC = true>
 class BidirectionalWitnessSearch {
 
 public:
     using Graph = GRAPH;
+    using Profiler = PROFILER;
     constexpr static int QPopLimit = Q_POP_LIMIT;
     constexpr static bool OneHopHeuristic = ONE_HOP_HEURISTIC;
-    using Type = BidirectionalWitnessSearch<Graph, QPopLimit, OneHopHeuristic>;
+    using Type = BidirectionalWitnessSearch<Graph, Profiler, QPopLimit, OneHopHeuristic>;
 
 private:
     struct Distance : public ExternalKHeapElement {
@@ -36,12 +36,14 @@ public:
         weight(0),
         Q {ExternalKHeap<2, Distance>(), ExternalKHeap<2, Distance>()},
         distance {std::vector<Distance>(), std::vector<Distance>()},
-        settled {std::vector<Vertex>(), std::vector<Vertex>()} {
+        settled {std::vector<Vertex>(), std::vector<Vertex>()},
+        profiler(0) {
     }
 
-    inline void initialize(const Graph* graph, const std::vector<int>* weight) {
+    inline void initialize(const Graph* graph, const std::vector<int>* weight, Profiler* profiler) {
         this->graph = graph;
         this->weight = weight;
+        this->profiler = profiler;
         Q[0].reserve(graph->numVertices());
         Q[1].reserve(graph->numVertices());
         std::vector<Distance>(graph->numVertices()).swap(distance[0]);
@@ -58,6 +60,7 @@ public:
             }
         }
 
+        profiler->startWitnessSearch();
         foundWitness = false;
         int qPops = QPopLimit;
         clear<BACKWARD>();
@@ -88,6 +91,7 @@ public:
             }
         }
 
+        profiler->doneWitnessSearch();
         return true;
     }
 
@@ -122,6 +126,7 @@ private:
                 relax<DIRECTION>(v, label->distance + (*weight)[edge], shortcutDistance);
             }
         }
+        profiler->settledVertex();
     }
 
     template<int DIRECTION>
@@ -144,6 +149,8 @@ private:
     Vertex currentFrom;
     Vertex currentVia;
     bool foundWitness;
+
+    Profiler* profiler;
 
 };
 

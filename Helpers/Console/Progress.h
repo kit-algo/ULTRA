@@ -24,7 +24,7 @@ public:
         init(n);
     }
 
-    void init(long long n) {
+    inline void init(long long n) {
         numSteps = n;
         stepsDone = 0;
         lastDrawnStep = 0;
@@ -33,25 +33,31 @@ public:
         if (verbose) os << "0% " << std::flush;
     }
 
-    void iterate() {
+    inline void iterate() {
         ++stepsDone;
         checkDraw();
     }
 
-    void iterateTo(long long target) {
-        AssertMsg(target >= stepsDone, "Target is too small!");
+    inline void iterateTo(long long target) {
+        Assert(target >= stepsDone);
         stepsDone = target;
         checkDraw();
     }
 
-    void operator+=(long long addend) {
-        AssertMsg(addend >= 0, "Addend may not be negative!");
+    inline void operator+=(long long addend) {
+        Assert(addend >= 0);
         stepsDone += addend;
         checkDraw();
     }
 
-    void operator++() {iterate();}
-    void operator++(int) {iterate();}
+    inline void operator++() {iterate();}
+    inline void operator++(int) {iterate();}
+
+    inline void finished() {
+        stepsDone = numSteps;
+        draw();
+        if (verbose) os << std::endl;
+    }
 
     inline void SetCheckTimeStep(const int s) {checkTimeStep = s;}
     inline void SetRedrawTime(const double t) {redrawTime = t;}

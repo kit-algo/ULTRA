@@ -32,6 +32,10 @@ public:
         deserialize(routeId, stopIndex);
     }
 
+    inline bool operator<(const RouteSegment& other) const noexcept {
+        return routeId < other.routeId || (routeId == other.routeId && stopIndex < other.stopIndex);
+    }
+
 public:
     RouteId routeId;
     StopIndex stopIndex;

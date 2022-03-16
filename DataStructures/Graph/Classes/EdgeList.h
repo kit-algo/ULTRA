@@ -18,6 +18,7 @@
 #include "../../../Helpers/FileSystem/FileSystem.h"
 #include "../../../Helpers/IO/Serialization.h"
 #include "../../../Helpers/Vector/Permutation.h"
+#include "../../../Helpers/Console/ProgressBar.h"
 #include "../../../Helpers/Ranges/Range.h"
 #include "../../../Helpers/Ranges/SubRange.h"
 #include "../../../Helpers/Ranges/DirectEdgeRange.h"
@@ -153,6 +154,13 @@ public:
         long long result = sizeof(size_t);
         result += vertexAttributes.byteSize();
         result += edgeAttributes.byteSize();
+        return result;
+    }
+
+    inline long long memoryUsageInBytes() const noexcept {
+        long long result = sizeof(size_t);
+        result += vertexAttributes.memoryUsageInBytes();
+        result += edgeAttributes.memoryUsageInBytes();
         return result;
     }
 
@@ -486,6 +494,7 @@ public:
         edgeAttributes.deserialize(fileName, separator);
     }
 
+// TODO Utils
     template<bool VERBOSE = false>
     inline void fromDimacs(const std::string& fileBaseName, const double coordinateFactor = 1) noexcept {
         clear();
@@ -495,6 +504,7 @@ public:
         AssertMsg(grIs.is_open(), "cannot open file: " << grFilename);
         size_t vertexCount = -1;
         size_t edgeCount = -1;
+        ProgressBar bar(1);
         std::cout << "\r                     \r" << std::flush;
         while (!grIs.eof()) {
             std::string line;
@@ -510,6 +520,7 @@ public:
                     vertexCount = String::lexicalCast<size_t>(tokens[2]);
                     edgeCount = String::lexicalCast<size_t>(tokens[3]);
                     addVertices(vertexCount);
+                    if (VERBOSE) bar.init(edgeCount);
                 }
             } else {
                 if (tokens.size() != 4 || tokens[0] != "a") {
@@ -535,6 +546,7 @@ public:
                                 values[edge] = weight;
                             }
                         });
+                        if (VERBOSE) bar++;
                     }
                 }
             }
@@ -547,6 +559,7 @@ public:
         if constexpr (HasVertexAttribute(Coordinates)) {
             const std::string coFilename = FileSystem::ensureExtension(fileBaseName, ".co");
             if (VERBOSE) std::cout << "Reading dimacs coordinates from: " << coFilename << std::endl << std::flush;
+            if (VERBOSE) bar.init(vertexCount);
             std::ifstream coIs(coFilename);
             AssertMsg(coIs.is_open(), "cannot open file: " << coFilename);
             bool header = false;
@@ -583,6 +596,7 @@ public:
                             get(Coordinates, v).x = x;
                             get(Coordinates, v).y = y;
                         }
+                        if (VERBOSE) bar++;
                     }
                 }
             }

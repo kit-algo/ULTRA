@@ -126,7 +126,7 @@ public:
     }
 
     inline Edge beginEdgeFrom(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        AssertMsg(isVertex(vertex) || vertex == numVertices(), vertex << " is not a valid vertex!");
         return beginOut[vertex];
     }
 
@@ -167,6 +167,12 @@ public:
     inline long long byteSize() const noexcept {
         long long result = vertexAttributes.byteSize();
         result += edgeAttributes.byteSize();
+        return result;
+    }
+
+    inline long long memoryUsageInBytes() const noexcept {
+        long long result = vertexAttributes.memoryUsageInBytes();
+        result += edgeAttributes.memoryUsageInBytes();
         return result;
     }
 
@@ -366,7 +372,7 @@ public:
         edgeAttributes.forEach([&](auto& values) {
             edgePermutation.permutate(values);
         });
-        AssertMsg(satisfiesInvariants(), "Invariants not satisfied");
+        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
     }
 
     // Attributes:
@@ -636,6 +642,17 @@ public:
         out << "                       hash : " << std::setw(tabSize) << String::prettyInt(hash) << std::endl;
     }
 
+    inline void printAdjacencyList(std::ostream& out = std::cout) const noexcept {
+        for (const Vertex vertex : vertices()) {
+            out << std::setw(log10(numVertices()) + 1) << std::left << vertex << std::right << " -> ";
+            Enumeration edgeList;
+            for (const Edge edge : edgesFrom(vertex)) {
+                edgeList << "(" << Graph::edgeToString(*this, edge) << ")" << sep;
+            }
+            out << edgeList << std::endl;
+        }
+    }
+
 private:
     inline void changeVertexIds(const Order& vertexOrder, const Permutation& vertexPermutation) noexcept {
         Order edgeOrder;
@@ -674,7 +691,7 @@ private:
 
         beginOut.swap(newBeginOut);
         checkVectorSize();
-        Assert(satisfiesInvariants());
+        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
     }
 
 public:

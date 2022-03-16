@@ -23,6 +23,32 @@
 
 namespace FileSystem {
 
+    inline std::string getWorkingDirectory() noexcept {
+        char buff[PATH_MAX];
+        ssize_t len = readlink("/proc/self/exe", buff, sizeof(buff)-1);
+        if (len != -1) {
+            buff[len] = '\0';
+            std::string path(buff);
+            return path.substr(0, path.rfind('/'));
+        }
+        return "/home";
+    }
+
+    inline std::vector<std::string> getFiles(const std::string& path) noexcept {
+        DIR* dir;
+        struct dirent* ent;
+        if ((dir = opendir(path.c_str())) != NULL) {
+            std::vector<std::string> dirs;
+            while ((ent = readdir(dir)) != NULL) {
+                dirs.push_back(ent->d_name);
+            }
+            closedir(dir);
+            std::sort(dirs.begin(), dirs.end());
+            return dirs;
+        }
+        return std::vector<std::string>();
+    }
+
     inline bool isAbsolutePath(const std::string& path) noexcept {
         return (!path.empty()) && (path[0] == '/');
     }
@@ -45,6 +71,30 @@ namespace FileSystem {
         } else {
             return false;
         }
+    }
+
+    inline bool renameFile(const std::string& oldName, const std::string& newName) noexcept {
+        if (!isFile(oldName)) return false;
+        if (isFile(newName)) return false;
+        return rename(oldName.c_str(), newName.c_str()) == 0;
+    }
+
+    inline void deleteFile(const std::string& fileName) noexcept {
+        if (!isFile(fileName)) return;
+        remove(fileName.c_str());
+    }
+
+    inline bool copyFile(const std::string& oldName, const std::string& newName) noexcept {
+        if (!isFile(oldName)) return false;
+        if (isFile(newName)) return false;
+        std::ifstream source(oldName, std::ios::binary);
+        AssertMsg(source.is_open(), "cannot open file: " << oldName);
+        std::ofstream destination(newName, std::ios::binary);
+        AssertMsg(destination.is_open(), "cannot open file: " << newName);
+        destination << source.rdbuf();
+        source.close();
+        destination.close();
+        return true;
     }
 
     inline bool isFileOrDirectory(const std::string& path) noexcept {
@@ -83,6 +133,14 @@ namespace FileSystem {
         }
     }
 
+    inline std::string getAbsolutePath(const std::string& path) noexcept {
+        if (isAbsolutePath(path)) {
+            return path;
+        } else {
+            return extendPath(getWorkingDirectory(), path);
+        }
+    }
+
     inline std::string ensureExtension(const std::string& fileName, const std::string& extension) noexcept {
         if (String::endsWith(fileName, extension)) {
             return fileName;
@@ -97,6 +155,30 @@ namespace FileSystem {
         size_t extensionBegin  = fileName.find_last_of('.');
         if (extensionBegin <= directoryEnd) extensionBegin = fileName.size();
         return fileName.substr(directoryEnd, extensionBegin - directoryEnd);
+    }
+
+    inline void unzip(const std::string& zipFileName, const std::string& ouputDirectory, const bool verbose = true, const std::string& unzipExecutable = "/usr/bin/unzip") noexcept {
+        if (!isFile(zipFileName)) return;
+        if (!isDirectory(ouputDirectory)) return;
+        pid_t pid = fork();
+        switch (pid) {
+        case -1:
+            error("Failure during fork()!");
+            exit(1);
+        case 0:
+            if (verbose) {
+                execl(unzipExecutable.c_str(), "unzip", "-o", zipFileName.c_str(), "-d", ouputDirectory.c_str(), nullptr);
+            } else {
+                execl(unzipExecutable.c_str(), "unzip", "-o", "-qq", zipFileName.c_str(), "-d", ouputDirectory.c_str(), nullptr);
+            }
+            error(unzipExecutable + " failed!");
+            exit(1);
+        default:
+            int status = 0;
+            while (!WIFEXITED(status)) {
+                waitpid(pid, &status, 0);
+            }
+        }
     }
 
     inline void makeDirectory(const std::string& path) noexcept {

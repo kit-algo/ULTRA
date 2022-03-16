@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 
+#include "../../GTFS/Entities/Vehicle.h"
 #include "../../Intermediate/Entities/Trip.h"
 
 #include "../../../Helpers/IO/Serialization.h"
@@ -40,6 +41,16 @@ public:
 
     inline void deserialize(IO::Deserialization& deserialize) noexcept {
         deserialize(tripName, routeName, type);
+    }
+
+    inline std::ostream& toCSV(std::ostream& out) const {
+        return out << "[" << routeName << "]" << tripName << "," << GTFS::typeName(type);
+    }
+
+    inline std::string toCSV() const {
+        std::stringstream ss;
+        toCSV(ss);
+        return ss.str();
     }
 
 public:

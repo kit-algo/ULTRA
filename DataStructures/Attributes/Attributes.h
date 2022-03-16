@@ -65,6 +65,7 @@ public:
     }
 
     inline long long byteSize() const noexcept {return sizeof(size_t);}
+    inline long long memoryUsageInBytes() const noexcept {return sizeof(size_t);}
     inline size_t size() const noexcept {return attributesSize;}
     inline bool hasSize(const size_t n) const noexcept {return attributesSize == n;}
     inline bool empty() const noexcept {return attributesSize == 0;}
@@ -260,6 +261,7 @@ public:
     }
 
     inline long long byteSize() const noexcept {return Vector::byteSize(values) + Super::byteSize();}
+    inline long long memoryUsageInBytes() const noexcept {return Vector::memoryUsageInBytes(values) + Super::memoryUsageInBytes();}
     inline size_t size() const noexcept {return values.size();}
     inline bool hasSize(const size_t size) const noexcept {return values.size() == size && Super::hasSize(size);}
     inline bool empty() const noexcept {return values.empty();}

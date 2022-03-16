@@ -7,6 +7,7 @@
 #include "../DataStructures/Graph/Classes/GraphInterface.h"
 
 #include "../Helpers/Assert.h"
+#include "../Helpers/Vector/Permutation.h"
 
 template<typename GRAPH, typename TRAVERSE_TREE_EDGE = NO_OPERATION, typename TRAVERSE_NON_TREE_EDGE = NO_OPERATION, typename BACKTRACK = NO_OPERATION, typename ROOT = NO_OPERATION, typename FINALIZE = NO_OPERATION>
 class DepthFirstSearch {
@@ -72,7 +73,7 @@ public:
 
 private:
     inline void settle(Vertex v) {
-        AssertMsg(!settled[v], "Vertex " << v << " was not settled!");
+        Assert(!settled[v]);
         settled[v] = true;
         for (Edge edge : graph.edgesFrom(v)) {
             push(edge, v);
@@ -143,4 +144,16 @@ template<typename GRAPH, typename TRAVERSE_TREE_EDGE = NO_OPERATION, typename TR
 inline void dfs(const GRAPH& graph, const TRAVERSE_TREE_EDGE& traverseTreeEdge = TRAVERSE_TREE_EDGE(), const TRAVERSE_NON_TREE_EDGE& traverseNonTreeEdge = TRAVERSE_NON_TREE_EDGE(), const BACKTRACK& backtrack = BACKTRACK()) {
     DFS<GRAPH, TRAVERSE_TREE_EDGE, TRAVERSE_NON_TREE_EDGE, BACKTRACK> dfs(graph, traverseTreeEdge, traverseNonTreeEdge, backtrack);
     dfs.run();
+}
+
+template<typename GRAPH>
+inline Order getDFSVertexOrder(const GRAPH& graph) noexcept {
+    Order order;
+    depthFirstSearch(graph, [&](const Edge e, const Vertex) {
+        const Vertex v = graph.get(ToVertex, e);
+        order.emplace_back(v);
+    }, NoOperation, NoOperation, [&](const Vertex v) {
+        order.emplace_back(v);
+    }, NoOperation);
+    return order;
 }

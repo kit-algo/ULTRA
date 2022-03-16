@@ -45,13 +45,26 @@ public:
         return trip > firstTrip;
     }
 
+    inline bool hasEarlierTrip(const StopEvent* otherTrip) const noexcept {
+        return otherTrip > firstTrip;
+    }
+
     inline bool hasEarlierTrip(const int arrivalTime) const noexcept {
         return hasEarlierTrip() && (previousDepartureTime() >= arrivalTime);
+    }
+
+    inline bool hasEarlierTrip(const StopEvent* otherTrip, const int arrivalTime) const noexcept {
+        return hasEarlierTrip(otherTrip) && (previousDepartureTime(otherTrip) >= arrivalTime);
     }
 
     inline void previousTrip() noexcept {
         AssertMsg(hasEarlierTrip(), "There is no earlier trip!");
         trip = trip - tripSize;
+    }
+
+    inline const StopEvent* previousTrip(const StopEvent* otherTrip) const noexcept {
+        AssertMsg(hasEarlierTrip(otherTrip), "There is no earlier trip!");
+        return otherTrip - tripSize;
     }
 
     inline bool decreaseTrip() noexcept {
@@ -64,8 +77,16 @@ public:
         return (trip + stopIndex)->arrivalTime;
     }
 
+    inline int arrivalTime(const StopEvent* otherTrip) const noexcept {
+        return (otherTrip + stopIndex)->arrivalTime;
+    }
+
     inline int departureTime() const noexcept {
         return (trip + stopIndex)->departureTime;
+    }
+
+    inline int departureTime(const StopEvent* otherTrip) const noexcept {
+        return (otherTrip + stopIndex)->departureTime;
     }
 
     inline int previousArrivalTime() const noexcept {
@@ -78,6 +99,11 @@ public:
         return (trip + stopIndex - tripSize)->departureTime;
     }
 
+    inline int previousDepartureTime(const StopEvent* otherTrip) const noexcept {
+        AssertMsg(hasEarlierTrip(otherTrip), "There is no earlier trip!");
+        return (otherTrip + stopIndex - tripSize)->departureTime;
+    }
+
     inline StopId stop() const noexcept {
         return stops[stopIndex];
     }
@@ -88,6 +114,10 @@ public:
 
     inline const StopEvent* stopEvent() const noexcept {
         return trip + stopIndex;
+    }
+
+    inline const StopEvent* stopEvent(const StopEvent* otherTrip) const noexcept {
+        return otherTrip + stopIndex;
     }
 
     inline const StopEvent* stopEvent(const StopIndex index) const noexcept {

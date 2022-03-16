@@ -7,6 +7,7 @@
 
 #include "../../../Helpers/Types.h"
 #include "../../../Helpers/IO/Serialization.h"
+#include "../../../Helpers/Vector/Permutation.h"
 
 namespace CSA {
 
@@ -75,6 +76,11 @@ public:
         std::stringstream ss;
         toCSV(ss);
         return ss.str();
+    }
+
+    inline void applyStopPermutation(const Permutation& permutation) noexcept {
+        departureStopId = permutation.permutate(departureStopId);
+        arrivalStopId = permutation.permutate(arrivalStopId);
     }
 
 public:

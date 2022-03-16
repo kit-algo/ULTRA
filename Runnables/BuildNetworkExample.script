@@ -1,0 +1,13 @@
+parseGTFS ../Networks/Switzerland/GTFS/ ../Networks/Switzerland/GTFS/GTFS.binary
+loadDimacsGraph ../Networks/Switzerland/OSM/dimacs ../Networks/Switzerland/OSM/graph
+gtfsToIntermediate ../Networks/Switzerland/GTFS/GTFS.binary 20170530 20170531 true true ../Networks/Switzerland/intermediate.binary
+applyBoundingBox ../Networks/Switzerland/intermediate.binary switzerland ../Networks/Switzerland/intermediate.binary
+reduceToMaximumConnectedComponent ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
+reduceGraph ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
+makeOneHopTransfers ../Networks/Switzerland/intermediate.binary 86400 ../Networks/Switzerland/intermediate.binary true
+addGraph ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/OSM/graph ../Networks/Switzerland/intermediate.binary
+reduceToMaximumConnectedComponent ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
+applyMaxTransferSpeed ../Networks/Switzerland/intermediate.binary 4.5 ../Networks/Switzerland/intermediate.binary
+reduceGraph ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
+intermediateToRAPTOR ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/raptor.binary
+intermediateToCSA ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/csa.binary

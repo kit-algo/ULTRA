@@ -55,9 +55,10 @@ protected:
 
     IdMapping(const Construct::RandomTag, const size_t n, const int seed = 42) :
         IdMapping(Construct::Id, n) {
-        std::srand(seed);
+        std::mt19937 randomGenerator(seed);
+        std::uniform_int_distribution<> distribution(0, n - 1);
         for (size_t i = 0; i < n; i++) {
-            std::swap((*this)[i], (*this)[std::rand() % n]);
+            std::swap((*this)[i], (*this)[distribution(randomGenerator)]);
         }
     }
 
@@ -208,6 +209,17 @@ public:
         mapPermutationImplementation(vector);
     }
 
+    inline Permutation splitAt(const size_t limit) const noexcept;
+
+    inline Permutation extend(const size_t newSize) const noexcept {
+        AssertMsg(newSize >= size(), "newSize is smaller than size!");
+        Permutation result = *this;
+        for (size_t i = size(); i < newSize; i++) {
+            result.emplace_back(i);
+        }
+        return result;
+    }
+
 protected:
     template<typename T>
     inline void mapPermutationImplementation(std::vector<T>& vector) const noexcept {
@@ -266,6 +278,15 @@ public:
         IdMapping(Construct::Invert, std::move(permutation)) {
     }
 
+    Order(const Construct::FromTextFileTag, const std::string& fileName) {
+        std::ifstream file(fileName);
+        IO::checkStream(file, fileName);
+        std::string line;
+        while (std::getline(file, line)) {
+            emplace_back(String::lexicalCast<size_t>(line));
+        }
+    }
+
 public:
     template<typename T>
     inline std::vector<T> getOrdered(const std::vector<T>& vector) const noexcept {
@@ -294,4 +315,29 @@ public:
         }
     }
 
+    inline Order splitAt(const size_t limit) const noexcept {
+        std::vector<size_t> left;
+        std::vector<size_t> right;
+        for (const size_t i : *this) {
+            if (i < limit) {
+                left.emplace_back(i);
+            } else {
+                right.emplace_back(i);
+            }
+        }
+        return Order(left + right);
+    }
+
+    inline Order extend(const size_t newSize) const noexcept {
+        AssertMsg(newSize >= size(), "newSize is smaller than size!");
+        Order result = *this;
+        for (size_t i = size(); i < newSize; i++) {
+            result.emplace_back(i);
+        }
+        return result;
+    }
 };
+
+inline Permutation Permutation::splitAt(const size_t limit) const noexcept {
+    return Permutation(Construct::Invert, Order(Construct::Invert, *this).splitAt(limit));
+}

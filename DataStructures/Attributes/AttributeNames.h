@@ -90,7 +90,10 @@ namespace ImplementationDetail {
     using EdgeFlagsType = AttributeNameWrapper<22>;
     using AnyAttributeType = AttributeNameWrapper<23>;
     using SizeType = AttributeNameWrapper<24>;
-    using UnknownType = AttributeNameWrapper<25>;
+    using ProfileIndexType = AttributeNameWrapper<25>;
+    using OriginalEdgeType = AttributeNameWrapper<26>;
+    using BundleSizeType = AttributeNameWrapper<27>;
+    using UnknownType = AttributeNameWrapper<28>;
     // Ensure that Unknown is the last entry!
 
 }
@@ -120,6 +123,9 @@ constexpr ImplementationDetail::IncomingEdgesType IncomingEdges;
 constexpr ImplementationDetail::EdgeFlagsType EdgeFlags;
 constexpr ImplementationDetail::AnyAttributeType AnyAttribute;
 constexpr ImplementationDetail::SizeType Size;
+constexpr ImplementationDetail::ProfileIndexType ProfileIndex;
+constexpr ImplementationDetail::OriginalEdgeType OriginalEdge;
+constexpr ImplementationDetail::BundleSizeType BundleSize;
 constexpr ImplementationDetail::UnknownType Unknown;
 // Ensure that Unknown is the last entry!
 
@@ -151,7 +157,10 @@ namespace ImplementationDetail {
         /* 22 */ "EdgeFlags",
         /* 23 */ "AnyAttribute",
         /* 24 */ "Size",
-        /* 25 */ "Unknown"
+        /* 25 */ "ProfileIndex",
+        /* 26 */ "OriginalEdge",
+        /* 27 */ "BundleSize",
+        /* 28 */ "Unknown"
         // Ensure that Unknown is the last entry!
     };
 

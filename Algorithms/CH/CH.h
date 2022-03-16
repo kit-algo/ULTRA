@@ -8,7 +8,6 @@
 #include "Preprocessing/CHBuilder.h"
 
 #include "../../DataStructures/Graph/Graph.h"
-#include "../../Helpers/Ranges/IndirectEdgeRange.h"
 #include "../../Helpers/Ranges/ConcatenatedRange.h"
 #include "../../Helpers/Ranges/Range.h"
 
@@ -36,9 +35,13 @@ public:
         Graph::move(std::move(backwardCH), backward);
     }
 
-    template<typename WITNESS_SEARCH, typename KEY_FUNCTION, typename STOP_CRITERION, bool BUILD_Q_LINEAR, bool BREAK_KEY_TIES_BY_ID>
-    CH(Builder<WITNESS_SEARCH, KEY_FUNCTION, STOP_CRITERION, BUILD_Q_LINEAR, BREAK_KEY_TIES_BY_ID>&& builder) :
-        CH(std::move(builder.getData().forwardCH), std::move(builder.getData().backwardCH)) {
+    CH(Data&& data) :
+        CH(std::move(data.forwardCH), std::move(data.backwardCH)) {
+    }
+
+    template<typename PROFILER, typename WITNESS_SEARCH, typename KEY_FUNCTION, typename STOP_CRITERION, bool BUILD_Q_LINEAR, bool BREAK_KEY_TIES_BY_ID>
+    CH(Builder<PROFILER, WITNESS_SEARCH, KEY_FUNCTION, STOP_CRITERION, BUILD_Q_LINEAR, BREAK_KEY_TIES_BY_ID>&& builder) :
+        CH(std::move(builder.getData())) {
     }
 
     CH(const std::string& fileName, const std::string& separator = ".") {
@@ -75,7 +78,7 @@ public:
     }
 
     inline EdgeRange edgesFrom(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex));
         return EdgeRange(forward.edgesFrom(vertex), backward.edgesFrom(vertex), Edge(forward.numEdges()));
     }
 
@@ -90,6 +93,16 @@ public:
     template<AttributeNameType ATTRIBUTE_NAME>
     inline AttributeConstReferenceType<ATTRIBUTE_NAME> get(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName, const Edge edge) const noexcept {
         return (edge < forward.numEdges()) ? forward.get(attributeName, edge) : backward.get(attributeName, Edge(edge - forward.numEdges()));
+    }
+
+    inline void applyVertexPermutation(const Permutation& permutation) noexcept {
+        forward.applyVertexPermutation(permutation);
+        backward.applyVertexPermutation(permutation);
+    }
+
+    inline void applyVertexOrder(const Order& order) noexcept {
+        forward.applyVertexOrder(order);
+        backward.applyVertexOrder(order);
     }
 
     inline bool isCoreVertex(const Vertex vertex) const noexcept {

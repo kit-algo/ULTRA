@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../../Geometry/Point.h"
+#include "../../GTFS/Entities/Stop.h"
 #include "../../../Helpers/IO/Serialization.h"
 #include "../../../Helpers/String/String.h"
 
@@ -20,6 +21,11 @@ public:
         name(name),
         coordinates(coordinates),
         minTransferTime(minTransferTime) {
+    }
+    Stop(const GTFS::Stop& s) :
+        name(s.name),
+        coordinates(s.coordinates),
+        minTransferTime(0) {
     }
     template<typename STOP_TYPE>
     Stop(const STOP_TYPE& s) :

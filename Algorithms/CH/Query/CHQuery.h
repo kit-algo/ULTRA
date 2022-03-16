@@ -36,7 +36,7 @@ public:
     Query(const Graph& forward, const Graph& backward, const std::vector<int>& forwardWeight, const std::vector<int>& backwardWeight, const Vertex::ValueType endOfPOIs = 0) :
         graph {&forward, &backward},
         weight {&forwardWeight, &backwardWeight},
-        root({noVertex, noVertex}),
+        root {noVertex, noVertex},
         Q {ExternalKHeap<2, Distance>(forward.numVertices()), ExternalKHeap<2, Distance>(backward.numVertices())},
         distance {std::vector<Distance>(forward.numVertices()), std::vector<Distance>(backward.numVertices())},
         parent {std::vector<Vertex>(forward.numVertices()), std::vector<Vertex>(backward.numVertices())},
@@ -48,7 +48,7 @@ public:
         stallCount(0),
         endOfPOIs(endOfPOIs),
         reachedPOIs {std::vector<Vertex>(), std::vector<Vertex>()} {
-        AssertMsg(forward.numVertices() == backward.numVertices(), "Number of vertices is inconsistent!");
+        Assert(forward.numVertices() == backward.numVertices());
     }
 
     template<typename ATTRIBUTE>
@@ -61,7 +61,7 @@ public:
     }
 
     template<bool TARGET_PRUNING = true>
-    inline void run(const Vertex from, const Vertex to) noexcept {
+    inline void run(const Vertex from, const Vertex to, const double targetPruningFactor = 1) noexcept {
         if (root[FORWARD] == from && root[BACKWARD] == to) return;
         if constexpr (Debug) {
             std::cout << "Starting " <<  ((CollectPOIs) ? ("CH-POI") : ("CH")) << " query" << std::endl;
@@ -71,7 +71,7 @@ public:
         clear();
         addSource(from);
         addTarget(to);
-        run<TARGET_PRUNING>();
+        run<TARGET_PRUNING>(targetPruningFactor);
     }
 
     template<int I, int J, bool TARGET_PRUNING = true>
@@ -116,7 +116,7 @@ public:
     }
 
     template<bool TARGET_PRUNING = true>
-    inline void run() noexcept {
+    inline void run(const double targetPruningFactor = 1) noexcept {
         if constexpr (Debug) std::cout << "Running " << ((CollectPOIs) ? ("CH-POI") : ("CH")) << " query" << std::endl;
 
         if (root[FORWARD] == root[BACKWARD]) {
@@ -125,16 +125,16 @@ public:
         }
 
         while ((!Q[FORWARD].empty()) && (!Q[BACKWARD].empty())) {
-            settle<FORWARD, BACKWARD, TARGET_PRUNING>();
-            settle<BACKWARD, FORWARD, TARGET_PRUNING>();
+            settle<FORWARD, BACKWARD, TARGET_PRUNING>(targetPruningFactor);
+            settle<BACKWARD, FORWARD, TARGET_PRUNING>(targetPruningFactor);
         }
 
         while (!Q[FORWARD].empty()) {
-            settle<FORWARD, BACKWARD, TARGET_PRUNING>();
+            settle<FORWARD, BACKWARD, TARGET_PRUNING>(targetPruningFactor);
         }
 
         while (!Q[BACKWARD].empty()) {
-            settle<BACKWARD, FORWARD, TARGET_PRUNING>();
+            settle<BACKWARD, FORWARD, TARGET_PRUNING>(targetPruningFactor);
         }
 
         if constexpr (Debug) printStatistics();
@@ -297,10 +297,10 @@ private:
     }
 
     template<int I, int J, bool TARGET_PRUNING>
-    inline void settle() noexcept {
+    inline void settle(const double targetPruningFactor = 1) noexcept {
         Distance* distanceU = Q[I].extractFront();
         if constexpr (TARGET_PRUNING) {
-            if (distanceU->distance > tentativeDistance) {
+            if (distanceU->distance > tentativeDistance * targetPruningFactor) {
                 Q[I].clear();
                 return;
             }

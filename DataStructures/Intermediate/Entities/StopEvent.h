@@ -6,6 +6,7 @@
 
 #include "../../../Helpers/IO/Serialization.h"
 #include "../../../Helpers/Types.h"
+#include "../../../Helpers/Vector/Permutation.h"
 
 namespace Intermediate {
 
@@ -65,6 +66,10 @@ public:
         stopId = other.stopId;
         departureTime = other.departureTime;
         arrivalTime = std::max(arrivalTime, other.arrivalTime);
+    }
+
+    inline void applyStopPermutation(const Permutation& permutation) noexcept {
+        stopId = permutation.permutate(stopId);
     }
 
 public:

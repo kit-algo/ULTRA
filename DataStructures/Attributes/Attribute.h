@@ -6,6 +6,7 @@
 
 #include "../../Helpers/Meta.h"
 #include "../../Helpers/String/String.h"
+#include "../../Helpers/String/Enumeration.h"
 
 // Introduction of Attribute, a struct that represents a pair of an AttributeName and a Type at compile time
 template<AttributeNameType ATTRIBUTE_NAME, typename TYPE>
