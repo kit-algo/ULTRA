@@ -3,8 +3,7 @@
 # ULTRA
 UnLimited TRAnsfers for Multi-Modal Route Planning
 
-ULTRA is a C++ framework for fast shortest path query answering in networks that contain a secondary transportation mode (e.g., walking or taxis) besides public transit.
-It was developed at [KIT](https://www.kit.edu) in the [group of Prof. Dorothea Wagner](https://i11www.iti.kit.edu/).
+ULTRA is a C++ framework for efficient journey planning in multimodal networks consisting of public transit and a non-schedule-based secondary transportation mode (e.g., walking, cycling, taxi). It was developed at [KIT](https://www.kit.edu) in the [group of Prof. Dorothea Wagner](https://i11www.iti.kit.edu/).
 
 ## Usage
 
