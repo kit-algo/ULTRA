@@ -190,58 +190,18 @@ public:
 
 public:
     inline Data reverseNetwork() const noexcept {
-        Permutation permutation;
-        const RAPTOR::Data reverseRaptorData = raptorData.reverseNetwork(permutation);
-        Data reverseData(reverseRaptorData);
-        DynamicTransferGraph reverseGraph;
-        Graph::copy(stopEventGraph, reverseGraph);
-        reverseGraph.revert();
-        reverseGraph.applyVertexPermutation(permutation);
-        reverseGraph.sortEdges(ToVertex);
-        Graph::move(std::move(reverseGraph), reverseData.stopEventGraph);
-        return reverseData;
+        Permutation dummy;
+        return reverseNetwork(dummy);
     }
 
-    inline void augmentShortcuts() noexcept {
-        DynamicTransferGraph result;
-        Graph::copy(stopEventGraph, result);
-        result.deleteEdges([&](const Edge) {
-            return true;
-        });
-        result.reserve(stopEventGraph.numVertices(), stopEventGraph.numEdges() * 10);
-        IndexedMap<Edge, false, size_t> reachedRouteSegments(raptorData.numberOfRouteSegments());
-        Progress progress(raptorData.numberOfRoutes());
-        for (const RouteId fromRoute : raptorData.routes()) {
-            progress++;
-            for (StopIndex fromIndex(0); fromIndex < numberOfStopsInRoute(fromRoute); fromIndex++) {
-                reachedRouteSegments.clear();
-                for (TripId fromTrip(firstTripOfRoute[fromRoute + 1] - 1); fromTrip != firstTripOfRoute[fromRoute] - 1; fromTrip--) {
-                    const StopEventId fromStopEvent(firstStopEventOfTrip[fromTrip] + fromIndex);
-                    for (const Edge edge : stopEventGraph.edgesFrom(Vertex(fromStopEvent))) {
-                        const StopEventId toStopEvent(stopEventGraph.get(ToVertex, edge));
-                        const TripId toTrip = tripOfStopEvent[toStopEvent];
-                        const RouteId toRoute = routeOfTrip[toTrip];
-                        const StopIndex toIndex = indexOfStopEvent[toStopEvent];
-                        const size_t toSegment = raptorData.getRouteSegmentNum(toRoute, toIndex);
-                        if (reachedRouteSegments.contains(toSegment)) {
-                            const StopEventId oldStopEvent(stopEventGraph.get(ToVertex, reachedRouteSegments[toSegment]));
-                            if (toStopEvent < oldStopEvent) {
-                                reachedRouteSegments[toSegment] = edge;
-                            }
-                        } else {
-                            reachedRouteSegments.insert(toSegment, edge);
-                        }
-                    }
-                    for (const Edge edge : reachedRouteSegments.getValues()) {
-                        const Vertex toVertex = stopEventGraph.get(ToVertex, edge);
-                        const int travelTime = stopEventGraph.get(TravelTime, edge);
-                        result.addEdge(Vertex(fromStopEvent), toVertex).set(TravelTime, travelTime);
-                    }
-                }
-            }
-        }
-        progress.finished();
-        Graph::move(std::move(result), stopEventGraph);
+    inline Data reverseNetwork(Permutation& stopEventPermutation) const noexcept {
+        const RAPTOR::Data reverseRaptorData = raptorData.reverseNetwork(stopEventPermutation);
+        Data reverseData(reverseRaptorData);
+        Graph::copy(stopEventGraph, reverseData.stopEventGraph);
+        reverseData.stopEventGraph.revert();
+        reverseData.stopEventGraph.applyVertexPermutation(stopEventPermutation);
+        reverseData.stopEventGraph.sortEdges(ToVertex);
+        return reverseData;
     }
 
     inline void printInfo() const noexcept {

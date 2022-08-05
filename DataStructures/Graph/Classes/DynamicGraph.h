@@ -144,6 +144,16 @@ public:
         return Range<Edge>(get(BeginOut, vertex), Edge(get(BeginOut, vertex) + get(OutDegree, vertex)));
     }
 
+    inline Edge beginEdgeFrom(const Vertex vertex) const noexcept {
+        AssertMsg(isVertex(vertex) || vertex == numVertices(), vertex << " is not a valid vertex!");
+        return get(BeginOut, vertex);
+    }
+
+    inline Edge endEdgeFrom(const Vertex vertex) const noexcept {
+        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        return Edge(get(BeginOut, vertex) + get(OutDegree, vertex));
+    }
+
     inline const std::vector<Edge>& edgesTo(const Vertex vertex) const noexcept {
         AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
         return get(IncomingEdges, vertex);

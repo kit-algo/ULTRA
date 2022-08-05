@@ -55,10 +55,9 @@ public:
     };
 
 public:
-    template<typename ATTRIBUTE>
-    DijkstraRAPTOR(const Data& data, const InitialTransferGraph& forwardGraph, const InitialTransferGraph& backwardGraph, const ATTRIBUTE weight, const Profiler& profilerTemplate = Profiler()) :
+    DijkstraRAPTOR(const Data& data, const InitialTransferType initialTransfers, const Profiler& profilerTemplate = Profiler()) :
         data(data),
-        initialTransfers(forwardGraph, backwardGraph, data.numberOfStops(), weight),
+        initialTransfers(initialTransfers),
         earliestArrivalByRoute(data.numberOfStops() + 1, never),
         stopsUpdatedByRoute(data.numberOfStops() + 1),
         stopsUpdatedByTransfer(data.numberOfStops() + 1),
@@ -79,6 +78,12 @@ public:
         profiler.registerPhases({PHASE_INITIALIZATION, PHASE_COLLECT, PHASE_SCAN, PHASE_TRANSFERS});
         profiler.registerMetrics({METRIC_ROUTES, METRIC_ROUTE_SEGMENTS, METRIC_VERTICES, METRIC_EDGES, METRIC_STOPS_BY_TRIP, METRIC_STOPS_BY_TRANSFER});
         profiler.initialize();
+    }
+
+
+    template<typename ATTRIBUTE>
+    DijkstraRAPTOR(const Data& data, const InitialTransferGraph& forwardGraph, const InitialTransferGraph& backwardGraph, const ATTRIBUTE weight, const Profiler& profilerTemplate = Profiler()) :
+        DijkstraRAPTOR(data, InitialTransferType(forwardGraph, backwardGraph, data.numberOfStops(), weight), profilerTemplate) {
     }
 
     template<typename T = CHGraph, typename = std::enable_if_t<Meta::Equals<T, CHGraph>() && Meta::Equals<T, InitialTransferGraph>()>>

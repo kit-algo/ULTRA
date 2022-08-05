@@ -9,39 +9,30 @@
 
 #include "../Profiler.h"
 
-#include "ForwardPruningRAPTOR.h"
+#include "ForwardPruningULTRARAPTOR.h"
 
 namespace RAPTOR {
 
-template<typename PROFILER>
-class BackwardPruningRAPTOR {
+template<typename PROFILER, typename INITIAL_TRANSFERS = BucketCHInitialTransfers>
+class BackwardPruningULTRARAPTOR {
 
 public:
     using Profiler = PROFILER;
-    using Type = BackwardPruningRAPTOR<Profiler>;
+    using InitialTransferType = INITIAL_TRANSFERS;
+    using Type = BackwardPruningULTRARAPTOR<Profiler, InitialTransferType>;
 
 public:
     struct EarliestArrivalLabel {
-        EarliestArrivalLabel() : arrivalTimeByRoute(never), arrivalTimeByTransfer(never), timestamp(0) {}
-        int arrivalTimeByRoute;
-        int arrivalTimeByTransfer;
+        EarliestArrivalLabel() : arrivalTime(never), timestamp(0) {}
+        int arrivalTime;
         int timestamp;
-
-        inline void setArrivalTimeByRoute(const int time) noexcept {
-            arrivalTimeByRoute = time;
-            arrivalTimeByTransfer = std::min(arrivalTimeByTransfer, time);
-        }
-
-        inline void minimize(const EarliestArrivalLabel& other) noexcept {
-            arrivalTimeByRoute = std::min(arrivalTimeByRoute, other.arrivalTimeByRoute);
-            arrivalTimeByTransfer = std::min(arrivalTimeByTransfer, other.arrivalTimeByTransfer);
-        }
     };
     using Round = std::vector<EarliestArrivalLabel>;
 
 public:
-    BackwardPruningRAPTOR(const Data& data, const ForwardPruningRAPTOR<Profiler>& forwardPruningRAPTOR, Profiler& profiler) :
+    BackwardPruningULTRARAPTOR(const Data& data, const InitialTransferType& initialTransfers, const ForwardPruningULTRARAPTOR<Profiler, InitialTransferType>& forwardPruningRAPTOR, Profiler& profiler) :
         data(data),
+        initialTransfers(initialTransfers),
         forwardPruningRAPTOR(forwardPruningRAPTOR),
         roundOffset(-1),
         roundIndex(-1),
@@ -49,6 +40,8 @@ public:
         stopsUpdatedByRoute(data.numberOfStops()),
         stopsUpdatedByTransfer(data.numberOfStops()),
         routesServingUpdatedStops(data.numberOfRoutes()),
+        sourceVertex(noVertex),
+        targetVertex(noVertex),
         sourceStop(noStop),
         targetStop(noStop),
         sourceDepartureTime(intMax),
@@ -57,32 +50,28 @@ public:
         AssertMsg(data.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
     }
 
-    inline void run(const StopId source, const StopId target, const int originalDepartureTime, const double arrivalSlack, const double tripSlack) noexcept {
+    inline void run(const Vertex source, const Vertex target, const int originalDepartureTime, const double arrivalSlack, const double tripSlack) noexcept {
         profiler.startPhase();
         clear<true>();
-        sourceStop = source;
-        targetStop = target;
-        profiler.donePhase(PHASE_INITIALIZATION);
+        sourceVertex = source;
+        targetVertex = target;
+        sourceStop = data.isStop(source) ? StopId(source) : StopId(data.numberOfStops());
+        targetStop = data.isStop(target) ? StopId(target) : StopId(data.numberOfStops() + 1);
 
         size_t lastNumberOfTrips = INFTY;
         maxTrips = forwardPruningRAPTOR.getMaxTrips();
         for (const ArrivalLabel& label : forwardPruningRAPTOR.getAnchorLabels()) {
             sourceDepartureTime = -((label.arrivalTime - originalDepartureTime) * arrivalSlack + originalDepartureTime);
-            roundOffset = maxTrips - std::min(size_t(std::ceil(label.numberOfTrips * tripSlack)), lastNumberOfTrips - 1);
+            roundOffset = 2 * (maxTrips - std::min(size_t(std::ceil(label.numberOfTrips * tripSlack)), lastNumberOfTrips - 1));
             lastNumberOfTrips = label.numberOfTrips;
             runIteration();
         }
         profiler.donePhase(PHASE_INITIALIZATION);
     }
 
-    inline int getArrivalTimeByRoute(const StopId stop, const size_t round) noexcept {
-        return roundLabel(std::min(round, rounds.size() - 1), stop).arrivalTimeByRoute;
+    inline int getArrivalTime(const StopId source, const size_t round) noexcept {
+        return roundLabel(std::min(2 * round + 1, rounds.size() - 1), source).arrivalTime;
     }
-
-    inline int getArrivalTimeByTransfer(const StopId stop, const size_t round) noexcept {
-        return roundLabel(std::min(round, rounds.size() - 1), stop).arrivalTimeByTransfer;
-    }
-
 
 private:
     template<bool RESET = true>
@@ -100,15 +89,14 @@ private:
     }
 
     inline void runIteration() noexcept {
-        profiler.startPhase();
         clear<false>();
         initialize();
         profiler.donePhase(PHASE_INITIALIZATION);
         profiler.startPhase();
-        relaxTransfers();
+        relaxInitialTransfers();
         profiler.donePhase(PHASE_TRANSFERS);
 
-        for (size_t i = roundIndex + 1; i <= maxTrips; i++) {
+        for (size_t i = (roundIndex + 1) / 2; i <= maxTrips; i++) {
             profiler.startPhase();
             startNewRound();
             profiler.donePhase(PHASE_INITIALIZATION);
@@ -118,9 +106,11 @@ private:
             profiler.startPhase();
             scanRoutes();
             profiler.donePhase(PHASE_SCAN);
-            if (stopsUpdatedByRoute.empty()) break;
             profiler.startPhase();
-            relaxTransfers();
+            startNewRound();
+            profiler.donePhase(PHASE_INITIALIZATION);
+            profiler.startPhase();
+            relaxIntermediateTransfers();
             profiler.donePhase(PHASE_TRANSFERS);
         }
         profiler.startPhase();
@@ -128,8 +118,8 @@ private:
 
     inline void initialize() noexcept {
         startNewRound();
-        stopsUpdatedByRoute.insert(sourceStop);
-        currentRoundLabel(sourceStop).setArrivalTimeByRoute(sourceDepartureTime);
+        arrivalByRoute(sourceStop, sourceDepartureTime);
+        startNewRound();
     }
 
     inline void collectRoutesServingUpdatedStops() noexcept {
@@ -138,7 +128,7 @@ private:
                 AssertMsg(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
                 AssertMsg(data.stopIds[data.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
                 if (route.stopIndex + 1 == data.numberOfStopsInRoute(route.routeId)) continue;
-                if (data.lastTripOfRoute(route.routeId)[route.stopIndex].departureTime < previousRoundLabel(stop).arrivalTimeByTransfer) continue;
+                if (data.lastTripOfRoute(route.routeId)[route.stopIndex].departureTime < previousRoundLabel(stop).arrivalTime) continue;
                 if (routesServingUpdatedStops.contains(route.routeId)) {
                     routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
                 } else {
@@ -161,11 +151,11 @@ private:
             const StopEvent* trip;
             trip = data.lastTripOfRoute(route);
             StopId stop = stops[stopIndex];
-            AssertMsg(trip[stopIndex].departureTime >= previousRoundLabel(stop).arrivalTimeByTransfer, "Cannot scan a route after the last trip has departed (Route: " << route << ", Stop: " << stop << ", StopIndex: " << stopIndex << ", Time: " << previousRoundLabel(stop).arrivalTimeByTransfer << ", LastDeparture: " << trip[stopIndex].departureTime << ", RoundIndex: " << roundIndex << ")!");
+            AssertMsg(trip[stopIndex].departureTime >= previousRoundLabel(stop).arrivalTime, "Cannot scan a route after the last trip has departed (Route: " << route << ", Stop: " << stop << ", StopIndex: " << stopIndex << ", Time: " << previousRoundLabel(stop).arrivalTime << ", LastDeparture: " << trip[stopIndex].departureTime << ", RoundIndex: " << roundIndex << ")!");
 
             StopIndex parentIndex = stopIndex;
             while (stopIndex < tripSize - 1) {
-                while ((trip > firstTrip) && ((trip - tripSize + stopIndex)->departureTime >= previousRoundLabel(stop).arrivalTimeByTransfer)) {
+                while ((trip > firstTrip) && ((trip - tripSize + stopIndex)->departureTime >= previousRoundLabel(stop).arrivalTime)) {
                     trip -= tripSize;
                     parentIndex = stopIndex;
                 }
@@ -176,19 +166,44 @@ private:
             }
         }
     }
-    inline void relaxTransfers() noexcept {
-        stopsUpdatedByTransfer.clear();
+
+    inline void relaxInitialTransfers() noexcept {
+        for (const Vertex stop : initialTransfers.getBackwardPOIs()) {
+            if (stop == targetStop) continue;
+            AssertMsg(data.isStop(stop), "Reached POI " << stop << " is not a stop!");
+            AssertMsg(initialTransfers.getBackwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
+            arrivalByTransfer(StopId(stop), sourceDepartureTime + initialTransfers.getBackwardDistance(stop));
+        }
+        if (initialTransfers.getDistance() != INFTY) {
+            arrivalByTransfer(targetStop, sourceDepartureTime + initialTransfers.getDistance());
+        }
+        if (data.isStop(sourceStop)) stopsUpdatedByTransfer.insert(sourceStop);
+    }
+
+    inline void relaxIntermediateTransfers() noexcept {
         routesServingUpdatedStops.clear();
+        const std::vector<StopId> stopsToScan = stopsUpdatedByTransfer.getValues();
+        stopsUpdatedByTransfer.clear();
         for (const StopId stop : stopsUpdatedByRoute) {
-            const int earliestArrivalTime = currentRoundLabel(stop).arrivalTimeByRoute;
-            for (const Edge edge : data.transferGraph.edgesFrom(stop)) {
-                profiler.countMetric(METRIC_EDGES);
-                const int arrivalTime = earliestArrivalTime + data.transferGraph.get(TravelTime, edge);
-                const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
-                AssertMsg(data.isStop(toStop), "Graph contains edges to non stop vertices!");
-                arrivalByTransfer(toStop, arrivalTime);
+            const int earliestArrivalTime = previousRoundLabel(stop).arrivalTime;
+            relaxShortcuts(stop, earliestArrivalTime);
+            if (initialTransfers.getForwardDistance(stop) != INFTY) {
+                arrivalByTransfer(targetStop, earliestArrivalTime + initialTransfers.getForwardDistance(stop));
             }
             stopsUpdatedByTransfer.insert(stop);
+        }
+        for (const StopId stop : stopsToScan) {
+            relaxShortcuts(stop, previousRoundLabel(stop).arrivalTime);
+        }
+    }
+
+    inline void relaxShortcuts(const StopId stop, const int earliestArrivalTime) noexcept {
+        for (const Edge edge : data.transferGraph.edgesFrom(stop)) {
+            profiler.countMetric(METRIC_EDGES);
+            const int arrivalTime = earliestArrivalTime + data.transferGraph.get(TravelTime, edge);
+            const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
+            AssertMsg(data.isStop(toStop), "Graph contains edges to non stop vertices!");
+            arrivalByTransfer(toStop, arrivalTime);
         }
     }
 
@@ -196,7 +211,7 @@ private:
         EarliestArrivalLabel& result = rounds[round][stop];
         if (result.timestamp != timestamp) {
             if (round > 0) {
-                result.minimize(roundLabel(round - 1, stop));
+                result.arrivalTime = std::min(result.arrivalTime, roundLabel(round - 1, stop).arrivalTime);
             }
             result.timestamp = timestamp;
         }
@@ -218,36 +233,34 @@ private:
         roundIndex++;
         while (roundIndex >= rounds.size()) {
             if (rounds.empty()) {
-                rounds.emplace_back(data.numberOfStops());
+                rounds.emplace_back(data.numberOfStops() + 2);
             } else {
                 rounds.emplace_back(rounds.back());
             }
         }
     }
 
-    inline void arrivalByRoute(const StopId stop, const int time) noexcept {
-        if (forwardPruningRAPTOR.getArrivalTimeByTransfer(stop, maxTrips - roundIndex) > -time) return;
+    inline void arrival(const StopId stop, const int arrivalTime, IndexedSet<false, StopId>& updatedStops, Metric metric) noexcept {
+        if (forwardPruningRAPTOR.getArrivalTime(stop, maxTrips - roundIndex / 2) > -arrivalTime) return;
         EarliestArrivalLabel& label = currentRoundLabel(stop);
-        if (label.arrivalTimeByRoute <= time) return;
-        profiler.countMetric(METRIC_STOPS_BY_TRIP);
-        label.setArrivalTimeByRoute(time);
-        stopsUpdatedByRoute.insert(stop);
+        if (label.arrivalTime <= arrivalTime) return;
+        profiler.countMetric(metric);
+        label.arrivalTime = arrivalTime;
+        if (data.isStop(stop)) updatedStops.insert(stop);
+    }
 
+    inline void arrivalByRoute(const StopId stop, const int time) noexcept {
+        arrival(stop, time, stopsUpdatedByRoute, METRIC_STOPS_BY_TRIP);
     }
 
     inline void arrivalByTransfer(const StopId stop, const int time) noexcept {
-        if (forwardPruningRAPTOR.getArrivalTimeByRoute(stop, maxTrips - roundIndex) > -time) return;
-        EarliestArrivalLabel& label = currentRoundLabel(stop);
-        if (label.arrivalTimeByTransfer <= time) return;
-        profiler.countMetric(METRIC_STOPS_BY_TRANSFER);
-        label.arrivalTimeByTransfer = time;
-        stopsUpdatedByTransfer.insert(stop);
-
+        arrival(stop, time, stopsUpdatedByTransfer, METRIC_STOPS_BY_TRANSFER);
     }
 
 private:
     const Data& data;
-    const ForwardPruningRAPTOR<Profiler>& forwardPruningRAPTOR;
+    const InitialTransferType& initialTransfers;
+    const ForwardPruningULTRARAPTOR<Profiler, InitialTransferType>& forwardPruningRAPTOR;
 
     std::vector<Round> rounds;
     size_t roundOffset;
@@ -258,6 +271,8 @@ private:
     IndexedSet<false, StopId> stopsUpdatedByTransfer;
     IndexedMap<StopIndex, false, RouteId> routesServingUpdatedStops;
 
+    Vertex sourceVertex;
+    Vertex targetVertex;
     StopId sourceStop;
     StopId targetStop;
     int sourceDepartureTime;

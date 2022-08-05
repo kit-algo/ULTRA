@@ -11,6 +11,7 @@
 
 #include "../Utils/Utils.h"
 
+#include "../../Container/Set.h"
 #include "../../Geometry/Point.h"
 #include "../../Geometry/Rectangle.h"
 
@@ -210,8 +211,7 @@ public:
 
     inline EdgeHandle addEdge(const Vertex from, const Vertex to) noexcept {
         AssertMsg(from == numVertices() - 1, "Can only add outgoing edges to last vertex!");
-        AssertMsg(isVertex(to), to << " is not a valid vertex!");
-        if (from != numVertices() - 1 || !isVertex(to)) return EdgeHandle(edgeAttributes, noEdge);
+        if (from != numVertices() - 1) return EdgeHandle(edgeAttributes, noEdge);
         beginOut.back()++;
         const Edge newEdge(edgeAttributes.size());
         edgeAttributes.emplaceBack();
@@ -314,6 +314,35 @@ public:
         deleteVertices([&](const Vertex vertex){return deleteVertex[vertex];});
     }
 
+    template<typename DELETE_EDGE>
+    inline void deleteEdges(const DELETE_EDGE& deleteEdge) noexcept {
+        size_t edgeCount = 0;
+        Permutation edgePerm(numEdges());
+        std::vector<Edge> newBeginOut;
+        for (const Vertex vertex : vertices()) {
+            newBeginOut.emplace_back(Edge(edgeCount));
+            for (const Edge edge : edgesFrom(vertex)) {
+                if (deleteEdge(edge)) continue;
+                edgePerm[edge] = edgeCount++;
+            }
+        }
+        newBeginOut.emplace_back(Edge(edgeCount));
+
+        vertexAttributes.forEach([&](std::vector<Edge>& values) {
+            edgePerm.mapPermutation(values);
+        });
+        edgeAttributes.forEach([&](std::vector<Edge>& values) {
+            edgePerm.mapPermutation(values);
+        });
+        edgeAttributes.forEach([&](auto& values) {
+            edgePerm.permutate(values);
+        });
+
+        edgeAttributes.resize(edgeCount);
+        beginOut.swap(newBeginOut);
+
+    }
+
     inline void applyVertexPermutation(const Permutation& permutation) noexcept {
         changeVertexIds(Order(Construct::Invert, permutation), permutation);
     }
@@ -333,7 +362,12 @@ public:
         for (size_t i = 1; i < newBeginOut.size(); i++) {
             newBeginOut[i] += newBeginOut[i - 1];
         }
-        const Permutation edgePermutation(Construct::Invert, Order(Construct::Sort, get(ToVertex)));
+        std::vector<Edge> firstEdge = newBeginOut;
+        Permutation edgePermutation(numEdges());
+        for (Edge edge(0); edge < numEdges(); edge++) {
+            const Vertex toVertex = get(ToVertex, edge);
+            edgePermutation[edge] = firstEdge[toVertex]++;
+        }
         if constexpr (HasEdgeAttribute(FromVertex)) {
             get(ToVertex).swap(get(FromVertex));
         } else {
@@ -497,8 +531,6 @@ public:
         AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
         size_t vertexCount = 0;
         size_t isolatedVertexCount = 0;
-        size_t degreeOneVertexCount = 0;
-        size_t degreeTwoVertexCount = 0;
         size_t sourceCount = 0;
         size_t sinkCount = 0;
         size_t minInDegree = numEdges();
@@ -523,24 +555,22 @@ public:
                 boundingBox = Geometry::Rectangle(get(Coordinates, Vertex(0)));
             }
         }
-        std::vector<std::vector<Edge>> incomingEdges(numVertices());
-        std::vector<std::set<Vertex>> allNeighbors(numVertices());
+        std::vector<size_t> inDegree(numVertices(), 0);
+        IndexedSet<false, Vertex> neighbors(numVertices());
         for (const Vertex v : vertices()) {
             vertexCount++;
             if constexpr (HasVertexAttribute(Coordinates)) {
                 boundingBox.extend(get(Coordinates, v));
                 hash += get(Coordinates, v).latitude + get(Coordinates, v).longitude;
             }
-            std::set<Vertex> neighbors;
+            neighbors.clear();
             for (const Edge e : edgesFrom(v)) {
                 const Vertex u = get(ToVertex, e);
-                allNeighbors[v].insert(u);
-                allNeighbors[u].insert(v);
-                incomingEdges[u].emplace_back(e);
+                inDegree[u]++;
                 hash += u;
                 edgeCount++;
                 if (u == v) loopEdgeCount++;
-                if (neighbors.count(u) > 0) multiEdgeCount++;
+                if (neighbors.contains(u)) multiEdgeCount++;
                 neighbors.insert(u);
                 if constexpr (HasEdgeAttribute(FromVertex)) {
                     hash += get(FromVertex, e);
@@ -574,25 +604,22 @@ public:
             }
         }
         for (const Vertex v : vertices()) {
-            const size_t inDeg = incomingEdges[v].size();
+            const size_t inDeg = inDegree[v];
             const size_t outDeg = outDegree(v);
-            hash += outDeg + inDeg;
-            if (outDeg == 0 && inDeg == 0) isolatedVertexCount++;
+            const size_t deg = inDeg + outDeg;
+            hash += deg;
+            if (deg == 0) isolatedVertexCount++;
             if (outDeg == 0 && inDeg > 0) sinkCount++;
             if (outDeg > 0 && inDeg == 0) sourceCount++;
             if (inDeg < minInDegree) minInDegree = inDeg;
             if (inDeg > maxInDegree) maxInDegree = inDeg;
             if (outDeg < minOutDegree) minOutDegree = outDeg;
             if (outDeg > maxOutDegree) maxOutDegree = outDeg;
-            if (allNeighbors[v].size() == 1) degreeOneVertexCount++;
-            if (allNeighbors[v].size() == 2) degreeTwoVertexCount++;
         }
         const int tabSize = 18;
         out << std::right;
         out << "                  #Vertices : " << std::setw(tabSize) << String::prettyInt(vertexCount) << "  (" << String::percent(vertexCount / (double) numVertices()) << ")" << std::endl;
         out << "          #IsolatedVertices : " << std::setw(tabSize) << String::prettyInt(isolatedVertexCount) << "  (" << String::percent(isolatedVertexCount / (double) vertexCount) << ")" << std::endl;
-        out << "         #DegreeOneVertices : " << std::setw(tabSize) << String::prettyInt(degreeOneVertexCount) << "  (" << String::percent(degreeOneVertexCount / (double) vertexCount) << ")" << std::endl;
-        out << "         #DegreeTwoVertices : " << std::setw(tabSize) << String::prettyInt(degreeTwoVertexCount) << "  (" << String::percent(degreeTwoVertexCount / (double) vertexCount) << ")" << std::endl;
         out << "                   #Sources : " << std::setw(tabSize) << String::prettyInt(sourceCount) << "  (" << String::percent(sourceCount / (double) vertexCount) << ")" << std::endl;
         out << "                     #Sinks : " << std::setw(tabSize) << String::prettyInt(sinkCount) << "  (" << String::percent(sinkCount / (double) vertexCount) << ")" << std::endl;
         out << "                minInDegree : " << std::setw(tabSize) << String::prettyInt(minInDegree) << std::endl;

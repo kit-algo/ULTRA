@@ -30,6 +30,10 @@ public:
         return !(*this == other);
     }
 
+    inline bool dominates(const ArrivalLabel& other) const noexcept {
+        return arrivalTime <= other.arrivalTime && numberOfTrips <= other.numberOfTrips;
+    }
+
     inline friend std::ostream& operator<<(std::ostream& out, const ArrivalLabel& label) noexcept {
         return out << "arrivalTime: " << label.arrivalTime << ", numberOfTrips: " << label.numberOfTrips;
     }
@@ -41,6 +45,8 @@ public:
 };
 
 struct WalkingParetoLabel {
+    inline static constexpr int NumberOfCriteria = 3;
+
     WalkingParetoLabel(const int arrivalTime = never, const int walkingDistance = INFTY, const int numberOfTrips = -1) :
         arrivalTime(arrivalTime),
         walkingDistance(walkingDistance),

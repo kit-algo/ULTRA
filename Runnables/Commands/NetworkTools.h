@@ -180,10 +180,7 @@ public:
     }
 
     virtual void execute() noexcept {
-        const std::string intermediateFile = getParameter("Intermediate file");
-        const std::string outputFile = getParameter("Output file");
-
-        Intermediate::Data inter = Intermediate::Data::FromBinary(intermediateFile);
+        Intermediate::Data inter(getParameter("Intermediate file"));
         inter.printInfo();
         Intermediate::TransferGraph graph = inter.minTravelTimeGraph();
         Graph::printInfo(graph);
@@ -192,11 +189,11 @@ public:
         scc.run();
         const int maxComponent = scc.maxComponent();
         std::cout << "Max component size: " << String::prettyInt(scc.getComponentSize(maxComponent)) << std::endl;
-        inter.deleteVertices([&](const Vertex vertex){
+        inter.deleteVertices([&](const Vertex vertex) {
             return scc.getComponent(vertex) != maxComponent;
         });
         inter.printInfo();
-        inter.serialize(outputFile);
+        inter.serialize(getParameter("Output file"));
         for (const Intermediate::Stop& stop : inter.stops) {
             if (stop.coordinates.x != 0) continue;
             if (stop.coordinates.y != 0) continue;

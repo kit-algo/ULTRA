@@ -137,7 +137,8 @@ public:
             arrivalTime(oneTripLabel.arrivalTime),
             walkingDistance(oneTripLabel.walkingDistance),
             finalStopEvent(noStopEvent),
-            timestamp(oneTripLabel.timestamp) {
+            //Set timestamp to INFTY so label can dominate equivalent candidates
+            timestamp(INFTY) {
         }
 
         int arrivalTime;
@@ -199,7 +200,7 @@ public:
         static constexpr int logK = 2;
         static constexpr int K = 1 << logK;
 
-        Bag() : heapSize(0), timestamp(0) {}
+        Bag() : heapSize(0) {}
 
         inline Label& operator[](const size_t i) noexcept {
             return labels[i];
@@ -219,6 +220,10 @@ public:
 
         inline bool empty() const noexcept {
             return labels.empty();
+        }
+
+        inline size_t size() const noexcept {
+            return labels.size();
         }
 
         inline bool heapEmpty() const noexcept {
@@ -367,9 +372,6 @@ public:
 
         std::vector<Label> labels;
         size_t heapSize;
-
-    public:
-        size_t timestamp;
     };
 
     using OneTripBag = Bag<OneTripLabel>;
@@ -777,7 +779,6 @@ private:
         AssertMsg(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
 
         for (const StopId stop : stopsUpdatedByRoute) {
-            AssertMsg(oneTripBags[stop].timestamp == timestamp, "Bag of stop " << stop << " was not updated!");
             oneTripQueue.update(&(oneTripBags[stop]));
         }
         if (shortcutCandidatesInQueue == 0) {
@@ -820,7 +821,6 @@ private:
         AssertMsg(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
 
         for (const StopId stop : stopsUpdatedByRoute) {
-            AssertMsg(twoTripsBags[stop].timestamp == timestamp, "Bag of stop " << stop << " was not updated!");
             twoTripsQueue.update(&(twoTripsBags[stop]));
         }
 
@@ -934,40 +934,21 @@ private:
         return directTransferArrivalLabels[vertex].arrivalTime + sourceDepartureTime;
     }
 
-    inline void refreshOneTripBag(const Vertex vertex, const OneTripLabel& walkingLabel) noexcept {
-        if (oneTripBags[vertex].timestamp == timestamp) return;
-        oneTripBags[vertex].timestamp = timestamp;
-        if (oneTripBags[vertex].prune(walkingLabel)) {
-            pruneBagInQueue(oneTripBags[vertex], oneTripQueue);
-        }
-    }
-
     inline bool updateOneTripBag(const Vertex vertex, const OneTripLabel& newLabel) noexcept {
         const OneTripLabel walkingLabel = getWalkingLabel(vertex);
         if (walkingLabel.dominates(newLabel)) return false;
-        refreshOneTripBag(vertex, walkingLabel);
-        return std::get<0>(oneTripBags[vertex].merge(newLabel, [&](const OneTripLabel& removedLabel) {
+        const bool merged = std::get<0>(oneTripBags[vertex].merge(newLabel, [&](const OneTripLabel& removedLabel) {
             if (removedLabel.isCandidate()) shortcutCandidatesInQueue--;
         }));
-    }
-
-    inline void refreshTwoTripsBag(const Vertex vertex, const OneTripLabel& walkingLabel) noexcept {
-        if (twoTripsBags[vertex].timestamp == timestamp) return;
-        twoTripsBags[vertex].timestamp = timestamp;
-        if (twoTripsBags[vertex].prune(TwoTripsLabel(walkingLabel))) {
-            pruneBagInQueue(oneTripBags[vertex], oneTripQueue);
-        }
-        if (twoTripsBags[vertex].pruneWithBag(oneTripBags[vertex])) {
+        if (merged && twoTripsBags[vertex].prune(TwoTripsLabel(newLabel))) {
             pruneBagInQueue(twoTripsBags[vertex], twoTripsQueue);
         }
+        return merged;
     }
 
     inline bool updateTwoTripsBagWitness(const Vertex vertex, const TwoTripsLabel& newLabel) noexcept {
         const OneTripLabel walkingLabel = getWalkingLabel(vertex);
         if (walkingLabel.dominates(newLabel)) return false;
-        refreshOneTripBag(vertex, walkingLabel);
-        if (oneTripBags[vertex].dominates(newLabel)) return false;
-        refreshTwoTripsBag(vertex, walkingLabel);
         return twoTripsBags[vertex].mergeWitness(newLabel, [&](const TwoTripsLabel& removedLabel) {
             pruneShortcutDestinationCandidates(removedLabel);
         });
@@ -976,9 +957,6 @@ private:
     inline std::tuple<bool, bool> updateTwoTripsBagCandidate(const Vertex vertex, const TwoTripsLabel& newLabel) noexcept {
         const OneTripLabel walkingLabel = getWalkingLabel(vertex);
         if (walkingLabel.dominates(newLabel)) return std::tuple<bool, bool>{false, false};
-        refreshOneTripBag(vertex, walkingLabel);
-        if (oneTripBags[vertex].dominates(newLabel)) return std::tuple<bool, bool>{false, false};
-        refreshTwoTripsBag(vertex, walkingLabel);
         return twoTripsBags[vertex].merge(newLabel, [&](const TwoTripsLabel& removedLabel) {
             pruneShortcutDestinationCandidates(removedLabel);
         });

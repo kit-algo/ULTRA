@@ -35,10 +35,10 @@ int main(int argc, char** argv) {
     new RunULTRARAPTORQueries(shell);
 
     new RunTransitiveMcRAPTORQueries(shell);
-    new RunDijkstraMcRAPTORQueries(shell);
+    new RunMCRQueries(shell);
     new RunULTRAMcRAPTORQueries(shell);
     new RunTransitiveBoundedMcRAPTORQueries(shell);
-    new RunBoundedULTRAMcRAPTORQueries(shell);
+    new RunUBMRAPTORQueries(shell);
 
     new RunTransitiveTripBasedQueries(shell);
     new RunULTRATripBasedQueries(shell);

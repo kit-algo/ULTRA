@@ -188,19 +188,8 @@ public:
 
     template<typename T>
     inline void permutate(std::vector<T>& vector) const noexcept {
-        AssertMsg(vector.size() == size(), "Cannot permute a vector of size " << vector.size() << " with a permutation of size " << size() << "!");
-        AssertMsg(isValid(), "The permutation is not valid!");
-        std::vector<bool> seen(size(), false);
-        for (size_t i = 0; i < size(); i++) {
-            if (seen[i]) continue;
-            seen[i] = true;
-            size_t index = (*this)[i];
-            while (!seen[index]) {
-                seen[index] = true;
-                std::swap(vector[i], vector[index]);
-                index = (*this)[index];
-            }
-        }
+        std::vector<T> result = getPermuted(vector);
+        vector.swap(result);
     }
 
     template<typename T>
@@ -300,19 +289,8 @@ public:
 
     template<typename T>
     inline void order(std::vector<T>& vector) const noexcept {
-        AssertMsg(vector.size() == size(), "Cannot order a vector of size " << vector.size() << " with a order of size " << size() << "!");
-        AssertMsg(isValid(), "The order is not valid!");
-        std::vector<bool> seen(size(), false);
-        for (size_t i = 0; i < size(); i++) {
-            if (seen[i]) continue;
-            size_t index = i;
-            while (!seen[(*this)[index]]) {
-                seen[index] = true;
-                std::swap(vector[index], vector[(*this)[index]]);
-                index = (*this)[index];
-            }
-            seen[index] = true;
-        }
+        std::vector<T> result = getOrdered(vector);
+        vector.swap(result);
     }
 
     inline Order splitAt(const size_t limit) const noexcept {

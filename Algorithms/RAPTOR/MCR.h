@@ -18,12 +18,12 @@
 namespace RAPTOR {
 
 template<bool TARGET_PRUNING, typename PROFILER = NoProfiler>
-class DijkstraMcRAPTOR {
+class MCR {
 
 public:
     static constexpr bool TargetPruning = TARGET_PRUNING;
     using Profiler = PROFILER;
-    using Type = DijkstraMcRAPTOR<TargetPruning, Profiler>;
+    using Type = MCR<TargetPruning, Profiler>;
     using InitialTransferGraph = CHGraph;
     using SourceType = Vertex;
 
@@ -136,7 +136,7 @@ public:
     using DijkstraBagType = DijkstraBag<DijkstraLabel>;
 
 public:
-    DijkstraMcRAPTOR(const Data& data, const CH::CH& chData, const Profiler& profilerTemplate = Profiler()) :
+    MCR(const Data& data, const CH::CH& chData, const Profiler& profilerTemplate = Profiler()) :
         data(data),
         initialTransfers(chData, FORWARD, data.numberOfStops()),
         stopsUpdatedByRoute(data.numberOfStops() + 1),

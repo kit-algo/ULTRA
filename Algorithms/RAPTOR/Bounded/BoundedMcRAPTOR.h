@@ -7,11 +7,11 @@
 #include "../../../DataStructures/RAPTOR/Data.h"
 #include "../../../DataStructures/RAPTOR/Entities/ArrivalLabel.h"
 #include "../../../DataStructures/RAPTOR/Entities/Bags.h"
+#include "BackwardPruningRAPTOR.h"
+#include "ForwardPruningRAPTOR.h"
 
 #include "../Profiler.h"
 
-#include "ForwardPruningRAPTOR.h"
-#include "BackwardPruningRAPTOR.h"
 
 namespace RAPTOR {
 

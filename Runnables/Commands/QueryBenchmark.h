@@ -15,16 +15,16 @@
 #include "../../Algorithms/CSA/DijkstraCSA.h"
 #include "../../Algorithms/CSA/HLCSA.h"
 #include "../../Algorithms/CSA/ULTRACSA.h"
-#include "../../Algorithms/RAPTOR/DijkstraMcRAPTOR.h"
+#include "../../Algorithms/RAPTOR/Bounded/BoundedMcRAPTOR.h"
+#include "../../Algorithms/RAPTOR/MCR.h"
 #include "../../Algorithms/RAPTOR/ULTRAMcRAPTOR.h"
 #include "../../Algorithms/RAPTOR/HLRAPTOR.h"
 #include "../../Algorithms/RAPTOR/DijkstraRAPTOR.h"
 #include "../../Algorithms/RAPTOR/InitialTransfers.h"
 #include "../../Algorithms/RAPTOR/McRAPTOR.h"
 #include "../../Algorithms/RAPTOR/RAPTOR.h"
+#include "../../Algorithms/RAPTOR/ULTRABounded/UBMRAPTOR.h"
 #include "../../Algorithms/RAPTOR/ULTRARAPTOR.h"
-#include "../../Algorithms/RAPTOR/BoundedMcRAPTOR/BoundedMcRAPTOR.h"
-#include "../../Algorithms/RAPTOR/BoundedULTRAMcRAPTOR/BoundedULTRAMcRAPTOR.h"
 #include "../../Algorithms/TripBased/BoundedMcQuery/BoundedMcQuery.h"
 #include "../../Algorithms/TripBased/Query/McQuery.h"
 #include "../../Algorithms/TripBased/Query/Query.h"
@@ -261,11 +261,11 @@ public:
     }
 };
 
-class RunDijkstraMcRAPTORQueries : public ParameterizedCommand {
+class RunMCRQueries : public ParameterizedCommand {
 
 public:
-    RunDijkstraMcRAPTORQueries(BasicShell& shell) :
-        ParameterizedCommand(shell, "runDijkstraMcRAPTORQueries", "Runs the given number of random Dijkstra McRAPTOR queries.") {
+    RunMCRQueries(BasicShell& shell) :
+        ParameterizedCommand(shell, "runMCRQueries", "Runs the given number of random MCR queries.") {
         addParameter("RAPTOR input file");
         addParameter("CH data");
         addParameter("Number of queries");
@@ -276,7 +276,7 @@ public:
         raptorData.useImplicitDepartureBufferTimes();
         raptorData.printInfo();
         CH::CH ch(getParameter("CH data"));
-        RAPTOR::DijkstraMcRAPTOR<true, RAPTOR::AggregateProfiler> algorithm(raptorData, ch);
+        RAPTOR::MCR<true, RAPTOR::AggregateProfiler> algorithm(raptorData, ch);
 
         const size_t n = getParameter<size_t>("Number of queries");
         const std::vector<VertexQuery> queries = generateRandomVertexQueries(ch.numVertices(), n);
@@ -321,11 +321,11 @@ public:
     }
 };
 
-class RunBoundedULTRAMcRAPTORQueries : public ParameterizedCommand {
+class RunUBMRAPTORQueries : public ParameterizedCommand {
 
 public:
-    RunBoundedULTRAMcRAPTORQueries(BasicShell& shell) :
-        ParameterizedCommand(shell, "runBoundedULTRAMcRAPTORQueries", "Runs the given number of random Bounded ULTRA-McRAPTOR queries.") {
+    RunUBMRAPTORQueries(BasicShell& shell) :
+        ParameterizedCommand(shell, "runUBMRAPTORQueries", "Runs the given number of random UBM-RAPTOR queries.") {
         addParameter("RAPTOR input file");
         addParameter("CH data");
         addParameter("Number of queries");
@@ -339,7 +339,7 @@ public:
         raptorData.printInfo();
         const RAPTOR::Data reverseData = raptorData.reverseNetwork();
         CH::CH ch(getParameter("CH data"));
-        RAPTOR::BoundedULTRAMcRAPTOR<RAPTOR::AggregateProfiler> algorithm(raptorData, reverseData, ch);
+        RAPTOR::UBMRAPTOR<RAPTOR::AggregateProfiler> algorithm(raptorData, reverseData, ch);
 
         const double arrivalSlack = getParameter<double>("Arrival slack");
         const double tripSlack = getParameter<double>("Trip slack");
@@ -610,7 +610,7 @@ public:
         raptorData.printInfo();
         const RAPTOR::Data reverseData = raptorData.reverseNetwork();
         CH::CH ch(getParameter("CH data"));
-        RAPTOR::BoundedULTRAMcRAPTOR<RAPTOR::AggregateProfiler> algorithm(raptorData, reverseData, ch);
+        RAPTOR::UBMRAPTOR<RAPTOR::AggregateProfiler> algorithm(raptorData, reverseData, ch);
 
         const size_t n = getParameter<size_t>("Number of queries");
         const std::vector<VertexQuery> queries = generateRandomVertexQueries(ch.numVertices(), n);

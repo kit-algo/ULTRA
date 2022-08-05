@@ -29,6 +29,14 @@ struct Bag {
     }
 
     template<typename OTHER_LABEL>
+    inline bool dominatesStrongly(const OTHER_LABEL& newLabel) const noexcept {
+        for (const Label& label : labels) {
+            if (label.dominatesStrongly(newLabel)) return true;
+        }
+        return false;
+    }
+
+    template<typename OTHER_LABEL>
     inline bool dominates(const Bag<OTHER_LABEL>& other) const noexcept {
         for (const OTHER_LABEL& label : other.labels) {
             if (!dominates(label)) return false;
@@ -40,6 +48,21 @@ struct Bag {
         size_t removedLabels = 0;
         for (size_t i = 0; i < labels.size(); i++) {
             if (labels[i].dominates(newLabel)) return false;
+            if (newLabel.dominates(labels[i])) {
+                removedLabels++;
+                continue;
+            }
+            labels[i - removedLabels] = labels[i];
+        }
+        labels.resize(labels.size() - removedLabels + 1);
+        labels.back() = newLabel;
+        return true;
+    }
+
+    inline bool mergeWithStrongDominance(const Label& newLabel) noexcept {
+        size_t removedLabels = 0;
+        for (size_t i = 0; i < labels.size(); i++) {
+            if (labels[i].dominatesStrongly(newLabel)) return false;
             if (newLabel.dominates(labels[i])) {
                 removedLabels++;
                 continue;
@@ -63,6 +86,22 @@ struct Bag {
         }
         labels.resize(labels.size() - removedLabels + 1);
         labels.back() = newLabel;
+    }
+
+    inline bool mergeUndominatedUnlessEqual(const Label& newLabel) noexcept {
+        AssertMsg(!dominatesStrongly(newLabel), "Trying to merge dominated label!");
+        size_t removedLabels = 0;
+        for (size_t i = 0; i < labels.size(); i++) {
+            if (labels[i] == newLabel) return false;
+            if (newLabel.dominatesStrongly(labels[i])) {
+                removedLabels++;
+                continue;
+            }
+            labels[i - removedLabels] = labels[i];
+        }
+        labels.resize(labels.size() - removedLabels + 1);
+        labels.back() = newLabel;
+        return true;
     }
 
     inline size_t size() const noexcept {

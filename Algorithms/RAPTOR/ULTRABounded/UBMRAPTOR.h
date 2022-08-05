@@ -11,17 +11,17 @@
 #include "../InitialTransfers.h"
 #include "../Profiler.h"
 
-#include "ForwardPruningULTRARAPTOR.h"
 #include "BackwardPruningULTRARAPTOR.h"
+#include "ForwardPruningULTRARAPTOR.h"
 
 namespace RAPTOR {
 
 template<typename PROFILER = NoProfiler>
-class BoundedULTRAMcRAPTOR {
+class UBMRAPTOR {
 
 public:
     using Profiler = PROFILER;
-    using Type = BoundedULTRAMcRAPTOR<Profiler>;
+    using Type = UBMRAPTOR<Profiler>;
 
 private:
     struct Label {
@@ -101,7 +101,7 @@ private:
     using RouteBagType = RouteBag<RouteLabel>;
 
 public:
-    BoundedULTRAMcRAPTOR(const Data& data, const Data& backwardData, const CH::CH& chData, const Profiler& profilerTemplate = Profiler()) :
+    UBMRAPTOR(const Data& data, const Data& backwardData, const CH::CH& chData, const Profiler& profilerTemplate = Profiler()) :
         data(data),
         initialTransfers(chData, FORWARD, data.numberOfStops()),
         profiler(profilerTemplate),

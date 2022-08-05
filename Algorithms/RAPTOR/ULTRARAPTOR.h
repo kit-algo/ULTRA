@@ -15,17 +15,18 @@
 
 namespace RAPTOR {
 
-template<typename PROFILER = NoProfiler, bool PREVENT_DIRECT_WALKING = false>
+template<typename PROFILER = NoProfiler, bool PREVENT_DIRECT_WALKING = false, typename INITIAL_TRANSFERS = BucketCHInitialTransfers>
 class ULTRARAPTOR {
 
 public:
     using Profiler = PROFILER;
     static constexpr bool PreventDirectWalking = PREVENT_DIRECT_WALKING;
+    using InitialTransferType = INITIAL_TRANSFERS;
+    using InitialTransferGraph = typename InitialTransferType::Graph;
     static constexpr bool SeparateRouteAndTransferEntries = PreventDirectWalking;
     static constexpr int RoundFactor = SeparateRouteAndTransferEntries ? 2 : 1;
     using ArrivalTime = EarliestArrivalTime<SeparateRouteAndTransferEntries>;
-    using Type = ULTRARAPTOR<Profiler, PreventDirectWalking>;
-    using InitialTransferGraph = CHGraph;
+    using Type = ULTRARAPTOR<Profiler, PreventDirectWalking, InitialTransferType>;
     using SourceType = Vertex;
 
 private:
@@ -43,10 +44,9 @@ private:
     using Round = std::vector<EarliestArrivalLabel>;
 
 public:
-    template<typename ATTRIBUTE>
-    ULTRARAPTOR(const Data& data, const InitialTransferGraph& forwardGraph, const InitialTransferGraph& backwardGraph, const ATTRIBUTE weight, const Profiler& profilerTemplate = Profiler()) :
+    ULTRARAPTOR(const Data& data, const InitialTransferType initialTransfers, const Profiler& profilerTemplate = Profiler()) :
         data(data),
-        initialTransfers(forwardGraph, backwardGraph, data.numberOfStops(), weight),
+        initialTransfers(initialTransfers),
         earliestArrival(data.numberOfStops() + 1),
         stopsUpdatedByRoute(data.numberOfStops() + 1),
         stopsUpdatedByTransfer(data.numberOfStops() + 1),
@@ -63,8 +63,19 @@ public:
         profiler.initialize();
     }
 
+    template<typename ATTRIBUTE>
+    ULTRARAPTOR(const Data& data, const InitialTransferGraph& forwardGraph, const InitialTransferGraph& backwardGraph, const ATTRIBUTE weight, const Profiler& profilerTemplate = Profiler()) :
+        ULTRARAPTOR(data, InitialTransferType(forwardGraph, backwardGraph, data.numberOfStops(), weight), profilerTemplate) {
+    }
+
+    template<typename T = CHGraph, typename = std::enable_if_t<Meta::Equals<T, CHGraph>() && Meta::Equals<T, InitialTransferGraph>()>>
     ULTRARAPTOR(const Data& data, const CH::CH& chData, const Profiler& profilerTemplate = Profiler()) :
         ULTRARAPTOR(data, chData.forward, chData.backward, Weight, profilerTemplate) {
+    }
+
+    template<typename T = TransferGraph, typename = std::enable_if_t<Meta::Equals<T, TransferGraph>() && Meta::Equals<T, InitialTransferGraph>()>>
+    ULTRARAPTOR(const Data& data, const TransferGraph& forwardGraph, const TransferGraph& backwardGraph, const Profiler& profilerTemplate = Profiler()) :
+        ULTRARAPTOR(data, forwardGraph, backwardGraph, TravelTime, profilerTemplate) {
     }
 
     inline void run(const Vertex source, const int departureTime, const Vertex target, const size_t maxRounds = INFTY) noexcept {
@@ -462,7 +473,7 @@ private:
 private:
     const Data& data;
 
-    BucketCHInitialTransfers initialTransfers;
+    InitialTransferType initialTransfers;
 
     std::vector<Round> rounds;
 

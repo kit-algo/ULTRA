@@ -50,10 +50,10 @@ All query algorithms and preprocessing steps are available via the console appli
 | ``runHLRAPTORQueries``                  | HL-RAPTOR       | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
 | ``runULTRARAPTORQueries``               | ULTRA-RAPTOR    | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
 | ``runTransitiveMcRAPTORQueries``        | McRAPTOR        | Transitive | Stop-to-stop     | Arrival time, number of trips, transfer time (full)       |
-| ``runDijkstraMcRAPTORQueries``          | MCR             | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
+| ``runMCRQueries``                       | MCR             | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
 | ``runULTRAMcRAPTORQueries``             | ULTRA-McRAPTOR  | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
 | ``runTransitiveBoundedMcRAPTORQueries`` | BM-RAPTOR       | Transitive | Stop-to-stop     | Arrival time, number of trips, transfer time (restricted) |
-| ``runBoundedULTRAMcRAPTORQueries``      | ULTRA-BM-RAPTOR | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
+| ``RunUBMRAPTORQueries``                 | ULTRA-BM-RAPTOR | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
 | ``runTransitiveTripBasedQueries``       | TB              | Transitive | Stop-to-stop     | Arrival time, number of trips                             |
 | ``runULTRATripBasedQueries``            | ULTRA-TB        | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
 | ``runULTRAMcTripBasedQueries``          | ULTRA-McTB      | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |

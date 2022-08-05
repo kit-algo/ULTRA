@@ -12,12 +12,13 @@
 
 namespace TripBased {
 
-template<typename PROFILER = NoProfiler>
+template<typename PROFILER = NoProfiler, typename INITIAL_TRANSFERS = RAPTOR::BucketCHInitialTransfers>
 class BackwardPruningQuery {
 
 public:
     using Profiler = PROFILER;
-    using Type = BackwardPruningQuery<Profiler>;
+    using InitialTransferType = INITIAL_TRANSFERS;
+    using Type = BackwardPruningQuery<Profiler, InitialTransferType>;
 
 private:
     struct TripLabel {
@@ -45,7 +46,7 @@ private:
     };
 
 public:
-    BackwardPruningQuery(const Data& data, const ForwardPruningQuery<Profiler>& forwardPruningQuery, const CH::BucketQuery<CHGraph, true, false>& bucketQuery, Profiler& profiler) :
+    BackwardPruningQuery(const Data& data, const ForwardPruningQuery<Profiler, InitialTransferType>& forwardPruningQuery, const InitialTransferType& bucketQuery, Profiler& profiler) :
         data(data),
         forwardPruningQuery(forwardPruningQuery),
         bucketQuery(bucketQuery),
@@ -84,7 +85,7 @@ public:
         minArrivalTime = -originalDepartureTime;
         size_t lastNumberOfTrips = INFTY;
         maxTrips = forwardPruningQuery.getMaxTrips();
-        departureTimes.resize(maxTrips, INFTY);
+        departureTimes.resize(maxTrips + 1, INFTY);
         for (const RAPTOR::ArrivalLabel& label : forwardPruningQuery.getAnchorLabels()) {
             sourceDepartureTime = -((label.arrivalTime - originalDepartureTime) * arrivalSlack + originalDepartureTime);
             roundOffset = maxTrips - std::min(size_t(std::ceil(label.numberOfTrips * tripSlack)), lastNumberOfTrips - 1);
@@ -105,10 +106,20 @@ public:
         return stopArrivalTimes(stop, round);
     }
 
+    inline TripId getReverseTrip(const RouteId route, const size_t tripOffset) const noexcept {
+        return TripId(data.firstTripOfRoute[route + 1] - tripOffset - 1);
+    }
+
+    inline TripId getReverseTrip(const TripId trip) const noexcept {
+        const RouteId route = data.routeOfTrip[trip];
+        const size_t tripOffset = trip - data.firstTripOfRoute[route];
+        return TripId(data.firstTripOfRoute[route + 1] - tripOffset - 1);
+    }
+
 private:
     inline void runIteration() noexcept {
         clear<false>();
-        for (size_t i = round; i < maxTrips; i++) {
+        for (size_t i = round; i <= maxTrips; i++) {
             if (departureTimes[i] < sourceDepartureTime) break;
             departureTimes[i] = sourceDepartureTime;
         }
@@ -205,8 +216,8 @@ private:
 
 private:
     const Data& data;
-    const ForwardPruningQuery<Profiler>& forwardPruningQuery;
-    const CH::BucketQuery<CHGraph, true, false>& bucketQuery;
+    const ForwardPruningQuery<Profiler, InitialTransferType>& forwardPruningQuery;
+    const InitialTransferType& bucketQuery;
 
     std::vector<TripLabel> queue;
     std::vector<EdgeRange> edgeRanges;

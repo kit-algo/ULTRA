@@ -6,6 +6,7 @@
 #include "../../Algorithms/RAPTOR/ULTRA/Builder.h"
 #include "../../Algorithms/RAPTOR/ULTRA/McBuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/McULTRABuilder.h"
+#include "../../Algorithms/TripBased/Preprocessing/ShortcutAugmenter.h"
 #include "../../Algorithms/TripBased/Preprocessing/StopEventGraphBuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/ULTRABuilder.h"
 
@@ -328,14 +329,17 @@ public:
         addParameter("Input file");
         addParameter("Forward output file");
         addParameter("Backward output file");
+        addParameter("Trip limit", "1073741823");
     }
 
     virtual void execute() noexcept {
         TripBased::Data data(getParameter("Input file"));
         data.printInfo();
         TripBased::Data reverseData = data.reverseNetwork();
-        data.augmentShortcuts();
-        reverseData.augmentShortcuts();
+        TripBased::ShortcutAugmenter augmenter;
+        const size_t tripLimit = getParameter<size_t>("Trip limit");
+        augmenter.augmentShortcuts(data, tripLimit);
+        augmenter.augmentShortcuts(reverseData, tripLimit);
         data.serialize(getParameter("Forward output file"));
         reverseData.serialize(getParameter("Backward output file"));
     }

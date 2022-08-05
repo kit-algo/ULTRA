@@ -11,12 +11,13 @@
 
 namespace TripBased {
 
-template<typename PROFILER = NoProfiler>
+template<typename PROFILER = NoProfiler, typename INITIAL_TRANSFERS = RAPTOR::BucketCHInitialTransfers>
 class ForwardPruningQuery {
 
 public:
     using Profiler = PROFILER;
-    using Type = ForwardPruningQuery<Profiler>;
+    using InitialTransferType = INITIAL_TRANSFERS;
+    using Type = ForwardPruningQuery<Profiler, InitialTransferType>;
 
 private:
     struct TripLabel {
@@ -58,7 +59,7 @@ private:
     };
 
 public:
-    ForwardPruningQuery(const Data& data, CH::BucketQuery<CHGraph, true, false>& bucketQuery, Profiler& profiler) :
+    ForwardPruningQuery(const Data& data, InitialTransferType& bucketQuery, Profiler& profiler) :
         data(data),
         bucketQuery(bucketQuery),
         queue(data.numberOfStopEvents()),
@@ -263,7 +264,7 @@ private:
 
 private:
     const Data& data;
-    CH::BucketQuery<CHGraph, true, false>& bucketQuery;
+    InitialTransferType& bucketQuery;
 
     std::vector<TripLabel> queue;
     std::vector<EdgeRange> edgeRanges;

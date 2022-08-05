@@ -70,9 +70,9 @@ private:
     };
 
 public:
-    Query(const Data& data, const CH::CH& chData) :
+    Query(const Data& data, const RAPTOR::BucketCHInitialTransfers& initialTransfers) :
         data(data),
-        bucketQuery(chData.forward, chData.backward, data.numberOfStops(), Weight),
+        bucketQuery(initialTransfers),
         queue(data.numberOfStopEvents()),
         edgeRanges(data.numberOfStopEvents()),
         queueSize(0),
@@ -103,6 +103,10 @@ public:
         }
         profiler.registerPhases({PHASE_SCAN_INITIAL, PHASE_EVALUATE_INITIAL, PHASE_SCAN_TRIPS});
         profiler.registerMetrics({METRIC_ROUNDS, METRIC_SCANNED_TRIPS, METRIC_SCANNED_STOPS, METRIC_RELAXED_TRANSFERS, METRIC_ENQUEUES, METRIC_ADD_JOURNEYS});
+    }
+
+    Query(const Data& data, const CH::CH& chData) :
+        Query(data, RAPTOR::BucketCHInitialTransfers(chData.forward, chData.backward, data.numberOfStops(), Weight)) {
     }
 
     inline void run(const Vertex source, const int departureTime, const Vertex target) noexcept {
@@ -341,7 +345,7 @@ private:
 private:
     const Data& data;
 
-    CH::BucketQuery<CHGraph, true, false> bucketQuery;
+    RAPTOR::BucketCHInitialTransfers bucketQuery;
     std::vector<TripLabel> queue;
     std::vector<EdgeRange> edgeRanges;
     size_t queueSize;

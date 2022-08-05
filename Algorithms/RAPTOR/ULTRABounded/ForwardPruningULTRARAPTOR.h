@@ -12,18 +12,19 @@
 
 namespace RAPTOR {
 
-template<typename PROFILER = NoProfiler>
+template<typename PROFILER = NoProfiler, typename INITIAL_TRANSFERS = BucketCHInitialTransfers>
 class ForwardPruningULTRARAPTOR {
 
 public:
     using Profiler = PROFILER;
-    using Type = ForwardPruningULTRARAPTOR<Profiler>;
+    using InitialTransferType = INITIAL_TRANSFERS;
+    using Type = ForwardPruningULTRARAPTOR<Profiler, InitialTransferType>;
 
 private:
     using Round = std::vector<int>;
 
 public:
-    ForwardPruningULTRARAPTOR(const Data& data, BucketCHInitialTransfers& initialTransfers, Profiler& profiler) :
+    ForwardPruningULTRARAPTOR(const Data& data, InitialTransferType& initialTransfers, Profiler& profiler) :
         data(data),
         initialTransfers(initialTransfers),
         stopsUpdatedByRoute(data.numberOfStops()),
@@ -238,7 +239,7 @@ private:
 
 private:
     const Data& data;
-    BucketCHInitialTransfers& initialTransfers;
+    InitialTransferType& initialTransfers;
 
     std::vector<Round> rounds;
 
