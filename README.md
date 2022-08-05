@@ -1,8 +1,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# ULTRA: UnLimited TRAnsfers for Multi-Modal Route Planning
+# ULTRA: UnLimited TRAnsfers for Multimodal Route Planning
 
-ULTRA is a C++ framework for efficient journey planning in multimodal networks consisting of public transit and a non-schedule-based secondary transportation mode (e.g., walking, cycling, taxi). It was developed at [KIT](https://www.kit.edu) in the [group of Prof. Dorothea Wagner](https://i11www.iti.kit.edu/). This repository contains code for the following publications: 
+ULTRA is a C++ framework for efficient journey planning in multimodal networks consisting of public transit and non-schedule-based transfer modes (e.g., walking, cycling, e-scooter). It was developed at [KIT](https://www.kit.edu) in the [group of Prof. Dorothea Wagner](https://i11www.iti.kit.edu/). This repository contains code for the following publications: 
 
 * *UnLimited TRAnsfers for Multi-Modal Route Planning: An Efficient Solution*
   Moritz Baum, Valentin Buchhold, Jonas Sauer, Dorothea Wagner, Tobias Zündorf
@@ -16,8 +16,12 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
 
 * *Fast Multimodal Journey Planning for Three Criteria*
   Moritz Potthoff, Jonas Sauer
-  In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 4:1–4:15, 2020
+  In: Proceedings of the 24th Workshop on Algorithm Engineering and Experiments (ALENEX'22), SIAM, pages 145–157, 2022
   [pdf](https://epubs.siam.org/doi/epdf/10.1137/1.9781611977042.12) [arXiv](https://arxiv.org/abs/2110.12954)
+
+* *Efficient Algorithms for Fully Multimodal Journey Planning*
+  Moritz Potthoff, Jonas
+  Accepted for publication at the 22nd Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'22)
 
 ## Usage
 All query algorithms and preprocessing steps are available via the console application ``ULTRA``, which can be compiled using the ``Makefile`` located in the ``Runnables`` folder. It includes the following commands:
@@ -28,9 +32,9 @@ All query algorithms and preprocessing steps are available via the console appli
 * (Mc)ULTRA shortcut computation:
     - ``computeStopToStopShortcuts`` computes stop-to-stop ULTRA shortcuts for use with ULTRA-RAPTOR.
     - ``computeEventToEventShortcuts`` computes event-to-event ULTRA shortcuts for use with ULTRA-TB.
-    - ``computeMcStopToStopShortcuts`` computes stop-to-stop McULTRA shortcuts for use with ULTRA-McRAPTOR and ULTRA-BM-RAPTOR.
-    - ``computeMcEventToEventShortcuts`` computes event-to-event McULTRA shortcuts for use with ULTRA-McTB and ULTRA-BM-TB.
-    - ``augmentTripBasedShortcuts`` performs the shortcut augmentation step that is required for ULTRA-BM-TB.
+    - ``computeMcStopToStopShortcuts`` computes stop-to-stop McULTRA shortcuts for use with ULTRA-McRAPTOR and UBM-RAPTOR.
+    - ``computeMcEventToEventShortcuts`` computes event-to-event McULTRA shortcuts for use with ULTRA-McTB and UBM-TB.
+    - ``augmentTripBasedShortcuts`` performs the shortcut augmentation step that is required for UBM-TB.
     - ``validateStopToStopShortcuts`` and ``validateEventToEventShortcuts`` test the validity of the computed shortcuts by comparing them to paths in the original transfer graph.
 * Original TB preprocessing:
     - ``raptorToTripBased`` takes a network in RAPTOR format as input and runs the TB preprocessing algorithm.
@@ -53,11 +57,11 @@ All query algorithms and preprocessing steps are available via the console appli
 | ``runMCRQueries``                       | MCR             | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
 | ``runULTRAMcRAPTORQueries``             | ULTRA-McRAPTOR  | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
 | ``runTransitiveBoundedMcRAPTORQueries`` | BM-RAPTOR       | Transitive | Stop-to-stop     | Arrival time, number of trips, transfer time (restricted) |
-| ``RunUBMRAPTORQueries``                 | ULTRA-BM-RAPTOR | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
+| ``runUBMRAPTORQueries``                 | UBM-RAPTOR      | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
 | ``runTransitiveTripBasedQueries``       | TB              | Transitive | Stop-to-stop     | Arrival time, number of trips                             |
 | ``runULTRATripBasedQueries``            | ULTRA-TB        | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
 | ``runULTRAMcTripBasedQueries``          | ULTRA-McTB      | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
-| ``runBoundedULTRAMcTripBasedQueries``   | ULTRA-BM-TB     | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
+| ``runBoundedULTRAMcTripBasedQueries``   | UBM-TB          | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
 
 ## Networks
 We use custom data formats for loading the public transit network and the transfer graph: The Intermediate format allows for easy network manipulation, while the RAPTOR format is required by the preprocessing and all query algorithms except for CSA, which uses its own format. The Switzerland and London networks used in our experiments are available at [https://i11www.iti.kit.edu/PublicTransitData/ULTRA/](https://i11www.iti.kit.edu/PublicTransitData/ULTRA/) in the required formats. Unfortunately, we cannot provide the Germany and Stuttgart networks because they are proprietary.
@@ -80,3 +84,20 @@ The ``Network`` application provides commands for manipulating the network data 
 * ``applyConstantTransferSpeed`` applies a constant transfer speed to all edges in the transfer graph and computes the travel times accordingly.
 
 An example script that combines all steps necessary to load a public transit network is provided at ``Runnables/BuildNetworkExample.script``. It can be run from the ``Network`` application using ``runScript BuildNetworkExample.script``. It takes as input GFTS data in CSV format located at ``Networks/Switzerland/GTFS/`` and a road graph in DIMACS format located at ``Networks/Switzerland/OSM/dimacs``.
+
+## Multiple Transfer Modes
+The algorithms listed above support public transit plus one transfer mode. Additionally, this framework provides algorithms for multimodal networks with multiple transfer modes. The required multimodal data structures can be built with the following commands in ``Network``:
+* ``buildMultimodalRAPTORData`` converts unimodal RAPTOR data into multimodal RAPTOR data. Note that it does not add any transfer graphs.
+* ``addModeToMultimodalRAPTORData`` adds a transfer graph for a specified transfer mode to the given multimodal RAPTOR data.
+* ``buildMultimodalTripBasedData`` converts unimodal TB data into multimodal TB data. Note that it does not add any transfer graphs.
+* ``addModeToMultimodalTripBasedData`` adds a shortcut graph for a specified transfer mode to the given multimodal TB data.
+
+ULTRA shortcuts for networks with multiple transfer modes can be computed with the following commands in ``ULTRA``:
+* ``computeMultimodalMcStopToStopShortcuts`` computes multimodal stop-to-stop McULTRA shortcuts for use with ULTRA-McRAPTOR and UBM-RAPTOR.
+* ``computeMultimodalMcEventToEventShortcuts`` computes multimodal event-to-event McULTRA shortcuts for use with UBM-HydRA.
+
+The ``ULTRA`` application offers the following query algorithms. All algorithms optimize arrival time, number of trips and one transfer time criterion per transfer mode.
+* ``runMultimodalMCRQueries``: MCR for full Pareto sets
+* ``runMultimodalULTRAMcRAPTORQueries``: ULTRA-McRAPTOR with stop-to-stop shortcuts for full Pareto sets
+* ``runMultimodalUBMRAPTORQueries``: UBM-RAPTOR with stop-to-stop shortcuts for restricted Pareto sets
+* ``runMultimodalUBMHydRAQueries``: UBM-HydRA with event-to-event shortcuts for restricted Pareto sets

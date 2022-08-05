@@ -17,9 +17,11 @@ int main(int argc, char** argv) {
 
     new ComputeStopToStopShortcuts(shell);
     new ComputeMcStopToStopShortcuts(shell);
+    new ComputeMultimodalMcStopToStopShortcuts(shell);
     new RAPTORToTripBased(shell);
     new ComputeEventToEventShortcuts(shell);
     new ComputeMcEventToEventShortcuts(shell);
+    new ComputeMultimodalMcEventToEventShortcuts(shell);
     new AugmentTripBasedShortcuts(shell);
     new ValidateStopToStopShortcuts(shell);
     new ValidateEventToEventShortcuts(shell);
@@ -45,6 +47,12 @@ int main(int argc, char** argv) {
 
     new RunULTRAMcTripBasedQueries(shell);
     new RunBoundedULTRAMcTripBasedQueries(shell);
+
+    new RunMultimodalMCRQueries(shell);
+    new RunMultimodalULTRAMcRAPTORQueries(shell);
+    new RunUBMHydRAQueries(shell);
+    new RunMultimodalUBMRAPTORQueries(shell);
+    new RunMultimodalUBMHydRAQueries(shell);
 
     new ComputeTransferTimeSavings(shell);
     shell.run();

@@ -203,6 +203,49 @@ public:
 
 };
 
+class ReduceToMaximumConnectedComponentWithTransitive : public ParameterizedCommand {
+
+public:
+    ReduceToMaximumConnectedComponentWithTransitive(BasicShell& shell) :
+        ParameterizedCommand(shell, "reduceToMaximumConnectedComponentWithTransitive", "Removes everything that is not part of the largest connected component in the full network and reduces the transitive network accordingly.") {
+        addParameter("Full intermediate file");
+        addParameter("Transitive intermediate file");
+        addParameter("Full output file");
+        addParameter("Transitive output file");
+    }
+
+    virtual void execute() noexcept {
+        Intermediate::Data fullData(getParameter("Full intermediate file"));
+        fullData.printInfo();
+        Intermediate::TransferGraph graph = fullData.minTravelTimeGraph();
+        Graph::printInfo(graph);
+        graph.printAnalysis();
+        StronglyConnectedComponents<Intermediate::TransferGraph, true> scc(graph);
+        scc.run();
+        const int maxComponent = scc.maxComponent();
+        std::cout << "Max component size: " << String::prettyInt(scc.getComponentSize(maxComponent)) << std::endl;
+        fullData.deleteVertices([&](const Vertex vertex) {
+            return scc.getComponent(vertex) != maxComponent;
+        });
+        fullData.printInfo();
+        fullData.serialize(getParameter("Full output file"));
+        for (const Intermediate::Stop& stop : fullData.stops) {
+            if (stop.coordinates.x != 0) continue;
+            if (stop.coordinates.y != 0) continue;
+            warning(stop);
+        }
+
+        Intermediate::Data transitiveData(getParameter("Transitive intermediate file"));
+        transitiveData.printInfo();
+        transitiveData.deleteVertices([&](const Vertex vertex) {
+            return scc.getComponent(vertex) != maxComponent;
+        });
+        transitiveData.printInfo();
+        transitiveData.serialize(getParameter("Transitive output file"));
+    }
+
+};
+
 class ApplyBoundingBox : public ParameterizedCommand {
 
 public:

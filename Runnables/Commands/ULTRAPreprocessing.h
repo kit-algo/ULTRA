@@ -5,7 +5,9 @@
 
 #include "../../Algorithms/RAPTOR/ULTRA/Builder.h"
 #include "../../Algorithms/RAPTOR/ULTRA/McBuilder.h"
+#include "../../Algorithms/RAPTOR/ULTRA/MultimodalMcBuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/McULTRABuilder.h"
+#include "../../Algorithms/TripBased/Preprocessing/MultimodalMcULTRABuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/ShortcutAugmenter.h"
 #include "../../Algorithms/TripBased/Preprocessing/StopEventGraphBuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/ULTRABuilder.h"
@@ -20,6 +22,29 @@
 #include "../../Shell/Shell.h"
 
 using namespace Shell;
+
+inline TransferGraph getOverheadGraph(const RAPTOR::Data& raptorData, const size_t mode) noexcept {
+    DynamicTransferGraph temp;
+    Graph::copy(raptorData.transferGraph, temp);
+    for (const StopId stop : raptorData.stops()) {
+        temp.addVertex(temp.vertexRecord(stop));
+    }
+    Permutation permutation(Construct::Id, temp.numVertices());
+    for (const StopId stop : raptorData.stops()) {
+        const size_t newStopId = stop + raptorData.transferGraph.numVertices();
+        permutation[stop] = newStopId;
+        permutation[newStopId] = stop;
+    }
+    temp.applyVertexPermutation(permutation);
+    for (const StopId stop : raptorData.stops()) {
+        const Vertex stopVertex(stop + raptorData.transferGraph.numVertices());
+        temp.addEdge(stop, stopVertex).set(TravelTime, RAPTOR::TransferModeOverhead[mode]);
+        temp.addEdge(stopVertex, stop).set(TravelTime, 0);
+    }
+    TransferGraph result;
+    Graph::move(std::move(temp), result);
+    return result;
+}
 
 class ComputeStopToStopShortcuts : public ParameterizedCommand {
 
@@ -141,6 +166,77 @@ private:
 
         RAPTOR::ULTRA::McBuilder<false, USE_ARRIVAL_KEY, FULL_ROUTE_SCANS> shortcutGraphBuilder(data);
         std::cout << "Computing multicriteria stop-to-stop ULTRA shortcuts (parallel with " << numberOfThreads << " threads)." << std::endl;
+        shortcutGraphBuilder.computeShortcuts(ThreadPinning(numberOfThreads, pinMultiplier), intermediateWitnessLimit, finalWitnessLimit);
+        Graph::move(std::move(shortcutGraphBuilder.getShortcutGraph()), data.transferGraph);
+
+        data.dontUseImplicitDepartureBufferTimes();
+        Graph::printInfo(data.transferGraph);
+        data.transferGraph.printAnalysis();
+        data.serialize(outputFile);
+    }
+};
+
+class ComputeMultimodalMcStopToStopShortcuts : public ParameterizedCommand {
+
+public:
+    ComputeMultimodalMcStopToStopShortcuts(BasicShell& shell) :
+        ParameterizedCommand(shell, "computeMultimodalMcStopToStopShortcuts", "Computes multimodal multicriteria stop-to-stop transfer shortcuts using ULTRA.") {
+        addParameter("RAPTOR data");
+        addParameter("Transitive transfer graph");
+        addParameter("Mode");
+        addParameter("Output file");
+        addParameter("Intermediate witness limit");
+        addParameter("Final witness limit");
+        addParameter("Number of threads", "max");
+        addParameter("Pin multiplier", "1");
+        addParameter("Discretization factor", "1", {"1", "300", "600", "900"});
+    }
+
+    virtual void execute() noexcept {
+        switch (getParameter<int>("Discretization factor")) {
+            case 1:
+                run<1>();
+                break;
+            case 300:
+                run<300>();
+                break;
+            case 600:
+                run<600>();
+                break;
+            case 900:
+                run<900>();
+                break;
+        }
+    }
+
+private:
+    inline int getNumberOfThreads() const noexcept {
+        if (getParameter("Number of threads") == "max") {
+            return numberOfCores();
+        } else {
+            return getParameter<int>("Number of threads");
+        }
+    }
+
+    template<int TIME_FACTOR>
+    inline void run() const noexcept {
+        const std::string inputFile = getParameter("RAPTOR data");
+        const size_t mode = RAPTOR::getTransferModeFromName(getParameter("Mode"));
+        const std::string outputFile = getParameter("Output file");
+        const int numberOfThreads = getNumberOfThreads();
+        const int pinMultiplier = getParameter<int>("Pin multiplier");
+        const int intermediateWitnessLimit = getParameter<int>("Intermediate witness limit");
+        const int finalWitnessLimit = getParameter<int>("Final witness limit");
+
+        RAPTOR::Data data(inputFile);
+        data.useImplicitDepartureBufferTimes();
+        data.printInfo();
+        data.transferGraph = getOverheadGraph(data, mode);
+        TransferGraph transitiveTransferGraph;
+        transitiveTransferGraph.readBinary(getParameter("Transitive transfer graph"));
+
+        RAPTOR::ULTRA::MultimodalMcBuilder<false, TIME_FACTOR> shortcutGraphBuilder(data, transitiveTransferGraph);
+        std::cout << "Computing multimodal multicriteria stop-to-stop ULTRA shortcuts (parallel with " << numberOfThreads << " threads)." << std::endl;
         shortcutGraphBuilder.computeShortcuts(ThreadPinning(numberOfThreads, pinMultiplier), intermediateWitnessLimit, finalWitnessLimit);
         Graph::move(std::move(shortcutGraphBuilder.getShortcutGraph()), data.transferGraph);
 
@@ -319,6 +415,75 @@ private:
         data.serialize(outputFile);
     }
 
+};
+
+class ComputeMultimodalMcEventToEventShortcuts : public ParameterizedCommand {
+
+public:
+    ComputeMultimodalMcEventToEventShortcuts(BasicShell& shell) :
+        ParameterizedCommand(shell, "computeMultimodalMcEventToEventShortcuts", "Computes multimodal multicriteria event-to-event transfer shortcuts using ULTRA and saves the resulting network in Trip-Based format.") {
+        addParameter("RAPTOR data");
+        addParameter("Transitive transfer graph");
+        addParameter("Mode");
+        addParameter("Output file");
+        addParameter("Intermediate witness limit");
+        addParameter("Final witness limit");
+        addParameter("Number of threads", "max");
+        addParameter("Pin multiplier", "1");
+        addParameter("Discretization factor", "1", {"1", "300", "600", "900"});
+    }
+
+    virtual void execute() noexcept {
+        switch (getParameter<int>("Discretization factor")) {
+            case 1:
+                run<1>();
+                break;
+            case 300:
+                run<300>();
+                break;
+            case 600:
+                run<600>();
+                break;
+            case 900:
+                run<900>();
+                break;
+        }
+    }
+
+private:
+    inline int getNumberOfThreads() const noexcept {
+        if (getParameter("Number of threads") == "max") {
+            return numberOfCores();
+        } else {
+            return getParameter<int>("Number of threads");
+        }
+    }
+
+    template<int TIME_FACTOR>
+    inline void run() const noexcept {
+        const std::string inputFile = getParameter("RAPTOR data");
+        const size_t mode = RAPTOR::getTransferModeFromName(getParameter("Mode"));
+        const std::string outputFile = getParameter("Output file");
+        const int numberOfThreads = getNumberOfThreads();
+        const int pinMultiplier = getParameter<int>("Pin multiplier");
+        const int intermediateWitnessLimit = getParameter<int>("Intermediate witness limit");
+        const int finalWitnessLimit = getParameter<int>("Final witness limit");
+
+        RAPTOR::Data raptor(inputFile);
+        raptor.printInfo();
+        raptor.transferGraph = getOverheadGraph(raptor, mode);
+        TripBased::Data data(raptor);
+        TransferGraph transitiveTransferGraph;
+        transitiveTransferGraph.readBinary(getParameter("Transitive transfer graph"));
+
+        TripBased::MultimodalMcULTRABuilder<false, TIME_FACTOR> shortcutGraphBuilder(data, transitiveTransferGraph);
+        std::cout << "Computing multimodal multicriteria event-to-event ULTRA shortcuts (parallel with " << numberOfThreads << " threads)." << std::endl;
+        shortcutGraphBuilder.computeShortcuts(ThreadPinning(numberOfThreads, pinMultiplier), intermediateWitnessLimit, finalWitnessLimit);
+        Graph::move(std::move(shortcutGraphBuilder.getStopEventGraph()), data.stopEventGraph);
+
+        data.printInfo();
+        data.serialize(outputFile);
+    }
 };
 
 class AugmentTripBasedShortcuts : public ParameterizedCommand {

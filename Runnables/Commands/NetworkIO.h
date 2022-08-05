@@ -7,6 +7,8 @@
 #include "../../DataStructures/GTFS/Data.h"
 #include "../../DataStructures/Intermediate/Data.h"
 #include "../../DataStructures/RAPTOR/Data.h"
+#include "../../DataStructures/RAPTOR/MultimodalData.h"
+#include "../../DataStructures/TripBased/MultimodalData.h"
 
 #include "../../Shell/Shell.h"
 
@@ -118,6 +120,88 @@ public:
         data.serialize(outputFile);
     }
 
+};
+
+class BuildMultimodalRAPTORData : public ParameterizedCommand {
+
+public:
+    BuildMultimodalRAPTORData(BasicShell& shell) :
+        ParameterizedCommand(shell, "buildMultimodalRAPTORData", "Builds multimodal RAPTOR data based on RAPTOR data.") {
+        addParameter("RAPTOR data");
+        addParameter("Output file");
+    }
+
+    virtual void execute() noexcept {
+        const RAPTOR::Data raptorData(getParameter("RAPTOR data"));
+        raptorData.printInfo();
+        const RAPTOR::MultimodalData multimodalData(raptorData);
+        multimodalData.printInfo();
+        multimodalData.serialize(getParameter("Output file"));
+    }
+};
+
+class AddModeToMultimodalRAPTORData : public ParameterizedCommand {
+
+public:
+    AddModeToMultimodalRAPTORData(BasicShell& shell) :
+        ParameterizedCommand(shell, "addModeToMultimodalRAPTORData", "Adds a transfer graph for the specified mode to multimodal RAPTOR data.") {
+        addParameter("Multimodal RAPTOR data");
+        addParameter("Transfer graph");
+        addParameter("Mode");
+        addParameter("Output file");
+    }
+
+    virtual void execute() noexcept {
+        RAPTOR::MultimodalData multimodalData(getParameter("Multimodal RAPTOR data"));
+        multimodalData.printInfo();
+        RAPTOR::TransferGraph graph;
+        graph.readBinary(getParameter("Transfer graph"));
+        const size_t mode = RAPTOR::getTransferModeFromName(getParameter("Mode"));
+        multimodalData.addTransferGraph(mode, graph);
+        multimodalData.printInfo();
+        multimodalData.serialize(getParameter("Output file"));
+    }
+};
+
+class BuildMultimodalTripBasedData : public ParameterizedCommand {
+
+public:
+    BuildMultimodalTripBasedData(BasicShell& shell) :
+        ParameterizedCommand(shell, "buildMultimodalTripBasedData", "Builds multimodal Trip-Based data based on Trip-Based data.") {
+        addParameter("Trip-Based data");
+        addParameter("Output file");
+    }
+
+    virtual void execute() noexcept {
+        const TripBased::Data tripBasedData(getParameter("Trip-Based data"));
+        tripBasedData.printInfo();
+        const TripBased::MultimodalData multimodalData(tripBasedData);
+        multimodalData.printInfo();
+        multimodalData.serialize(getParameter("Output file"));
+    }
+};
+
+class AddModeToMultimodalTripBasedData : public ParameterizedCommand {
+
+public:
+    AddModeToMultimodalTripBasedData(BasicShell& shell) :
+        ParameterizedCommand(shell, "addModeToMultimodalTripBasedData", "Adds a transfer graph for the specified mode to multimodal Trip-Based data.") {
+        addParameter("Multimodal Trip-Based data");
+        addParameter("Transfer graph");
+        addParameter("Mode");
+        addParameter("Output file");
+    }
+
+    virtual void execute() noexcept {
+        TripBased::MultimodalData multimodalData(getParameter("Multimodal Trip-Based data"));
+        multimodalData.printInfo();
+        TransferGraph graph;
+        graph.readBinary(getParameter("Transfer graph"));
+        const size_t mode = RAPTOR::getTransferModeFromName(getParameter("Mode"));
+        multimodalData.addTransferGraph(mode, graph);
+        multimodalData.printInfo();
+        multimodalData.serialize(getParameter("Output file"));
+    }
 };
 
 class LoadDimacsGraph : public ParameterizedCommand {

@@ -36,15 +36,25 @@ typedef enum {
     PHASE_COLLECT,
     PHASE_SCAN,
     PHASE_TRANSFERS,
+    PHASE_TRANSFERS_WALKING,
+    PHASE_TRANSFERS_SCOOTER,
+    PHASE_TRANSFERS_BICYCLE,
     PHASE_FINAL_TRANSFERS,
     NUM_PHASES
 } Phase;
+
+inline Phase getProfilerTransferPhase(const size_t mode) noexcept {
+    return Phase(PHASE_TRANSFERS_WALKING + mode);
+}
 
 constexpr const char* PhaseNames[] = {
     "Init",
     "Collect",
     "Scan",
     "Transfers",
+    "Transfers (Walking)",
+    "Transfers (Scooter)",
+    "Transfers (Bicycle)",
     "Final",
 };
 

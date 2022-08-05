@@ -16,12 +16,17 @@ int main(int argc, char** argv) {
     new GTFSToIntermediate(shell);
     new IntermediateToCSA(shell);
     new IntermediateToRAPTOR(shell);
+    new BuildMultimodalRAPTORData(shell);
+    new AddModeToMultimodalRAPTORData(shell);
+    new BuildMultimodalTripBasedData(shell);
+    new AddModeToMultimodalTripBasedData(shell);
     new LoadDimacsGraph(shell);
     new DuplicateTrips(shell);
     new AddGraph(shell);
     new ReplaceGraph(shell);
     new ReduceGraph(shell);
     new ReduceToMaximumConnectedComponent(shell);
+    new ReduceToMaximumConnectedComponentWithTransitive(shell);
     new ApplyBoundingBox(shell);
     new ApplyCustomBoundingBox(shell);
     new MakeOneHopTransfers(shell);
