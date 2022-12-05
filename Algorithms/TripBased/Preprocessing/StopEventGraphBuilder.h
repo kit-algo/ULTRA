@@ -126,7 +126,7 @@ public:
             for (const Edge edge : generatedTransfers.edgesFrom(fromVertex)) {
                 transfers.emplace_back(edge);
             }
-            std::sort(transfers.begin(), transfers.end(), [&](const Edge a, const Edge b){
+            std::stable_sort(transfers.begin(), transfers.end(), [&](const Edge a, const Edge b){
                 return data.raptorData.stopEvents[generatedTransfers.get(ToVertex, a)].arrivalTime < data.raptorData.stopEvents[generatedTransfers.get(ToVertex, b)].arrivalTime;
             });
 
@@ -158,7 +158,7 @@ public:
                 if (keep) keepTransfers.emplace_back(transfer);
             }
 
-            std::sort(keepTransfers.begin(), keepTransfers.end(), [](const Edge a, const Edge b) {
+            std::stable_sort(keepTransfers.begin(), keepTransfers.end(), [](const Edge a, const Edge b) {
                 return a > b;
             });
             for (const Edge transfer : keepTransfers) {
