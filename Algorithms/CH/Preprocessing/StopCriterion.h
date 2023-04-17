@@ -6,7 +6,7 @@
 
 #include "CHData.h"
 
-#include "../../../assert.h"
+#include "../../../Helpers/Assert.h"
 #include "../../../Helpers/Vector/Permutation.h"
 
 namespace CH {

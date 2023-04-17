@@ -7,7 +7,7 @@
 #include "CHData.h"
 #include "WitnessSearch.h"
 
-#include "../../../assert.h"
+#include "../../../Helpers/Assert.h"
 #include "../../../Helpers/Ranges/Range.h"
 #include "../../../Helpers/Vector/Permutation.h"
 
