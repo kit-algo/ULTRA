@@ -4,6 +4,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "../../Helpers/Helpers.h"
 #include "../../Helpers/Types.h"
 #include "../../Helpers/ConstructorTags.h"
 

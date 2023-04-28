@@ -241,6 +241,13 @@ public:
         edgeAttributes.clear();
     }
 
+    inline void clearEdges() noexcept {
+        edgeCount = 0;
+        edgeAttributes.clear();
+        Vector::fill(get(BeginOut), Edge(0));
+        Vector::fill(get(OutDegree), size_t(0));
+    }
+
     inline void reserve(const size_t numVertices, const size_t numEdges) noexcept {
         vertexAttributes.reserve(numVertices);
         edgeAttributes.reserve(numEdges);

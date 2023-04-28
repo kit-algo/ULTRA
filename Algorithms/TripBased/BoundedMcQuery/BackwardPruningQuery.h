@@ -71,10 +71,10 @@ public:
             edgeLabels[edge].trip = data.tripOfStopEvent[departureStopEvent];
             edgeLabels[edge].firstEvent = data.firstStopEventOfTrip[edgeLabels[edge].trip];
             edgeLabels[edge].departureStop = data.getStopOfStopEvent(departureStopEvent);
-            edgeLabels[edge].departureTime = -data.raptorData.stopEvents[departureStopEvent].departureTime;
+            edgeLabels[edge].departureTime = -data.departureTime(departureStopEvent);
         }
         for (StopEventId stopEvent(0); stopEvent < data.numberOfStopEvents(); stopEvent++) {
-            properArrivalTimes[stopEvent] = data.arrivalEvents[stopEvent].arrivalTime - data.raptorData.minTransferTime(data.getStopOfStopEvent(stopEvent));
+            properArrivalTimes[stopEvent] = data.arrivalEvents[stopEvent].arrivalTime - data.minTransferTime(data.getStopOfStopEvent(stopEvent));
         }
     }
 
@@ -147,7 +147,7 @@ private:
             const int stopDepartureTime = sourceDepartureTime + bucketQuery.getBackwardDistance(stop);
             const int arrivalTime = forwardPruningQuery.getArrivalTime(StopId(stop), maxTrips - round);
             if (-stopDepartureTime < arrivalTime) continue;
-            for (const RAPTOR::RouteSegment& segment : data.raptorData.routesContainingStop(StopId(stop))) {
+            for (const RAPTOR::RouteSegment& segment : data.routesContainingStop(StopId(stop))) {
                 const TripId trip = data.getEarliestTrip(segment, stopDepartureTime);
                 if (trip != noTripId) {
                     enqueue(trip, StopIndex(segment.stopIndex + 1));

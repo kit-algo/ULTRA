@@ -214,7 +214,7 @@ private:
             const int stopDepartureTime = sourceDepartureTime + timeFromSource;
             const int arrivalTime = -backwardPruningQuery.getArrivalTime(StopId(stop), maxTrips);
             if (stopDepartureTime > arrivalTime) continue;
-            for (const RAPTOR::RouteSegment& segment : data.raptorData.routesContainingStop(StopId(stop))) {
+            for (const RAPTOR::RouteSegment& segment : data.routesContainingStop(StopId(stop))) {
                 const TripId trip = data.getEarliestTrip(segment, stopDepartureTime);
                 if (trip != noTripId) {
                     enqueue(trip, StopIndex(segment.stopIndex + 1), timeFromSource);
@@ -328,14 +328,14 @@ private:
             std::tie(arrivalStopEvent, edge) = (departureStopEvent == noStopEvent) ? getParent(label, targetLabel) : getParent(label, StopEventId(departureStopEvent + 1));
 
             const StopId arrivalStop = data.getStopOfStopEvent(arrivalStopEvent);
-            const int arrivalTime = data.raptorData.stopEvents[arrivalStopEvent].arrivalTime;
+            const int arrivalTime = data.arrivalTime(arrivalStopEvent);
             const int transferArrivalTime = (edge == noEdge) ? targetLabel.arrivalTime : arrivalTime + data.stopEventGraph.get(TravelTime, edge);
             result.emplace_back(arrivalStop, departureStop, arrivalTime, transferArrivalTime, edge);
 
             departureStopEvent = StopEventId(label.begin - 1);
             departureStop = data.getStopOfStopEvent(departureStopEvent);
             const RouteId route = data.getRouteOfStopEvent(departureStopEvent);
-            const int departureTime = data.raptorData.stopEvents[departureStopEvent].departureTime;
+            const int departureTime = data.departureTime(departureStopEvent);
             result.emplace_back(departureStop, arrivalStop, departureTime, arrivalTime, true, route);
 
             parent = label.parent;

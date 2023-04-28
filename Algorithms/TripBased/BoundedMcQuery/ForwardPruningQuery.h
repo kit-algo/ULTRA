@@ -4,6 +4,7 @@
 
 #include "../../../DataStructures/RAPTOR/Entities/ArrivalLabel.h"
 #include "../../../DataStructures/TripBased/Data.h"
+#include "../../../DataStructures/TripBased/RouteLabel.h"
 #include "../Query/ReachedIndex.h"
 #include "../Query/Profiler.h"
 
@@ -47,17 +48,6 @@ private:
         StopEventId firstEvent;
     };
 
-    struct RouteLabel {
-        RouteLabel() :
-            numberOfTrips(0) {
-        }
-        inline StopIndex end() const noexcept {
-            return StopIndex(departureTimes.size() / numberOfTrips);
-        }
-        u_int32_t numberOfTrips;
-        std::vector<int> departureTimes;
-    };
-
 public:
     ForwardPruningQuery(const Data& data, InitialTransferType& bucketQuery, Profiler& profiler) :
         data(data),
@@ -70,7 +60,6 @@ public:
         targetLabels(1),
         minArrivalTime(INFTY),
         edgeLabels(data.stopEventGraph.numEdges()),
-        routeLabels(data.numberOfRoutes()),
         sourceVertex(noVertex),
         targetVertex(noVertex),
         sourceDepartureTime(never),
@@ -82,17 +71,9 @@ public:
             edgeLabels[edge].trip = data.tripOfStopEvent[data.stopEventGraph.get(ToVertex, edge)];
             edgeLabels[edge].firstEvent = data.firstStopEventOfTrip[edgeLabels[edge].trip];
         }
-        for (const RouteId route : data.raptorData.routes()) {
-            const size_t numberOfStops = data.numberOfStopsInRoute(route);
-            const size_t numberOfTrips = data.raptorData.numberOfTripsInRoute(route);
-            const RAPTOR::StopEvent* stopEvents = data.raptorData.firstTripOfRoute(route);
-            routeLabels[route].numberOfTrips = numberOfTrips;
-            routeLabels[route].departureTimes.resize((numberOfStops - 1) * numberOfTrips);
-            for (size_t trip = 0; trip < numberOfTrips; trip++) {
-                for (size_t stopIndex = 0; stopIndex + 1 < numberOfStops; stopIndex++) {
-                    routeLabels[route].departureTimes[(stopIndex * numberOfTrips) + trip] = stopEvents[(trip * numberOfStops) + stopIndex].departureTime;
-                }
-            }
+        routeLabels.reserve(data.numberOfRoutes());
+        for (const RouteId route : data.routes()) {
+            routeLabels.emplace_back(data, route);
         }
     }
 
@@ -143,36 +124,24 @@ private:
     }
 
     inline void evaluateInitialTransfers() noexcept {
-        std::vector<bool> reachedRoutes(data.raptorData.numberOfRoutes(), false);
+        std::vector<bool> reachedRoutes(data.numberOfRoutes(), false);
         for (const Vertex stop : bucketQuery.getForwardPOIs()) {
-            for (const RAPTOR::RouteSegment& route : data.raptorData.routesContainingStop(StopId(stop))) {
+            for (const RAPTOR::RouteSegment& route : data.routesContainingStop(StopId(stop))) {
                 reachedRoutes[route.routeId] = true;
             }
         }
-        for (const RouteId route : data.raptorData.routes()) {
+        for (const RouteId route : data.routes()) {
             if (!reachedRoutes[route]) continue;
             const RouteLabel& label = routeLabels[route];
             const StopIndex endIndex = label.end();
             const TripId firstTrip = data.firstTripOfRoute[route];
-            const StopId* stops = data.raptorData.stopArrayOfRoute(route);
             TripId tripIndex = noTripId;
             for (StopIndex stopIndex(0); stopIndex < endIndex; stopIndex++) {
-                const int timeFromSource = bucketQuery.getForwardDistance(stops[stopIndex]);
+                const StopId stop = data.getStop(firstTrip, stopIndex);
+                const int timeFromSource = bucketQuery.getForwardDistance(stop);
                 if (timeFromSource == INFTY) continue;
                 const int stopDepartureTime = sourceDepartureTime + timeFromSource;
-                const u_int32_t labelIndex = stopIndex * label.numberOfTrips;
-                if (tripIndex >= label.numberOfTrips) {
-                    tripIndex = std::lower_bound(TripId(0), TripId(label.numberOfTrips), stopDepartureTime, [&](const TripId trip, const int time) {
-                        return label.departureTimes[labelIndex + trip] < time;
-                    });
-                    if (tripIndex >= label.numberOfTrips) continue;
-                } else {
-                    if (label.departureTimes[labelIndex + tripIndex - 1] < stopDepartureTime) continue;
-                    tripIndex--;
-                    while ((tripIndex > 0) && (label.departureTimes[labelIndex + tripIndex - 1] >= stopDepartureTime)) {
-                        tripIndex--;
-                    }
-                }
+                if (!label.findEarliestTrip(stopIndex, stopDepartureTime, tripIndex)) continue;
                 enqueue(firstTrip + tripIndex, StopIndex(stopIndex + 1));
                 if (tripIndex == 0) break;
             }

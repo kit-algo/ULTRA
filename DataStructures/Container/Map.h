@@ -77,6 +77,10 @@ public:
         return indices.size();
     }
 
+    inline void resize(const size_t newCapacity) noexcept {
+        indices.resize(newCapacity, NotContained);
+    }
+
     inline bool contains(const KeyType key) noexcept {
         if (Resizeable) {
             if ((size_t)key >= capacity()) indices.resize(key + 1, NotContained);

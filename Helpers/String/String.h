@@ -338,7 +338,7 @@ namespace String {
         if ((!(t >= 0)) && (t <= -infinity)) return "-infinity";
         const bool negative = (t < 0);
         t = negative ? -t : t;
-        if (t == 0) return "0:00";
+        if (t == 0) return displaySeconds ? "0:00:00" : "0:00";
         T s = t % 60;
         T m = (t / 60) % 60;
         T h = (t / 3600) % 24;

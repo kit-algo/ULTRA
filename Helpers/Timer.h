@@ -21,6 +21,11 @@ public:
         return (cur - start) / 1000.0;
     }
 
+    inline void advance(double targetTime) noexcept {
+        double cur = timestamp();
+        start = cur - targetTime;
+    }
+
 private:
     inline static double timestamp() noexcept {
         timeval tp;

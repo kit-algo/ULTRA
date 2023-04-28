@@ -238,7 +238,7 @@ private:
     }
 
     inline bool isNode(const size_t index) const noexcept {
-        return (index >= 0) && (index < nodes.size());
+        return index < nodes.size();
     }
 
     inline void makeBoundingBox(const int beginIndex, const int endIndex, Geometry::Rectangle& boundingBox) noexcept {

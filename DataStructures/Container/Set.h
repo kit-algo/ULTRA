@@ -2,7 +2,6 @@
 
 #include <set>
 #include <limits>
-#include <bitset>
 
 #include "../../Helpers/Types.h"
 #include "../../Helpers/Helpers.h"
@@ -198,94 +197,5 @@ public:
 private:
     std::vector<size_t> indices;
     std::vector<ValueType> values;
-
-};
-
-template<size_t CAPACITY = 32, typename VALUE_TYPE = size_t>
-class SmallSet {
-
-public:
-    inline constexpr static size_t Capacity = CAPACITY;
-    using ValueType = VALUE_TYPE;
-    using Type = SmallSet<Capacity, ValueType>;
-
-    class Iterator {
-    public:
-        Iterator(const std::bitset<Capacity>* data, const size_t i) : data(data), i(i) {}
-        inline bool operator!=(const Iterator& other) const noexcept {return i != other.i;}
-        inline ValueType operator*() const noexcept {return ValueType(i);}
-        inline Iterator& operator++() noexcept {do {++i;} while (i < Capacity && !(*data)[i]); return *this;}
-        inline Iterator& operator+=(const size_t n) noexcept {for (size_t j = 0; j < n; j++) ++(*this); return *this;}
-        inline Iterator operator+(const size_t n) const noexcept {return Iterator(*this) += n;}
-        inline ValueType operator[](const size_t n) const noexcept {return *(*this + n);}
-    private:
-        const std::bitset<Capacity>* data;
-        size_t i;
-    };
-
-public:
-    SmallSet() {}
-    SmallSet(const std::vector<ValueType>& values) {
-        for (const ValueType value : values) {
-            insert(value);
-        }
-    }
-
-    inline std::vector<ValueType> getValues() const noexcept {
-        std::vector<ValueType> values;
-        for (const ValueType value : *this) {
-            values.emplace_back(value);
-        }
-        return values;
-    }
-
-    inline Iterator begin() const noexcept {
-        return ++Iterator(&data, -1);
-    }
-
-    inline Iterator end() const noexcept {
-        return Iterator(&data, Capacity);
-    }
-
-    inline size_t size() const noexcept {
-        return data.count();
-    }
-
-    inline bool empty() const noexcept {
-        return data.none();
-    }
-
-    inline size_t capacity() const noexcept {
-        return Capacity;
-    }
-
-    inline ValueType operator[](const size_t i) const noexcept {
-        AssertMsg(i < size(), "Index " << i << " is out of range!");
-        return begin()[i];
-    }
-
-    inline bool contains(const ValueType value) noexcept {
-        AssertMsg(value < capacity(), "Value " << value << " is out of range!");
-        return data[value];
-    }
-
-    inline bool insert(const ValueType value) noexcept {
-        if (contains(value)) return false;
-        data[value] = true;
-        return true;
-    }
-
-    inline bool remove(const ValueType value) noexcept {
-        if (!contains(value)) return false;
-        data[value] = false;
-        return true;
-    }
-
-    inline void clear() noexcept {
-        data.reset();
-    }
-
-private:
-    std::bitset<Capacity> data;
 
 };

@@ -53,6 +53,8 @@ public:
     }
 
 public:
+    inline const TransferGraph& getTransferGraph() const noexcept {return raptorData.transferGraph;}
+
     inline size_t numberOfStops() const noexcept {return raptorData.numberOfStops();}
     inline bool isStop(const Vertex stop) const noexcept {return raptorData.isStop(stop);}
     inline Range<StopId> stops() const noexcept {return raptorData.stops();}
@@ -68,7 +70,10 @@ public:
     inline size_t numberOfStopEvents() const noexcept {return raptorData.numberOfStopEvents();}
     inline size_t numberOfRouteSegments() const noexcept {return raptorData.numberOfRouteSegments();}
 
+    inline int minTransferTime(const StopId stop) const noexcept {return raptorData.minTransferTime(stop);}
+
     inline size_t numberOfStopsInRoute(const RouteId route) const noexcept {return raptorData.numberOfStopsInRoute(route);}
+    inline size_t numberOfTripsInRoute(const RouteId route) const noexcept {return raptorData.numberOfTripsInRoute(route);}
     inline size_t numberOfStopsInTrip(const TripId trip) const noexcept {
         AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
         return firstStopEventOfTrip[trip + 1] - firstStopEventOfTrip[trip];
@@ -85,7 +90,7 @@ public:
     inline StopId getStop(const TripId trip, const StopIndex index) const noexcept {
         AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
         AssertMsg(index < numberOfStopsInTrip(trip), "The trip " << trip << " has only " << numberOfStopsInTrip(trip) << " stops!");
-        return raptorData.stopIds[raptorData.firstStopIdOfRoute[routeOfTrip[trip]] + index];
+        return raptorData.stopIds[firstStopIdOfTrip[trip] + index];
     }
 
     inline RouteId getRouteOfStopEvent(const StopEventId stopEvent) const noexcept {
@@ -93,7 +98,7 @@ public:
     }
 
     inline StopId getStopOfStopEvent(const StopEventId stopEvent) const noexcept {
-        return raptorData.stopIds[firstStopIdOfTrip[tripOfStopEvent[stopEvent]] + indexOfStopEvent[stopEvent]];
+        return getStop(tripOfStopEvent[stopEvent], indexOfStopEvent[stopEvent]);
     }
 
     inline StopEventId getStopEventId(const TripId trip, const StopIndex index) const noexcept {
@@ -124,14 +129,24 @@ public:
         return raptorData.stopEvents[stopEvent].departureTime;
     }
 
+    inline SubRange<std::vector<RAPTOR::RouteSegment>> routesContainingStop(const StopId stop) const noexcept {
+        AssertMsg(isStop(stop), "The id " << stop << " does not represent a stop!");
+        return raptorData.routesContainingStop(stop);
+    }
+
     inline Range<TripId> tripsOfRoute(const RouteId route) const noexcept {
         AssertMsg(isRoute(route), "The id " << route << " does not represent a route!");
         return Range<TripId>(firstTripOfRoute[route], firstTripOfRoute[route + 1]);
     }
 
+    inline const StopId* stopArrayOfRoute(const RouteId route) const noexcept {
+        AssertMsg(isRoute(route), "The id " << route << " does not represent a route!");
+        return raptorData.stopArrayOfRoute(route);
+    }
+
     inline const StopId* stopArrayOfTrip(const TripId trip) const noexcept {
         AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
-        return raptorData.stopArrayOfRoute(routeOfTrip[trip]);
+        return stopArrayOfRoute(routeOfTrip[trip]);
     }
 
     inline const RAPTOR::StopEvent* eventArrayOfTrip(const TripId trip) const noexcept {
@@ -165,27 +180,8 @@ public:
         return noTripId;
     }
 
-    inline TripId getEarliestTripPeek(const RAPTOR::RouteSegment& route, const int time) const noexcept {
-        if (route.stopIndex + 1 == raptorData.numberOfStopsInRoute(route.routeId)) return noTripId;
-        const TripId tripsBegin = firstTripOfRoute[route.routeId];
-        const TripId tripsEnd = firstTripOfRoute[route.routeId + 1];
-        if (tripsBegin == tripsEnd) return noTripId;
-        const int firstDeparture = getStopEvent(tripsBegin, route.stopIndex).departureTime;
-        const int lastDeparture = getStopEvent(TripId(tripsEnd - 1), route.stopIndex).departureTime;
-        if (firstDeparture >= time) return tripsBegin;
-        if (lastDeparture < time) return noTripId;
-        TripId trip = TripId(tripsBegin + (((time - firstDeparture) * (tripsEnd - tripsBegin - 1)) / (lastDeparture - firstDeparture)));
-        if (getStopEvent(trip, route.stopIndex).departureTime < time) {
-            while (getStopEvent(trip, route.stopIndex).departureTime < time) {
-                trip++;
-            }
-        } else {
-            while (getStopEvent(trip, route.stopIndex).departureTime >= time) {
-                trip--;
-            }
-            trip++;
-        }
-        return trip;
+    inline int getTransferSlack(const StopEventId from, const StopEventId to, const int travelTime) const noexcept {
+        return departureTime(to) - arrivalTime(from) - travelTime;
     }
 
 public:
@@ -202,6 +198,21 @@ public:
         reverseData.stopEventGraph.applyVertexPermutation(stopEventPermutation);
         reverseData.stopEventGraph.sortEdges(ToVertex);
         return reverseData;
+    }
+
+    inline void removeInfeasibleShortcuts() noexcept {
+        TransferGraph temp;
+        temp.reserve(stopEventGraph.numVertices(), stopEventGraph.numEdges());
+        for (const Vertex fromStopEvent : stopEventGraph.vertices()) {
+            temp.addVertex();
+            for (const Edge shortcut : stopEventGraph.edgesFrom(fromStopEvent)) {
+                const Vertex toStopEvent = stopEventGraph.get(ToVertex, shortcut);
+                const int travelTime = stopEventGraph.get(TravelTime, shortcut);
+                if (arrivalTime(StopEventId(fromStopEvent)) + travelTime > departureTime(StopEventId(toStopEvent))) continue;
+                temp.addEdge(fromStopEvent, toStopEvent, stopEventGraph.edgeRecord(shortcut));
+            }
+        }
+        Graph::move(std::move(temp), stopEventGraph);
     }
 
     inline void printInfo() const noexcept {
