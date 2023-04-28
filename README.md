@@ -20,24 +20,25 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   [pdf](https://epubs.siam.org/doi/epdf/10.1137/1.9781611977042.12) [arXiv](https://arxiv.org/abs/2110.12954)
 
 * *Efficient Algorithms for Fully Multimodal Journey Planning*
-  Moritz Potthoff, Jonas
-  Accepted for publication at the 22nd Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'22)
+  Moritz Potthoff, Jonas Sauer
+  In: Proceedings of the 22nd Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'22), OpenAccess Series in Informatics, pages 14:1–14:15, 2022
+  [pdf](https://drops.dagstuhl.de/opus/volltexte/2022/17118/pdf/OASIcs-ATMOS-2022-14.pdf)
 
 ## Usage
-All query algorithms and preprocessing steps are available via the console application ``ULTRA``, which can be compiled using the ``Makefile`` located in the ``Runnables`` folder. It includes the following commands:
+All preprocessing steps and query algorithms are provided in the console application ``ULTRA``. You can compile it with the ``Makefile`` in the ``Runnables`` folder. Type ``make ULTRARelease -B`` to compile in release mode. The following commands are available:
 
-* CH computation:
-    - ``buildCH`` performs a regular CH precomputation. The output is required by the (Mc)ULTRA query algorithms, which use it to perform the Bucket-CH precomputation.
-    - ``buildCoreCH`` performs a Core-CH precomputation. The output is required by the (Mc)ULTRA shortcut computation and by the MCSA and M(C)R query algorithms.
+* Contraction Hierarchies (CH) computation:
+    - ``buildCH`` performs a regular CH precomputation. The output is used by the (Mc)ULTRA query algorithms for the Bucket-CH searches.
+    - ``buildCoreCH`` performs a Core-CH precomputation. The output is used by the (Mc)ULTRA shortcut computation and by the MCSA and M(C)R query algorithms.
 * (Mc)ULTRA shortcut computation:
-    - ``computeStopToStopShortcuts`` computes stop-to-stop ULTRA shortcuts for use with ULTRA-RAPTOR.
+    - ``computeStopToStopShortcuts`` computes stop-to-stop ULTRA shortcuts for use with ULTRA-CSA and ULTRA-RAPTOR.
     - ``computeEventToEventShortcuts`` computes event-to-event ULTRA shortcuts for use with ULTRA-TB.
     - ``computeMcStopToStopShortcuts`` computes stop-to-stop McULTRA shortcuts for use with ULTRA-McRAPTOR and UBM-RAPTOR.
     - ``computeMcEventToEventShortcuts`` computes event-to-event McULTRA shortcuts for use with ULTRA-McTB and UBM-TB.
     - ``augmentTripBasedShortcuts`` performs the shortcut augmentation step that is required for UBM-TB.
     - ``validateStopToStopShortcuts`` and ``validateEventToEventShortcuts`` test the validity of the computed shortcuts by comparing them to paths in the original transfer graph.
-* Original TB preprocessing:
-    - ``raptorToTripBased`` takes a network in RAPTOR format as input and runs the TB preprocessing algorithm.
+* Original TB transfer generation:
+    - ``raptorToTripBased`` takes a network in RAPTOR format as input and runs the TB transfer generation.
     - With a transitively closed transfer graph as input, this performs the original TB preprocessing.
     - With stop-to-stop ULTRA shortcuts as input, this performs the sequential ULTRA-TB preprocessing.
     - The parameter "Route-based pruning?" enables the optimized preprocessing proposed by Lehoux and Loiodice.
