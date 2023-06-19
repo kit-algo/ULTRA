@@ -54,15 +54,16 @@ All preprocessing steps and query algorithms are provided in the console applica
 | ``runDijkstraRAPTORQueries``            | MR              | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
 | ``runHLRAPTORQueries``                  | HL-RAPTOR       | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
 | ``runULTRARAPTORQueries``               | ULTRA-RAPTOR    | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
+| ``runTransitiveTBQueries``              | TB              | Transitive | Stop-to-stop     | Arrival time, number of trips                             |
+| ``runULTRATBQueries``                   | ULTRA-TB        | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
 | ``runTransitiveMcRAPTORQueries``        | McRAPTOR        | Transitive | Stop-to-stop     | Arrival time, number of trips, transfer time (full)       |
 | ``runMCRQueries``                       | MCR             | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
 | ``runULTRAMcRAPTORQueries``             | ULTRA-McRAPTOR  | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
+| ``runULTRAMcTBQueries``                 | ULTRA-McTB      | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
 | ``runTransitiveBoundedMcRAPTORQueries`` | BM-RAPTOR       | Transitive | Stop-to-stop     | Arrival time, number of trips, transfer time (restricted) |
 | ``runUBMRAPTORQueries``                 | UBM-RAPTOR      | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
-| ``runTransitiveTripBasedQueries``       | TB              | Transitive | Stop-to-stop     | Arrival time, number of trips                             |
-| ``runULTRATripBasedQueries``            | ULTRA-TB        | Unlimited  | Vertex-to-vertex | Arrival time, number of trips                             |
-| ``runULTRAMcTripBasedQueries``          | ULTRA-McTB      | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (full)       |
-| ``runBoundedULTRAMcTripBasedQueries``   | UBM-TB          | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
+| ``runUBMTBQueries``                     | UBM-TB          | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
+| ``runUBMHydRAQueries``                  | UBM-HydRA       | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
 
 ## Networks
 We use custom data formats for loading the public transit network and the transfer graph: The Intermediate format allows for easy network manipulation, while the RAPTOR format is required by the preprocessing and all query algorithms except for CSA, which uses its own format. The Switzerland and London networks used in our experiments are available at [https://i11www.iti.kit.edu/PublicTransitData/ULTRA/](https://i11www.iti.kit.edu/PublicTransitData/ULTRA/) in the required formats. Unfortunately, we cannot provide the Germany and Stuttgart networks because they are proprietary.

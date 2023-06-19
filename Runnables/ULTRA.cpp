@@ -1,6 +1,9 @@
 #include "Commands/CH.h"
-#include "Commands/QueryBenchmark.h"
 #include "Commands/ULTRAPreprocessing.h"
+
+#include "Commands/BenchmarkULTRA.h"
+#include "Commands/BenchmarkMcULTRA.h"
+#include "Commands/BenchmarkMultimodal.h"
 
 #include "../Helpers/Console/CommandLineParser.h"
 
@@ -36,25 +39,26 @@ int main(int argc, char** argv) {
     new RunHLRAPTORQueries(shell);
     new RunULTRARAPTORQueries(shell);
 
+    new RunTransitiveTBQueries(shell);
+    new RunULTRATBQueries(shell);
+
     new RunTransitiveMcRAPTORQueries(shell);
     new RunMCRQueries(shell);
     new RunULTRAMcRAPTORQueries(shell);
+    new RunULTRAMcTBQueries(shell);
+
     new RunTransitiveBoundedMcRAPTORQueries(shell);
     new RunUBMRAPTORQueries(shell);
+    new RunUBMTBQueries(shell);
+    new RunUBMHydRAQueries(shell);
 
-    new RunTransitiveTripBasedQueries(shell);
-    new RunULTRATripBasedQueries(shell);
-
-    new RunULTRAMcTripBasedQueries(shell);
-    new RunBoundedULTRAMcTripBasedQueries(shell);
+    new ComputeTransferTimeSavings(shell);
 
     new RunMultimodalMCRQueries(shell);
     new RunMultimodalULTRAMcRAPTORQueries(shell);
-    new RunUBMHydRAQueries(shell);
     new RunMultimodalUBMRAPTORQueries(shell);
     new RunMultimodalUBMHydRAQueries(shell);
 
-    new ComputeTransferTimeSavings(shell);
     shell.run();
     return 0;
 }

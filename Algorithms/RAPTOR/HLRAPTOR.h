@@ -7,6 +7,7 @@
 #include "InitialTransfers.h"
 
 #include "../../DataStructures/RAPTOR/Data.h"
+#include "../../DataStructures/RAPTOR/Entities/ArrivalLabel.h"
 #include "../../DataStructures/RAPTOR/Entities/EarliestArrivalTime.h"
 #include "../../DataStructures/Container/Set.h"
 #include "../../DataStructures/Container/Map.h"

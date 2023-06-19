@@ -14,6 +14,7 @@
 
 #include "../../DataStructures/Graph/Graph.h"
 #include "../../DataStructures/RAPTOR/Data.h"
+#include "../../DataStructures/RAPTOR/TransferModes.h"
 #include "../../DataStructures/TripBased/Data.h"
 
 #include "../../Helpers/MultiThreading.h"
