@@ -2,6 +2,9 @@
 
 #include "../CH/Query/BucketQuery.h"
 #include "../CH/Query/CHQuery.h"
+#include "../CH/UPQuery/GroupedParetoUPQuery.h"
+#include "../CH/UPQuery/SeparatedParetoUPQuery.h"
+#include "../CH/UPQuery/UPQuery.h"
 
 #include "../../DataStructures/RAPTOR/TransferModes.h"
 
@@ -10,6 +13,15 @@ namespace RAPTOR {
 using DijkstraInitialTransfers = CH::Query<TransferGraph, false, false, true>;
 using CoreCHInitialTransfers = CH::Query<CHGraph, true, false, true>;
 using BucketCHInitialTransfers = CH::BucketQuery<CHGraph, true, false>;
+
+template<bool DEBUG, bool USE_STOP_BUCKETS, bool USE_TARGET_BUCKETS>
+using BasicInitialAndFinalTransfers = CH::UPQuery<USE_STOP_BUCKETS, USE_TARGET_BUCKETS, true, DEBUG>;
+template<bool DEBUG>
+using SeparatedParetoInitialAndFinalTransfers = CH::SeparatedParetoUPQuery<true, DEBUG>;
+template<bool DEBUG, size_t MAX_TRIPS>
+using GroupedParetoInitialAndFinalTransfers = CH::GroupedParetoUPQuery<true, DEBUG, MAX_TRIPS>;
+template<bool DEBUG, size_t GROUPED_ROUNDS>
+using ParetoInitialAndFinalTransfers = Meta::IF<GROUPED_ROUNDS != 0, GroupedParetoInitialAndFinalTransfers<DEBUG, GROUPED_ROUNDS>, SeparatedParetoInitialAndFinalTransfers<DEBUG>>;
 
 class TransitiveInitialTransfers {
 public:

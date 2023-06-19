@@ -14,6 +14,11 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 4:1–4:15, 2020
   [pdf](http://i11www.ira.uka.de/extra/publications/swz-iultr-20.pdf)
 
+* *An Efficient Solution for One-to-Many Multi-Modal Journey Planning*
+  Jonas Sauer, Dorothea Wagner, Tobias Zündorf
+  In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 1:1–1:15, 2020
+  [pdf](https://i11www.iti.kit.edu/extra/publications/swz-aesom-20.pdf)
+
 * *Fast Multimodal Journey Planning for Three Criteria*
   Moritz Potthoff, Jonas Sauer
   In: Proceedings of the 24th Workshop on Algorithm Engineering and Experiments (ALENEX'22), SIAM, pages 145–157, 2022
@@ -25,7 +30,7 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   [pdf](https://drops.dagstuhl.de/opus/volltexte/2022/17118/pdf/OASIcs-ATMOS-2022-14.pdf)
 
 ## Usage
-All preprocessing steps and query algorithms are provided in the console application ``ULTRA``. You can compile it with the ``Makefile`` in the ``Runnables`` folder. Type ``make ULTRARelease -B`` to compile in release mode. The following commands are available:
+Most preprocessing steps and query algorithms are provided in the console application ``ULTRA``. You can compile it with the ``Makefile`` in the ``Runnables`` folder. Type ``make ULTRARelease -B`` to compile in release mode. The following commands are available:
 
 * Contraction Hierarchies (CH) computation:
     - ``buildCH`` performs a regular CH precomputation. The output is used by the (Mc)ULTRA query algorithms for the Bucket-CH searches.
@@ -88,7 +93,7 @@ The ``Network`` application provides commands for manipulating the network data 
 An example script that combines all steps necessary to load a public transit network is provided at ``Runnables/BuildNetworkExample.script``. It can be run from the ``Network`` application using ``runScript BuildNetworkExample.script``. It takes as input GFTS data in CSV format located at ``Networks/Switzerland/GTFS/`` and a road graph in DIMACS format located at ``Networks/Switzerland/OSM/dimacs``.
 
 ## Multiple Transfer Modes
-The algorithms listed above support public transit plus one transfer mode. Additionally, this framework provides algorithms for multimodal networks with multiple transfer modes. The required multimodal data structures can be built with the following commands in ``Network``:
+The algorithms listed above support bimodal networks with public transit and a single transfer mode. Additionally, this framework provides algorithms for multimodal networks with multiple transfer modes. The required multimodal data structures can be built with the following commands in ``Network``:
 * ``buildMultimodalRAPTORData`` converts unimodal RAPTOR data into multimodal RAPTOR data. Note that it does not add any transfer graphs.
 * ``addModeToMultimodalRAPTORData`` adds a transfer graph for a specified transfer mode to the given multimodal RAPTOR data.
 * ``buildMultimodalTripBasedData`` converts unimodal TB data into multimodal TB data. Note that it does not add any transfer graphs.
@@ -103,3 +108,23 @@ The ``ULTRA`` application offers the following query algorithms. All algorithms 
 * ``runMultimodalULTRAMcRAPTORQueries``: ULTRA-McRAPTOR with stop-to-stop shortcuts for full Pareto sets
 * ``runMultimodalUBMRAPTORQueries``: UBM-RAPTOR with stop-to-stop shortcuts for restricted Pareto sets
 * ``runMultimodalUBMHydRAQueries``: UBM-HydRA with event-to-event shortcuts for restricted Pareto sets
+
+## One-to-Many Journey Planning
+The query algorithms in the `ULTRA` application only support one-to-one queries. The `ULTRAPHAST` application provides algorithms for one-to-all and one-to-many queries:
+
+| Command                                      | Algorithm | Target set     | Criteria                      |
+| -------------------------------------------- | --------- | -------------- | ----------------------------- |
+| `runOneToAllDijkstraCSAQueriesToVertices`    | MCSA      | Vertices       | Arrival time                  |
+| `runOneToManyDijkstraCSAQueriesToStops`      | MCSA      | Stops          | Arrival time                  |
+| `runOneToManyDijkstraCSAQueriesToBall`       | MCSA      | Ball           | Arrival time                  |
+| `runUPCSAQueries`                            | UP-CSA    | Vertices/Stops | Arrival time                  |
+| `runUPCSAQueriesToBall`                      | UP-CSA    | Ball           | Arrival time                  |
+| `runOneToAllDijkstraRAPTORQueriesToVertices` | MR        | Vertices       | Arrival time, number of trips |
+| `runOneToManyDijkstraRAPTORQueriesToStops`   | MR        | Stops          | Arrival time, number of trips |
+| `runOneToManyDijkstraRAPTORQueriesToBall`    | MR        | Ball           | Arrival time, number of trips |
+| `runUPRAPTORQueries`                         | UP-RAPTOR | Vertices/Stops | Arrival time, number of trips |
+| `runUPRAPTORQueriesToBall`                   | UP-RAPTOR | Ball           | Arrival time, number of trips |
+| `runUPTBQueries`                             | UP-TB     | Vertices/Stops | Arrival time, number of trips |
+
+Random ball target sets can be generated with the command `createBallTargetSets`. CH and Core-CH precomputations for these target sets can be run with `buildUPCHForTargetSets` and `buildCoreCHForTargetSets`, respectively.
+
