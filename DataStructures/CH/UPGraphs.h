@@ -100,7 +100,7 @@ struct CompactSweepGraph {
 
     template<typename GRAPH_TYPE>
     inline void build(const GRAPH_TYPE& originalGraph, const std::vector<Vertex>& targets, const bool invertOrder, const bool revertEdges, const size_t numExcludedVertices) noexcept {
-        std::vector<bool> isRequired = targetSelection(graph, targets, [&](const Vertex v) {
+        std::vector<bool> isRequired = targetSelection(originalGraph, targets, [&](const Vertex v) {
             return v < numExcludedVertices;
         });
 
