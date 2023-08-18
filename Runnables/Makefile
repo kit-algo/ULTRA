@@ -4,8 +4,17 @@ OPTIMIZATION=-march=native -O3
 DEBUG=-rdynamic -Werror -Wpedantic -pedantic-errors -Wall -Wextra -Wparentheses -Wfatal-errors -D_GLIBCXX_DEBUG -g -fno-omit-frame-pointer
 RELEASE=-ffast-math -ftree-vectorize -Wfatal-errors -DNDEBUG
 
+INCLUDE=-I /usr/include/cairo
+LIBRARY_PATH=-L /usr/lib
+DYN_LIBRARIES=-lcairo
 
-all: NetworkRelease ULTRARelease ULTRAPHASTRelease
+all: IsochronesRelease NetworkRelease ULTRARelease ULTRAPHASTRelease
+
+IsochronesDebug:
+	$(CC) $(INCLUDE) $(LIBRARY_PATH) $(FLAGS) $(OPTIMIZATION) $(DEBUG) -o Isochrones Isochrones.cpp $(DYN_LIBRARIES)
+
+IsochronesRelease:
+	$(CC) $(INCLUDE) $(LIBRARY_PATH) $(FLAGS) $(OPTIMIZATION) $(RELEASE) -o Isochrones Isochrones.cpp $(DYN_LIBRARIES)
 
 NetworkDebug:
 	$(CC) $(FLAGS) $(OPTIMIZATION) $(DEBUG) -o Network Network.cpp
