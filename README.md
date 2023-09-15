@@ -12,7 +12,7 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
 * *Integrating ULTRA and Trip-Based Routing*
   Jonas Sauer, Dorothea Wagner, Tobias Zündorf
   In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 4:1–4:15, 2020
-  [pdf](http://i11www.ira.uka.de/extra/publications/swz-iultr-20.pdf)
+  [pdf](http://i11www.iti.kit.edu/extra/publications/swz-iultr-20.pdf)
 
 * *An Efficient Solution for One-to-Many Multi-Modal Journey Planning*
   Jonas Sauer, Dorothea Wagner, Tobias Zündorf
@@ -78,7 +78,7 @@ The ``Network`` application provides commands for manipulating the network data 
 * ``gtfsToIntermediate`` converts GFTS binary data to the Intermediate network format.
 * ``intermediateToCSA`` converts a network in Intermediate format to CSA format.
 * ``intermediateToRAPTOR`` converts a network in Intermediate format to RAPTOR format.
-* ``loadDimacsGraph`` converts a graph in the format used by the [9th DIMACS Implementation Challenge](http://users.diag.uniroma1.it/challenge9/download.shtml) to our custom binary graph format.
+* ``loadDimacsGraph`` converts a graph in the format used by the [9th DIMACS Implementation Challenge](http://diag.uniroma1.it/challenge9/download.shtml) to our custom binary graph format.
 * ``duplicateTrips`` duplicates all trips in the network and shifts them by a specified time offset. This is used to extend networks that only comprise a single day to two days, in order to allow for overnight journeys.
 * ``addGraph`` adds a transfer graph to a network in Intermediate format. Existing transfer edges in the network are preserved.
 * ``replaceGraph`` replaces the transfer graph of a network with a specified transfer graph.
