@@ -202,6 +202,7 @@ protected:
             Trip trip;
             while (in.readRow(trip.routeId, trip.serviceId, trip.tripId, trip.name)) {
                 if (trip.validate()) trips.emplace_back(trip);
+                count++;
             }
             return count;
         }, verbose);
