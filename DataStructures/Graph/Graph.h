@@ -17,6 +17,7 @@ using WithTravelTime = List<Attribute<TravelTime, int>>;
 using WithTravelTimeAndDistance = List<Attribute<TravelTime, int>, Attribute<Distance, int>>;
 using WithTravelTimeAndEdgeFlags = List<Attribute<TravelTime, int>, Attribute<EdgeFlags, std::vector<bool>>>;
 using WithTravelTimeAndBundleSize = List<Attribute<TravelTime, int>, Attribute<BundleSize, int>>;
+using WithTravelTimeAndDelays = List<Attribute<TravelTime, int>, Attribute<MinOriginDelay, int>, Attribute<MaxOriginDelay, int>>;
 using WithReverseEdges = List<Attribute<ReverseEdge, Edge>>;
 using WithCapacity = List<Attribute<Capacity, int>>;
 using WithWeight = List<Attribute<Weight, int>>;
@@ -54,6 +55,9 @@ using CondensationGraph = DynamicGraph<WithSize, WithTravelTime>;
 
 using BundledGraph = StaticGraph<WithCoordinates, WithTravelTimeAndBundleSize>;
 using DynamicBundledGraph = DynamicGraph<WithCoordinates, WithTravelTimeAndBundleSize>;
+
+using DelayGraph = StaticGraph<WithCoordinates, WithTravelTimeAndDelays>;
+using DynamicDelayGraph = DynamicGraph<WithCoordinates, WithTravelTimeAndDelays>;
 
 #include "Utils/Conversion.h"
 #include "Utils/IO.h"

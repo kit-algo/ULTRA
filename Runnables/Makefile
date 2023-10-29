@@ -5,7 +5,13 @@ DEBUG=-rdynamic -Werror -Wpedantic -pedantic-errors -Wall -Wextra -Wparentheses 
 RELEASE=-ffast-math -ftree-vectorize -Wfatal-errors -DNDEBUG
 
 
-all: NetworkRelease ULTRARelease ULTRAPHASTRelease
+all: DelayExperimentsRelease NetworkRelease ULTRARelease ULTRAPHASTRelease
+
+DelayExperimentsDebug:
+	$(CC) $(INCLUDE) $(LIBRARY_PATH) $(FLAGS) $(OPTIMIZATION) $(DEBUG) -o DelayExperiments DelayExperiments.cpp $(DYN_LIBRARIES)
+
+DelayExperimentsRelease:
+	$(CC) $(INCLUDE) $(LIBRARY_PATH) $(FLAGS) $(OPTIMIZATION) $(RELEASE) -o DelayExperiments DelayExperiments.cpp $(DYN_LIBRARIES)
 
 NetworkDebug:
 	$(CC) $(FLAGS) $(OPTIMIZATION) $(DEBUG) -o Network Network.cpp

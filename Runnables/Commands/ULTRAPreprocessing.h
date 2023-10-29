@@ -6,6 +6,7 @@
 #include "../../Algorithms/RAPTOR/ULTRA/Builder.h"
 #include "../../Algorithms/RAPTOR/ULTRA/McBuilder.h"
 #include "../../Algorithms/RAPTOR/ULTRA/MultimodalMcBuilder.h"
+#include "../../Algorithms/TripBased/Preprocessing/DelayULTRABuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/McULTRABuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/MultimodalMcULTRABuilder.h"
 #include "../../Algorithms/TripBased/Preprocessing/ShortcutAugmenter.h"
@@ -16,6 +17,7 @@
 #include "../../DataStructures/RAPTOR/Data.h"
 #include "../../DataStructures/RAPTOR/TransferModes.h"
 #include "../../DataStructures/TripBased/Data.h"
+#include "../../DataStructures/TripBased/DelayData.h"
 
 #include "../../Helpers/MultiThreading.h"
 #include "../../Helpers/String/String.h"
@@ -46,6 +48,50 @@ inline TransferGraph getOverheadGraph(const RAPTOR::Data& raptorData, const size
     Graph::move(std::move(temp), result);
     return result;
 }
+
+class BuildFreeTransferGraph : public ParameterizedCommand {
+
+public:
+    BuildFreeTransferGraph(BasicShell& shell) :
+        ParameterizedCommand(shell, "buildFreeTransferGraph", "Builds the free transfer graph for fully multimodal ULTRA.") {
+        addParameter("Input file");
+        addParameter("Output file");
+    }
+
+    virtual void execute() noexcept {
+        RAPTOR::Data raptorData(getParameter("Input file"));
+        DynamicTransferGraph temp;
+        DynamicTransferGraph temp2;
+        for (const StopId stop : raptorData.stops()) {
+            temp.addVertex(raptorData.transferGraph.vertexRecord(stop));
+            temp2.addVertex(raptorData.transferGraph.vertexRecord(stop));
+        }
+        for (const StopId from : raptorData.stops()) {
+            for (const StopId to : raptorData.stops()) {
+                const Geometry::Point& a = raptorData.getCoordinates()[from];
+                const Geometry::Point& b = raptorData.getCoordinates()[to];
+                const double distance = Geometry::geoDistanceInCM(a, b);
+                if (distance <= 10000) {
+                    const int travelTime = (distance / 4.5) * 0.036;
+                    temp.addEdge(from, to).set(TravelTime, travelTime);
+                }
+            }
+        }
+
+        Dijkstra<DynamicTransferGraph, false> dijkstra(temp, temp[TravelTime]);
+        for (const Vertex vertex : temp.vertices()) {
+            dijkstra.run(vertex, noVertex, [&](const Vertex u) {
+                if (u >= vertex) return;
+                const int travelTime = dijkstra.getDistance(u);
+                temp2.addEdge(vertex, u).set(TravelTime, travelTime);
+                temp2.addEdge(u, vertex).set(TravelTime, travelTime);
+            });
+        }
+
+        Graph::move(std::move(temp2), raptorData.transferGraph);
+        raptorData.serialize(getParameter("Output file"));
+    }
+};
 
 class ComputeStopToStopShortcuts : public ParameterizedCommand {
 
@@ -353,6 +399,49 @@ private:
 
 };
 
+class ComputeDelayEventToEventShortcuts : public ParameterizedCommand {
+
+public:
+    ComputeDelayEventToEventShortcuts(BasicShell& shell) :
+        ParameterizedCommand(shell, "computeDelayEventToEventShortcuts", "Computes delay-tolerant event-to-event transfer shortcuts using ULTRA and saves the resulting network in Trip-Based format.") {
+        addParameter("Input file");
+        addParameter("Output file");
+        addParameter("Arrival delay buffer");
+        addParameter("Departure delay buffer");
+        addParameter("Memory limit", "2048");
+        addParameter("Number of threads", "max");
+        addParameter("Pin multiplier", "1");
+    }
+
+    virtual void execute() noexcept {
+        RAPTOR::Data raptor(getParameter("Input file"));
+        raptor.printInfo();
+        const int arrivalDelayBuffer = getParameter<int>("Arrival delay buffer");
+        const int departureDelayBuffer = getParameter<int>("Departure delay buffer");
+        TripBased::DelayData data(raptor, arrivalDelayBuffer, departureDelayBuffer);
+        TripBased::DelayULTRABuilder shortcutGraphBuilder(data.data);
+
+        const int numberOfThreads = getNumberOfThreads();
+        const int pinMultiplier = getParameter<int>("Pin multiplier");
+        const size_t memoryLimit = getParameter<size_t>("Memory limit");
+        std::cout << "Computing delay-tolerant event-to-event ULTRA shortcuts (parallel with " << numberOfThreads << " threads)." << std::endl;
+        shortcutGraphBuilder.computeShortcuts(ThreadPinning(numberOfThreads, pinMultiplier), arrivalDelayBuffer, departureDelayBuffer, memoryLimit);
+        Graph::move(std::move(shortcutGraphBuilder.getStopEventGraph()), data.stopEventGraph);
+
+        data.printInfo();
+        data.serialize(getParameter("Output file"));
+    }
+
+private:
+    inline int getNumberOfThreads() const noexcept {
+        if (getParameter("Number of threads") == "max") {
+            return numberOfCores();
+        } else {
+            return getParameter<int>("Number of threads");
+        }
+    }
+};
+
 class ComputeMcEventToEventShortcuts : public ParameterizedCommand {
 
 public:
@@ -495,6 +584,7 @@ public:
         addParameter("Input file");
         addParameter("Forward output file");
         addParameter("Backward output file");
+        addParameter("Remove superfluous shortcuts?");
         addParameter("Trip limit", "1073741823");
     }
 
@@ -506,6 +596,10 @@ public:
         const size_t tripLimit = getParameter<size_t>("Trip limit");
         augmenter.augmentShortcuts(data, tripLimit);
         augmenter.augmentShortcuts(reverseData, tripLimit);
+        if (getParameter<bool>("Remove superfluous shortcuts?")) {
+            augmenter.removeSuperfluousShortcuts(data);
+            augmenter.removeSuperfluousShortcuts(reverseData);
+        }
         data.serialize(getParameter("Forward output file"));
         reverseData.serialize(getParameter("Backward output file"));
     }
@@ -606,6 +700,7 @@ public:
         ParameterizedCommand(shell, "validateEventToEventShortcuts", "Compares event-to-event ULTRA shortcuts to paths in the original transfer graph.") {
         addParameter("Original graph");
         addParameter("ULTRA-TB data");
+        addParameter("Departure delay buffer", "0");
     }
 
     virtual void execute() noexcept {
@@ -615,6 +710,7 @@ public:
         const TripBased::Data ultraTBData(getParameter("ULTRA-TB data"));
         ultraTBData.printInfo();
 
+        const int departureDelayBuffer = getParameter<int>("Departure delay buffer");
 
         DynamicTransferGraph stopShortcuts;
         stopShortcuts.addVertices(ultraTBData.numberOfStops());
@@ -625,7 +721,7 @@ public:
                 const Vertex toEventVertex = ultraTBData.stopEventGraph.get(ToVertex, edge);
                 const int departureTime = ultraTBData.raptorData.stopEvents[toEventVertex].departureTime;
                 const int travelTime = ultraTBData.stopEventGraph.get(TravelTime, edge);
-                if (travelTime > departureTime - arrivalTime) {
+                if (travelTime > departureTime + departureDelayBuffer - arrivalTime) {
                     std::cout << "\nShortcut from " << fromEventVertex << " to " << toEventVertex << " is too long to reach destination stop event! (Should be at most " << departureTime - arrivalTime << ", but is " << travelTime << ")!" << std::endl;
                 }
 

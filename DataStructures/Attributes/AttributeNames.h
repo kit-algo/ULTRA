@@ -93,7 +93,9 @@ namespace ImplementationDetail {
     using ProfileIndexType = AttributeNameWrapper<25>;
     using OriginalEdgeType = AttributeNameWrapper<26>;
     using BundleSizeType = AttributeNameWrapper<27>;
-    using UnknownType = AttributeNameWrapper<28>;
+    using MinOriginDelayType = AttributeNameWrapper<28>;
+    using MaxOriginDelayType = AttributeNameWrapper<29>;
+    using UnknownType = AttributeNameWrapper<30>;
     // Ensure that Unknown is the last entry!
 
 }
@@ -126,6 +128,8 @@ constexpr ImplementationDetail::SizeType Size;
 constexpr ImplementationDetail::ProfileIndexType ProfileIndex;
 constexpr ImplementationDetail::OriginalEdgeType OriginalEdge;
 constexpr ImplementationDetail::BundleSizeType BundleSize;
+constexpr ImplementationDetail::MinOriginDelayType MinOriginDelay;
+constexpr ImplementationDetail::MaxOriginDelayType MaxOriginDelay;
 constexpr ImplementationDetail::UnknownType Unknown;
 // Ensure that Unknown is the last entry!
 
@@ -160,7 +164,9 @@ namespace ImplementationDetail {
         /* 25 */ "ProfileIndex",
         /* 26 */ "OriginalEdge",
         /* 27 */ "BundleSize",
-        /* 28 */ "Unknown"
+        /* 28 */ "MinOriginDelay",
+        /* 29 */ "MaxOriginDelay",
+        /* 30 */ "Unknown"
         // Ensure that Unknown is the last entry!
     };
 

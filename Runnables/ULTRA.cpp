@@ -20,11 +20,13 @@ int main(int argc, char** argv) {
     new BuildCoreCH(shell);
 
     //Preprocessing
+    new BuildFreeTransferGraph(shell);
     new ComputeStopToStopShortcuts(shell);
     new ComputeMcStopToStopShortcuts(shell);
     new ComputeMultimodalMcStopToStopShortcuts(shell);
     new RAPTORToTripBased(shell);
     new ComputeEventToEventShortcuts(shell);
+    new ComputeDelayEventToEventShortcuts(shell);
     new ComputeMcEventToEventShortcuts(shell);
     new ComputeMultimodalMcEventToEventShortcuts(shell);
     new AugmentTripBasedShortcuts(shell);

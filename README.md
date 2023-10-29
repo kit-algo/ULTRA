@@ -28,6 +28,10 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   Moritz Potthoff, Jonas Sauer
   In: Proceedings of the 22nd Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'22), OpenAccess Series in Informatics, pages 14:1–14:15, 2022
   [pdf](https://drops.dagstuhl.de/opus/volltexte/2022/17118/pdf/OASIcs-ATMOS-2022-14.pdf)
+  
+* *Fast and Delay-Robust Multimodal Journey Planning*
+  Dominik Bez, Jonas Sauer
+  Accepted for publication at the 26th Workshop on Algorithm Engineering and Experiments (ALENEX'24)
 
 ## Usage
 Most preprocessing steps and query algorithms are provided in the console application ``ULTRA``. You can compile it with the ``Makefile`` in the ``Runnables`` folder. Type ``make ULTRARelease -B`` to compile in release mode. The following commands are available:
@@ -38,6 +42,7 @@ Most preprocessing steps and query algorithms are provided in the console applic
 * (Mc)ULTRA shortcut computation:
     - ``computeStopToStopShortcuts`` computes stop-to-stop ULTRA shortcuts for use with ULTRA-CSA and ULTRA-RAPTOR.
     - ``computeEventToEventShortcuts`` computes event-to-event ULTRA shortcuts for use with ULTRA-TB.
+	- ``computeDelayEventToEventShortcuts`` computes delay-tolerate event-to-event ULTRA shortcuts.
     - ``computeMcStopToStopShortcuts`` computes stop-to-stop McULTRA shortcuts for use with ULTRA-McRAPTOR and UBM-RAPTOR.
     - ``computeMcEventToEventShortcuts`` computes event-to-event McULTRA shortcuts for use with ULTRA-McTB and UBM-TB.
     - ``augmentTripBasedShortcuts`` performs the shortcut augmentation step that is required for UBM-TB.
@@ -94,10 +99,12 @@ An example script that combines all steps necessary to load a public transit net
 
 ## Multiple Transfer Modes
 The algorithms listed above support bimodal networks with public transit and a single transfer mode. Additionally, this framework provides algorithms for multimodal networks with multiple transfer modes. The required multimodal data structures can be built with the following commands in ``Network``:
-* ``buildMultimodalRAPTORData`` converts unimodal RAPTOR data into multimodal RAPTOR data. Note that it does not add any transfer graphs.
+* ``buildMultimodalRAPTORData`` converts unimodal RAPTOR data into multimodal RAPTOR data. The transfer graph contained in the RAPTOR data is used for the "free" transfers whose transfer time is not penalized. The transfer graphs for the non-"free" modes must be added separately with the ``addModeToMultimodalRAPTORData``.
 * ``addModeToMultimodalRAPTORData`` adds a transfer graph for a specified transfer mode to the given multimodal RAPTOR data.
-* ``buildMultimodalTripBasedData`` converts unimodal TB data into multimodal TB data. Note that it does not add any transfer graphs.
+* ``buildMultimodalTripBasedData`` converts unimodal TB data into multimodal TB data. The transfer graph contained in the TB data is used for the "free" transfers whose transfer time is not penalized. The transfer graphs for the non-"free" modes must be added separately with the ``addModeToMultimodalTripBasedData``.
 * ``addModeToMultimodalTripBasedData`` adds a shortcut graph for a specified transfer mode to the given multimodal TB data.
+`
+Additionally, the command ``buildFreeTransferGraph`` in ``ULTRA`` builds a "free" transfer graph by connecting all pairs of stops within a specified geographical distance and then computing the transitive closure.
 
 ULTRA shortcuts for networks with multiple transfer modes can be computed with the following commands in ``ULTRA``:
 * ``computeMultimodalMcStopToStopShortcuts`` computes multimodal stop-to-stop McULTRA shortcuts for use with ULTRA-McRAPTOR and UBM-RAPTOR.
@@ -128,3 +135,13 @@ The query algorithms in the `ULTRA` application only support one-to-one queries.
 
 Random ball target sets can be generated with the command `createBallTargetSets`. CH and Core-CH precomputations for these target sets can be run with `buildUPCHForTargetSets` and `buildCoreCHForTargetSets`, respectively.
 
+## Delay-Robustness
+The application ``DelayExperiments`` provides commands for evaluating Delay-ULTRA, the variant of ULTRA that anticipates possible vehicle delays. The delay-robust shortcut computation itself is run with the command ``computeDelayEventToEventShortcuts`` in ``ULTRA``. All delays up to the specified limit (measured in seconds) are accounted for. ``DelayExperiments`` provides the following commands:
+* ``GenerateDelayScenario`` generates a delay scenario for the given network, using a synthetic delay model.
+* ``GenerateDelayQueries`` generates queries for the specified delay scenario that are answered incorrectly by an algorithm without delay information.
+* ``BuildFakeDelayData`` takes as input a network with regular ULTRA shortcuts and converts it to the format used by Delay-ULTRA. This is useful for comparing Delay-ULTRA to regular ULTRA. 
+* ``RunDelayUpdatesWithoutReplacement`` simulates basic delay updates for the given delay scenario.
+* ``RunDelayUpdatesWithReplacement`` simulates advanced delay updates for the given delay scenario. A heuristic replacement search is performed to find missing shortcuts.
+* ``MeasureDelayULTRAQueryCoverage`` measures the result quality of TB using Delay-ULTRA shortcuts.
+* ``MeasureHypotheticalDelayULTRAQueryCoverage`` measures the result quality of TB using Delay-ULTRA shortcuts, assuming that updates can be performed instantly.
+* ``MeasureDelayULTRAQueryPerformance`` measures the query performance of TB using Delay-ULTRA shortcuts.
