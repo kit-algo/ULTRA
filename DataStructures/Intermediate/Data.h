@@ -791,7 +791,7 @@ public:
     inline TransferGraph minTravelTimeGraph() const noexcept {
         TransferGraph result;
         result.addVertices(transferGraph.numVertices());
-        for (const Trip trip : trips) {
+        for (const Trip& trip : trips) {
             for (size_t i = 1; i < trip.stopEvents.size(); i++) {
                 if (trip.stopEvents[i - 1].stopId == trip.stopEvents[i].stopId) continue;
                 const size_t numEdges = result.numEdges();
