@@ -179,7 +179,13 @@ public:
 
     // Manipulation:
     inline void clear() noexcept {
+        beginOut.clear();
         vertexAttributes.clear();
+        edgeAttributes.clear();
+    }
+
+    inline void removeEdges() noexcept {
+        std::fill(beginOut.begin(), beginOut.end(), Edge(0));
         edgeAttributes.clear();
     }
 
