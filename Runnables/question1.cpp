@@ -9,7 +9,6 @@
 
 using namespace std;
 
-// Data structure to represent an edge
 struct Edge {
     int target;
     int weight;
