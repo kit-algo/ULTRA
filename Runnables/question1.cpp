@@ -1,5 +1,5 @@
 /* 
-
+   function Dijkstra();
    function readGraphFromFile(filename):
     graph = empty unordered_map
     open filename
@@ -10,14 +10,6 @@
     return graph
 
 */
-
-
-
-
-
-
-
-
 
 #pragma once
 
