@@ -1,3 +1,24 @@
+/* 
+
+   function readGraphFromFile(filename):
+    graph = empty unordered_map
+    open filename
+    for each line in filename:
+        read u, v, w from line
+        add {v, w} to graph[u]
+    close filename
+    return graph
+
+*/
+
+
+
+
+
+
+
+
+
 #pragma once
 
 #include <iostream>
