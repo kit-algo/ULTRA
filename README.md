@@ -39,7 +39,7 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
 * Explore the research work comprehensively through our dedicated YouTube playlist. This curated collection provides in-depth insights into the ULTRA project, covering its current status, future prospects, tool usage tutorials, and a holistic understanding of the research. For a detailed walkthrough and to become familiar with our work, refer to the [ULTRA Research Project Playlist](https://www.youtube.com/watch?v%253DLmKhB_EpwpI%2526list%253DPLKylawUbe40d6tInpese9KRFIDEMDcvFM%2526pp%253DiAQB). It's a valuable resource for open-source enthusiasts looking to contribute and engage with this research. 🎥🔍
 
   
-- **Video 1:[Public Transport Planning: Introduction](hqdefault.webp)**
+- **Video 1: Public Transport Planning: Introduction**
   - What makes a good public transport supply?
   - Exploring Pareto optimal solutions
   - Characteristics of public transport
