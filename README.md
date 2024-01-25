@@ -36,7 +36,7 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
 
 # Useful Links to get Familirise with the ULTRA
 
-* Explore the research work comprehensively through our dedicated YouTube playlist. This curated collection provides in-depth insights into the ULTRA project, covering its current status, future prospects, tool usage tutorials, and a holistic understanding of the research. For a detailed walkthrough and to become familiar with our work, refer to the [ULTRA Research Project Playlist](https://www.youtube.com/watch?v%253DLmKhB_EpwpI%2526list%253DPLKylawUbe40d6tInpese9KRFIDEMDcvFM%2526pp%253DiAQB). It's a valuable resource for open-source enthusiasts looking to contribute and engage with this research. 🎥🔍
+* Explore the research work comprehensively through our dedicated YouTube playlist. This curated collection provides in-depth insights into the ULTRA project, covering its current status, future prospects, tool usage tutorials, and a holistic understanding of the research. For a detailed walkthrough and to become familiar with our work, refer to the [ULTRA Research Project Playlist](https://www.youtube.com/watch?v%253DLmKhB_EpwpI%2526list%253DPLKylawUbe40d6tInpese9KRFIDEMDcvFM%2526pp%253DiAQB). It's a valuable resource for open-source enthusiasts looking to contribute and engage with this research.🎥🔍
 
   
 - **Video 1: [Public Transport Planning: Introduction](https://youtu.be/LmKhB_EpwpI?feature=shared)**
@@ -122,7 +122,7 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
 
 - **Video 12: [Multimodal Journey Planning](https://youtu.be/OsdFfOQGd6k?feature=shared)**
   - Exploring multimodal routing in Practice
-  - User-Constrained CH (UCCH) and Multimodal Multicriteria RAPTOR (MCR Algorithm)
+  - User-Constrained CH (UCCH) Algorithm qqand Multimodal Multicriteria RAPTOR (MCR Algorithm)
   - Fuzzy Dominance and Heuristic solutions
   - Experiments: London Example
   - Unlimited Walking Effects
