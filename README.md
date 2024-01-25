@@ -36,10 +36,10 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
 
 # Useful Links to get Familirise with the ULTRA
 
-* *Explore the research work comprehensively through our dedicated YouTube playlist. This curated collection provides in-depth insights into the ULTRA project, covering its current status, future prospects, tool usage tutorials, and a holistic understanding of the research. For a detailed walkthrough and to become familiar with our work, refer to the [ULTRA Research Project Playlist](https://www.youtube.com/watch?v%253DLmKhB_EpwpI%2526list%253DPLKylawUbe40d6tInpese9KRFIDEMDcvFM%2526pp%253DiAQB). It's a valuable resource for open-source enthusiasts looking to contribute and engage with this research. 🎥🔍
+* Explore the research work comprehensively through our dedicated YouTube playlist. This curated collection provides in-depth insights into the ULTRA project, covering its current status, future prospects, tool usage tutorials, and a holistic understanding of the research. For a detailed walkthrough and to become familiar with our work, refer to the [ULTRA Research Project Playlist](https://www.youtube.com/watch?v%253DLmKhB_EpwpI%2526list%253DPLKylawUbe40d6tInpese9KRFIDEMDcvFM%2526pp%253DiAQB). It's a valuable resource for open-source enthusiasts looking to contribute and engage with this research. 🎥🔍
 
   
-* - **Video 1: Public Transport Planning: Introduction**
+* **Video 1: Public Transport Planning: Introduction**
   - What makes a good public transport supply?
   - Exploring Pareto optimal solutions
   - Characteristics of public transport
@@ -81,8 +81,8 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   - Understanding the line concept
   - What Should we determine while Planning?
   - When is a Solution feasible?
-  - Cost Oriented Model – LP1
-	- Extended Cost Model – LP2
+  - Cost Oriented Model – LP1 
+  - Extended Cost Model – LP2
 	- Direct Travelers Model – LP3
 	- Travel Time Model – LP4
 
@@ -102,7 +102,7 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
 - **Video 10: Route Planning in Transport Network**
   - Basic/speed-up techniques in route planning
   - Algorithms: Dijkstra's Algorithm, Gole Directed Search
-  - Multi-Level Dijkstra’s Algorithm
+  - Multi-Level Dijkstra’s Algorithm 
 	- Extreme Search Space Reduction 
 	- Notion Of Nested Dissection
 
