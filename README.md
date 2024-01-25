@@ -33,6 +33,105 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   Dominik Bez, Jonas Sauer
   Accepted for publication at the 26th Workshop on Algorithm Engineering and Experiments (ALENEX'24)
 
+
+# Useful Links to get Familirise with the ULTRA
+
+* Explore the research work comprehensively through our dedicated YouTube playlist. This curated collection provides in-depth insights into the ULTRA project, covering its current status, future prospects, tool usage tutorials, and a holistic understanding of the research. For a detailed walkthrough and to become familiar with our work, refer to the [ULTRA Research Project Playlist](https://www.youtube.com/watch?v%253DLmKhB_EpwpI%2526list%253DPLKylawUbe40d6tInpese9KRFIDEMDcvFM%2526pp%253DiAQB). It's a valuable resource for open-source enthusiasts looking to contribute and engage with this research.🎥🔍
+
+  
+- **Video 1: [Public Transport Planning: Introduction](https://youtu.be/LmKhB_EpwpI?feature=shared)**
+  - What makes a good public transport supply?
+  - Exploring Pareto optimal solutions
+  - Characteristics of public transport
+  - Useful terminology
+
+- **Video 2: [Public Transport Planning: Data Models](https://youtu.be/vfPZBLH9XCo?feature=shared)**
+  - Public transport supply and demand
+  - Building graphs for network models
+  - Elements: links, stops, lines, timetables, blocks
+  - Introduction to Event Activity Network
+
+- **Video 3: [Travel Demand Modelling](https://youtu.be/6QT8M8YWVas?feature=shared)**
+  - Defining travel demand
+  - Demand Modelling
+  - The 4-stage algorithm
+  - Insights into trip balancing
+
+- **Video 4: [Public Transport Planning: Approach in Planning practice](https://youtu.be/tgxxUlIlyac?feature=shared)**
+  - Travel Demand Model demonstration
+  - Overview of planning approaches
+  - Line planning and timetabling in practice
+  - Operating costs and Express systems
+
+- **Video 5: [Modeling with Integer Variables](https://youtu.be/aZY41pkgthA?feature=shared)**
+  - Overview of modeling problems
+  - How to Model what we Understood
+  - Practical insights into modeling
+  - Shortest path problems
+  - Flow conservation
+  - Some Practical Remarks
+
+- **Video 6: [Introduction to LinTim](https://youtu.be/bgpx1nmgff0?feature=shared)**
+  - Unveiling LinTim: What is LinTim and its core functionalities
+  - Benefits of LinTim Integration for public transport planning
+  - Familiarizing with LinTim Software Toolbox
+  - Hands-on experience with LinTim: Practical insights into tool usage
+
+- **Video 7: [LinTim Line Planning](https://youtu.be/OJzMy7vNYR0?feature=shared)**
+  - Understanding the line concept
+  - What Should we determine while Planning?
+  - When is a Solution feasible?
+  - Cost Oriented Model – LP1 
+  - Extended Cost Model – LP2 
+  - Direct Travelers Model – LP3 
+  - Travel Time Model – LP4 
+
+- **Video 8: [LinTim Timetabling](https://youtu.be/jjQbSiPKcaw?feature=shared)**
+  - Modeling timetables in public transportation
+  - Introduction to Periodic Event Scheduling Problem (PESP)
+  - Properties of PESP
+  - Algorithm for timetabling with practical demonstrations
+
+- **Video 9: [LinTim Vehicle Scheduling](https://youtu.be/4zjA9HOpWbI?feature=shared)**
+  - Compatibility for trips 
+  - Vehicle Scheduling in public transportation
+  - Modeling vehicle scheduling as a flow problem
+  - Delay management, stop location, and tariff planning
+  - Scheduling Problems as integer problems 
+
+- **Video 10: [Route Planning in Transport Network](https://youtu.be/m9l0cra-5gY?feature=shared)**
+  - Basic/speed-up techniques in route planning
+  - Algorithms: Dijkstra's Algorithm, Gole Directed Search
+  - Multi-Level Dijkstra’s Algorithm
+  - Extreme Search Space Reduction 
+  - Notion Of Nested Dissection
+
+- **Video 11: [Journey Planning in Public Transit Networks](https://youtu.be/AdArDN4E6Hg?feature=shared)**
+  - Terminology
+  - How to Model the Timetable (2 Approaches)
+  - Time-expanded and Time-dependent approaches for Graph Modelling
+  - Query types and handling
+  - Working of Different variants of Dijkstra’s Algorithm 
+  - Connection Scan Algorithm and Pareto Set
+  - RAPTOR - Road Based Public Transit Optimizes Router
+  - Route Scanning
+  - McRAPTOR (More Citeria RAPTOR)
+  - rRAPTOR
+  - Comparison between Algorithms Performance
+
+
+- **Video 12: [Multimodal Journey Planning](https://youtu.be/OsdFfOQGd6k?feature=shared)**
+  - Exploring multimodal routing in Practice
+  - User-Constrained CH (UCCH) Algorithm qqand Multimodal Multicriteria RAPTOR (MCR Algorithm)
+  - Fuzzy Dominance and Heuristic solutions
+  - Experiments: London Example
+  - Unlimited Walking Effects
+  - Experiments: Switzerland Network
+  - Problem Setting
+  - Goal and Approaches
+  - Experiments: Switzerland Network (Preprocessing)
+  - Comparison between Algorithms Performance
+ 
 ## Usage
 Most preprocessing steps and query algorithms are provided in the console application ``ULTRA``. You can compile it with the ``Makefile`` in the ``Runnables`` folder. Type ``make ULTRARelease -B`` to compile in release mode. The following commands are available:
 
