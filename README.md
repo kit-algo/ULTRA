@@ -45,25 +45,25 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   - Characteristics of public transport
   - Useful terminology
 
-- **Video 2: Public Transport Planning: Data Models**
+- **Video 2: [Public Transport Planning: Data Models](https://youtu.be/vfPZBLH9XCo?feature=shared)**
   - Public transport supply and demand
   - Building graphs for network models
   - Elements: links, stops, lines, timetables, blocks
   - Introduction to Event Activity Network
 
-- **Video 3: Travel Demand Modelling**
+- **Video 3: [Travel Demand Modelling](https://youtu.be/6QT8M8YWVas?feature=shared)**
   - Defining travel demand
   - Demand Modelling
   - The 4-stage algorithm
   - Insights into trip balancing
 
-- **Video 4: Public Transport Planning: Approach in Planning practice**
+- **Video 4: [Public Transport Planning: Approach in Planning practice](https://youtu.be/tgxxUlIlyac?feature=shared)**
   - Travel Demand Model demonstration
   - Overview of planning approaches
   - Line planning and timetabling in practice
   - Operating costs and Express systems
 
-- **Video 5: Modeling with Integer Variables**
+- **Video 5: [Modeling with Integer Variables](https://youtu.be/aZY41pkgthA?feature=shared)**
   - Overview of modeling problems
   - How to Model what we Understood
   - Practical insights into modeling
@@ -71,13 +71,13 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   - Flow conservation
   - Some Practical Remarks
 
-- **Video 6: Introduction to LinTim**
+- **Video 6: [Introduction to LinTim](https://youtu.be/bgpx1nmgff0?feature=shared)**
   - Unveiling LinTim: What is LinTim and its core functionalities
   - Benefits of LinTim Integration for public transport planning
   - Familiarizing with LinTim Software Toolbox
   - Hands-on experience with LinTim: Practical insights into tool usage
 
-- **Video 7: LinTim Planning**
+- **Video 7: [LinTim Line Planning](https://youtu.be/OJzMy7vNYR0?feature=shared)**
   - Understanding the line concept
   - What Should we determine while Planning?
   - When is a Solution feasible?
@@ -86,27 +86,27 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   - Direct Travelers Model – LP3 
   - Travel Time Model – LP4 
 
-- **Video 8: LinTim Timetabling**
+- **Video 8: [LinTim Timetabling](https://youtu.be/jjQbSiPKcaw?feature=shared)**
   - Modeling timetables in public transportation
   - Introduction to Periodic Event Scheduling Problem (PESP)
   - Properties of PESP
   - Algorithm for timetabling with practical demonstrations
 
-- **Video 9: LinTim Vehicle Scheduling**
+- **Video 9: [LinTim Vehicle Scheduling](https://youtu.be/4zjA9HOpWbI?feature=shared)**
   - Compatibility for trips 
   - Vehicle Scheduling in public transportation
   - Modeling vehicle scheduling as a flow problem
   - Delay management, stop location, and tariff planning
   - Scheduling Problems as integer problems 
 
-- **Video 10: Route Planning in Transport Network**
+- **Video 10: [Route Planning in Transport Network](https://youtu.be/m9l0cra-5gY?feature=shared)**
   - Basic/speed-up techniques in route planning
   - Algorithms: Dijkstra's Algorithm, Gole Directed Search
   - Multi-Level Dijkstra’s Algorithm
   - Extreme Search Space Reduction 
   - Notion Of Nested Dissection
 
-- **Video 11: Journey Planning in Public Transit Networks**
+- **Video 11: [Journey Planning in Public Transit Networks](https://youtu.be/AdArDN4E6Hg?feature=shared)**
   - Terminology
   - How to Model the Timetable (2 Approaches)
   - Time-expanded and Time-dependent approaches for Graph Modelling
@@ -120,7 +120,7 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks c
   - Comparison between Algorithms Performance
 
 
-- **Video 12: Multimodal Journey Planning**
+- **Video 12: [Multimodal Journey Planning](https://youtu.be/OsdFfOQGd6k?feature=shared)**
   - Exploring multimodal routing in Practice
   - User-Constrained CH (UCCH) and Multimodal Multicriteria RAPTOR (MCR Algorithm)
   - Fuzzy Dominance and Heuristic solutions
