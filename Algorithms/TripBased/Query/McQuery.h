@@ -172,7 +172,7 @@ private:
         std::vector<bool> reachedRoutes(data.numberOfRoutes(), false);
         for (const Vertex stop : bucketQuery.getForwardPOIs()) {
             for (const RAPTOR::RouteSegment& route : data.routesContainingStop(StopId(stop))) {
-                reachedRoutes[route.routeId] = true;
+                reachedRoutes[route.getRouteId()] = true;
             }
         }
         for (const RouteId route : data.routes()) {

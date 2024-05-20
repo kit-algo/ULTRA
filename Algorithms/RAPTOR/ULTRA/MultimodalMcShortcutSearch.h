@@ -487,7 +487,7 @@ public:
         RouteSegment route;
         int departureTime;
         inline bool operator<(const DepartureLabel& other) const noexcept {
-            return (departureTime > other.departureTime) || ((departureTime == other.departureTime) && (route.routeId < other.route.routeId));
+            return (departureTime > other.departureTime) || ((departureTime == other.departureTime) && (route.getRouteId() < other.route.getRouteId()));
         }
     };
 
@@ -625,7 +625,7 @@ private:
         sort(departureLabels);
         std::vector<ConsolidatedDepartureLabel> result(1);
         for (const DepartureLabel& label : departureLabels) {
-            if (label.route.routeId == noRouteId) {
+            if (label.route.getRouteId() == noRouteId) {
                 if (label.departureTime == result.back().departureTime) continue;
                 result.back().departureTime = label.departureTime;
                 result.emplace_back(label.departureTime);
@@ -667,13 +667,13 @@ private:
 
     inline void collectRoutes1(const std::vector<RouteSegment>& routes) noexcept {
         for (const RouteSegment& route : routes) {
-            AssertMsg(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-            AssertMsg(route.stopIndex + 1 < data.numberOfStopsInRoute(route.routeId), "RouteSegment " << route << " is not a departure event!");
-            AssertMsg(data.lastTripOfRoute(route.routeId)[route.stopIndex].departureTime >= initialArrivalTime(data.stopOfRouteSegment(route)), "RouteSegment " << route << " is not reachable!");
-            if (routesServingUpdatedStops.contains(route.routeId)) {
-                routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
+            AssertMsg(data.isRoute(route.getRouteId()), "Route " << route.getRouteId() << " is out of range!");
+            AssertMsg(route.getStopIndex() + 1 < data.numberOfStopsInRoute(route.getRouteId()), "RouteSegment " << route << " is not a departure event!");
+            AssertMsg(data.lastTripOfRoute(route.getRouteId())[route.getStopIndex()].departureTime >= initialArrivalTime(data.stopOfRouteSegment(route)), "RouteSegment " << route << " is not reachable!");
+            if (routesServingUpdatedStops.contains(route.getRouteId())) {
+                routesServingUpdatedStops[route.getRouteId()] = std::min(routesServingUpdatedStops[route.getRouteId()], route.getStopIndex());
             } else {
-                routesServingUpdatedStops.insert(route.routeId, route.stopIndex);
+                routesServingUpdatedStops.insert(route.getRouteId(), route.getStopIndex());
             }
         }
         AssertMsg(routesServingUpdatedStops.isSortedByKeys(), "Collected route segments are not sorted!");
@@ -682,13 +682,13 @@ private:
     inline void collectRoutes2() noexcept {
         for (const StopId stop : stopsUpdatedByTransfer) {
             for (const RouteSegment& route : data.routesContainingStop(stop)) {
-                AssertMsg(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-                AssertMsg(data.stopIds[data.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
-                if (route.stopIndex + 1 == data.numberOfStopsInRoute(route.routeId)) continue;
-                if (routesServingUpdatedStops.contains(route.routeId)) {
-                    routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
+                AssertMsg(data.isRoute(route.getRouteId()), "Route " << route.getRouteId() << " is out of range!");
+                AssertMsg(data.stopIds[data.firstStopIdOfRoute[route.getRouteId()] + route.getStopIndex()] == stop, "RAPTOR data contains invalid route segments!");
+                if (route.getStopIndex() + 1 == data.numberOfStopsInRoute(route.getRouteId())) continue;
+                if (routesServingUpdatedStops.contains(route.getRouteId())) {
+                    routesServingUpdatedStops[route.getRouteId()] = std::min(routesServingUpdatedStops[route.getRouteId()], route.getStopIndex());
                 } else {
-                    routesServingUpdatedStops.insert(route.routeId, route.stopIndex);
+                    routesServingUpdatedStops.insert(route.getRouteId(), route.getStopIndex());
                 }
             }
         }
@@ -1170,3 +1170,4 @@ private:
 };
 
 }
+

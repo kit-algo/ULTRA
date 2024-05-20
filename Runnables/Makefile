@@ -1,6 +1,6 @@
 CC=g++ -fopenmp
 FLAGS=-std=c++17 -pipe
-OPTIMIZATION=-march=native -O3
+OPTIMIZATION=-march=native -O3 -DENABLE_PREFETCH -DUSE_SMALLER_ROUTE_SEG
 DEBUG=-rdynamic -Werror -Wpedantic -pedantic-errors -Wall -Wextra -Wparentheses -Wfatal-errors -D_GLIBCXX_DEBUG -g -fno-omit-frame-pointer
 RELEASE=-ffast-math -ftree-vectorize -Wfatal-errors -DNDEBUG
 

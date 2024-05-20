@@ -150,7 +150,7 @@ private:
             for (const RAPTOR::RouteSegment& segment : data.routesContainingStop(StopId(stop))) {
                 const TripId trip = data.getEarliestTrip(segment, stopDepartureTime);
                 if (trip != noTripId) {
-                    enqueue(trip, StopIndex(segment.stopIndex + 1));
+                    enqueue(trip, StopIndex(segment.getStopIndex() + 1));
                 }
             }
         }

@@ -163,20 +163,20 @@ public:
     }
 
     inline TripId getEarliestTripLinear(const RAPTOR::RouteSegment& route, const int time) const noexcept {
-        if (route.stopIndex + 1 == raptorData.numberOfStopsInRoute(route.routeId)) return noTripId;
-        if (raptorData.lastTripOfRoute(route.routeId)[route.stopIndex].departureTime < time) return noTripId;
-        for (const TripId trip : tripsOfRoute(route.routeId)) {
-            if (getStopEvent(trip, route.stopIndex).departureTime >= time) return trip;
+        if (route.getStopIndex() + 1 == raptorData.numberOfStopsInRoute(route.getRouteId())) return noTripId;
+        if (raptorData.lastTripOfRoute(route.getRouteId())[route.getStopIndex()].departureTime < time) return noTripId;
+        for (const TripId trip : tripsOfRoute(route.getRouteId())) {
+            if (getStopEvent(trip, route.getStopIndex()).departureTime >= time) return trip;
         }
         return noTripId;
     }
 
     inline TripId getEarliestTripBinary(const RAPTOR::RouteSegment& route, const int time) const noexcept {
-        if (route.stopIndex + 1 == raptorData.numberOfStopsInRoute(route.routeId)) return noTripId;
-        const TripId trip = std::lower_bound(firstTripOfRoute[route.routeId], firstTripOfRoute[route.routeId + 1], time, [&](const TripId trip, const int time) {
-            return getStopEvent(trip, route.stopIndex).departureTime < time;
+        if (route.getStopIndex() + 1 == raptorData.numberOfStopsInRoute(route.getRouteId())) return noTripId;
+        const TripId trip = std::lower_bound(firstTripOfRoute[route.getRouteId()], firstTripOfRoute[route.getRouteId() + 1], time, [&](const TripId trip, const int time) {
+            return getStopEvent(trip, route.getStopIndex()).departureTime < time;
         });
-        if (trip < firstTripOfRoute[route.routeId + 1]) return trip;
+        if (trip < firstTripOfRoute[route.getRouteId() + 1]) return trip;
         return noTripId;
     }
 

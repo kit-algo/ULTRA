@@ -775,6 +775,12 @@ public:
         return true;
     }
 
+    inline void prefetchBeginOut(const Vertex vertex) const noexcept {
+        AssertMsg(isVertex(vertex), "Vertex is not valid!");
+
+        __builtin_prefetch(&beginOut[vertex]);
+    }
+
 private:
     std::vector<Edge> beginOut;
     VertexAttributes vertexAttributes;

@@ -159,6 +159,13 @@ private:
 
     inline void scanConnections(const ConnectionId begin, const ConnectionId end) noexcept {
         for (ConnectionId i = begin; i < end; i++) {
+            #ifdef ENABLE_PREFETCH
+            if (i + 4 < end) {
+                __builtin_prefetch(&data.connections[i + 4]);
+                data.transferGraph.prefetchBeginOut(data.connections[i + 4].arrivalStopId);
+            }
+            #endif
+            
             const Connection& connection = data.connections[i];
             if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) break;
             if (connectionIsReachable(connection, i)) {
@@ -258,3 +265,4 @@ private:
 
 };
 }
+

@@ -124,7 +124,7 @@ public:
         AssertMsg(isStop(stop), "The id " << stop << " does not represent a stop!");
         int result = 0;
         for (const RouteSegment& route : routesContainingStop(stop)) {
-            result += numberOfTripsInRoute(route.routeId);
+            result += numberOfTripsInRoute(route.getRouteId());
         }
         return result;
     }
@@ -186,8 +186,8 @@ public:
     }
 
     inline StopId stopOfRouteSegment(const RouteSegment& route) const noexcept {
-        AssertMsg(isRoute(route.routeId), "The id " << route.routeId << " does not represent a route!");
-        return stopIds[firstStopIdOfRoute[route.routeId] + route.stopIndex];
+        AssertMsg(isRoute(route.getRouteId()), "The id " << route.getRouteId() << " does not represent a route!");
+        return stopIds[firstStopIdOfRoute[route.getRouteId()] + route.getStopIndex()];
     }
 
     inline const StopEvent* firstTripOfRoute(const RouteId route) const noexcept {
@@ -231,7 +231,7 @@ public:
     }
 
     inline TripIterator getTripIterator(const RouteSegment& route) const noexcept {
-        return getTripIterator(route.routeId, route.stopIndex);
+        return getTripIterator(route.getRouteId(), route.getStopIndex());
     }
 
     inline std::vector<const StopEvent*> getLastTripByStopIndex() const noexcept {
@@ -330,12 +330,12 @@ public:
     }
 
     inline double maxRouteDistance(const RouteSegment& route) const noexcept {
-        AssertMsg(isRoute(route.routeId), "The id " << route << " does not represent a route!");
+        AssertMsg(isRoute(route.getRouteId()), "The id " << route << " does not represent a route!");
         double maxDist = 0;
-        const StopId* stops = stopArrayOfRoute(route.routeId);
-        const size_t tripSize = numberOfStopsInRoute(route.routeId);
-        for (size_t stopIndex = route.stopIndex + 1; stopIndex < tripSize; stopIndex++) {
-            const double dist = geoDistanceInCM(stopData[stops[route.stopIndex]].coordinates, stopData[stops[stopIndex]].coordinates) / 100000.0;
+        const StopId* stops = stopArrayOfRoute(route.getRouteId());
+        const size_t tripSize = numberOfStopsInRoute(route.getRouteId());
+        for (size_t stopIndex = route.getStopIndex() + 1; stopIndex < tripSize; stopIndex++) {
+            const double dist = geoDistanceInCM(stopData[stops[route.getStopIndex()]].coordinates, stopData[stops[stopIndex]].coordinates) / 100000.0;
             if (maxDist >= dist) continue;
             maxDist = dist;
         }
@@ -343,13 +343,13 @@ public:
     }
 
     inline double maxRouteSpeed(const RouteSegment& route) const noexcept {
-        AssertMsg(isRoute(route.routeId), "The id " << route << " does not represent a route!");
+        AssertMsg(isRoute(route.getRouteId()), "The id " << route << " does not represent a route!");
         double maxSpeed = 0;
-        const StopId* stops = stopArrayOfRoute(route.routeId);
-        const size_t tripSize = numberOfStopsInRoute(route.routeId);
-        for (const StopEvent* trip = firstTripOfRoute(route.routeId); trip <= lastTripOfRoute(route.routeId); trip += tripSize) {
-            for (size_t stopIndex = route.stopIndex + 1; stopIndex < tripSize; stopIndex++) {
-                const double speed = geoDistanceInCM(stopData[stops[route.stopIndex]].coordinates, stopData[stops[stopIndex]].coordinates) / (100000.0 * (trip[stopIndex].arrivalTime - trip[route.stopIndex].departureTime));
+        const StopId* stops = stopArrayOfRoute(route.getRouteId());
+        const size_t tripSize = numberOfStopsInRoute(route.getRouteId());
+        for (const StopEvent* trip = firstTripOfRoute(route.getRouteId()); trip <= lastTripOfRoute(route.getRouteId()); trip += tripSize) {
+            for (size_t stopIndex = route.getStopIndex() + 1; stopIndex < tripSize; stopIndex++) {
+                const double speed = geoDistanceInCM(stopData[stops[route.getStopIndex()]].coordinates, stopData[stops[stopIndex]].coordinates) / (100000.0 * (trip[stopIndex].arrivalTime - trip[route.getStopIndex()].departureTime));
                 if (maxSpeed >= speed) continue;
                 maxSpeed = speed;
             }
@@ -358,14 +358,14 @@ public:
     }
 
     inline double maxRouteSpeedTimesDistance(const RouteSegment& route) const noexcept {
-        AssertMsg(isRoute(route.routeId), "The id " << route << " does not represent a route!");
+        AssertMsg(isRoute(route.getRouteId()), "The id " << route << " does not represent a route!");
         double maxSpeedTimesDistance = 0;
-        const StopId* stops = stopArrayOfRoute(route.routeId);
-        const size_t tripSize = numberOfStopsInRoute(route.routeId);
-        for (const StopEvent* trip = firstTripOfRoute(route.routeId); trip <= lastTripOfRoute(route.routeId); trip += tripSize) {
-            for (size_t stopIndex = route.stopIndex + 1; stopIndex < tripSize; stopIndex++) {
-                const double dist = geoDistanceInCM(stopData[stops[route.stopIndex]].coordinates, stopData[stops[stopIndex]].coordinates) / 100000.0;
-                const double speedTimesDist = dist * dist / (trip[stopIndex].arrivalTime - trip[route.stopIndex].departureTime);
+        const StopId* stops = stopArrayOfRoute(route.getRouteId());
+        const size_t tripSize = numberOfStopsInRoute(route.getRouteId());
+        for (const StopEvent* trip = firstTripOfRoute(route.getRouteId()); trip <= lastTripOfRoute(route.getRouteId()); trip += tripSize) {
+            for (size_t stopIndex = route.getStopIndex() + 1; stopIndex < tripSize; stopIndex++) {
+                const double dist = geoDistanceInCM(stopData[stops[route.getStopIndex()]].coordinates, stopData[stops[stopIndex]].coordinates) / 100000.0;
+                const double speedTimesDist = dist * dist / (trip[stopIndex].arrivalTime - trip[route.getStopIndex()].departureTime);
                 if (maxSpeedTimesDistance >= speedTimesDist) continue;
                 maxSpeedTimesDistance = speedTimesDist;
             }
@@ -468,7 +468,7 @@ public:
         result.firstStopIdOfRoute = firstStopIdOfRoute;
         result.firstStopEventOfRoute = firstStopEventOfRoute;
         for (const RouteSegment routeSegment : routeSegments) {
-            result.routeSegments.emplace_back(routeSegment.routeId, StopIndex(numberOfStopsInRoute(routeSegment.routeId) - routeSegment.stopIndex - 1));
+            result.routeSegments.emplace_back(routeSegment.getRouteId(), StopIndex(numberOfStopsInRoute(routeSegment.getRouteId()) - routeSegment.getStopIndex() - 1));
         }
         for (const RouteId route : routes()) {
             for (size_t i = 0; i < numberOfStopsInRoute(route); i++) {

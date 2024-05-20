@@ -207,7 +207,7 @@ private:
             addTargetLabel(label);
         }
     }
-
+    
     inline void evaluateInitialTransfers() noexcept {
         for (const Vertex stop : bucketQuery.getForwardPOIs()) {
             const int timeFromSource = bucketQuery.getForwardDistance(stop);
@@ -217,7 +217,7 @@ private:
             for (const RAPTOR::RouteSegment& segment : data.routesContainingStop(StopId(stop))) {
                 const TripId trip = data.getEarliestTrip(segment, stopDepartureTime);
                 if (trip != noTripId) {
-                    enqueue(trip, StopIndex(segment.stopIndex + 1), timeFromSource);
+                    enqueue(trip, StopIndex(segment.getStopIndex() + 1), timeFromSource);
                 }
             }
         }
