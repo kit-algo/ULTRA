@@ -19,7 +19,11 @@ using StopId = DependentTaggedInteger<2, Vertex>;
 constexpr StopId noStop(StopId::InvalidValue);
 
 using RouteId = TaggedInteger<3, u_int32_t, -u_int32_t(1)>;
+#ifdef USE_SMALLER_ROUTE_SEG
+constexpr RouteId noRouteId((1<<24)-1);
+#else
 constexpr RouteId noRouteId(RouteId::InvalidValue);
+#endif
 
 using TripId = TaggedInteger<4, u_int32_t, -u_int32_t(1)>;
 constexpr TripId noTripId(TripId::InvalidValue);

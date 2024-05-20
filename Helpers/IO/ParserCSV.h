@@ -39,7 +39,12 @@ struct WithFileName {
     WithFileName() {std::memset(fileName, 0, MAX_FILE_NAME_LENGTH + 1);}
 
     void setFileName(const char* fileName) {
+// https://stackoverflow.com/a/50198710
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
         std::strncpy(this->fileName, fileName, MAX_FILE_NAME_LENGTH);
+#pragma GCC diagnostic pop
+ 
         this->fileName[MAX_FILE_NAME_LENGTH] = '\0';
     }
 

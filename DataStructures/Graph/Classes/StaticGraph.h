@@ -179,7 +179,13 @@ public:
 
     // Manipulation:
     inline void clear() noexcept {
+        beginOut.clear();
         vertexAttributes.clear();
+        edgeAttributes.clear();
+    }
+
+    inline void removeEdges() noexcept {
+        std::fill(beginOut.begin(), beginOut.end(), Edge(0));
         edgeAttributes.clear();
     }
 
@@ -511,6 +517,26 @@ public:
     }
 
     // IO:
+    inline void serialize(IO::Serialization& serialize) const {
+        serialize(beginOut, vertexAttributes, edgeAttributes);
+    }
+
+    inline void deserialize(IO::Deserialization& deserialize) {
+        clear();
+        deserialize(beginOut, vertexAttributes, edgeAttributes);
+        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+    }
+
+    inline void serialize(const std::string& fileName) const {
+        IO::serialize(fileName, beginOut, vertexAttributes, edgeAttributes);
+    }
+
+    inline void deserialize(const std::string& fileName) {
+        clear();
+        IO::deserialize(fileName, beginOut, vertexAttributes, edgeAttributes);
+        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+    }
+
     inline void writeBinary(const std::string& fileName, const std::string& separator = ".") const noexcept {
         IO::serialize(fileName + separator + "beginOut", beginOut);
         vertexAttributes.serialize(fileName, separator);
@@ -747,6 +773,12 @@ public:
             }
         }
         return true;
+    }
+
+    inline void prefetchBeginOut(const Vertex vertex) const noexcept {
+        AssertMsg(isVertex(vertex), "Vertex is not valid!");
+
+        __builtin_prefetch(&beginOut[vertex]);
     }
 
 private:

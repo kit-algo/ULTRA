@@ -111,6 +111,12 @@ public:
 
     inline void reduceTransfers(const TripId trip) noexcept {
         timestamp++;
+
+        if (timestamp == 0) {
+            labels.clear();
+            labels.resize(data.numberOfStops());
+        }
+
         const StopId* stops = data.stopArrayOfTrip(trip);
         for (StopIndex i = StopIndex(data.numberOfStopsInTrip(trip) - 1); i > 0; i--) {
             const int arrivalTime = data.getStopEvent(trip, i).arrivalTime;
@@ -188,14 +194,14 @@ private:
         for (StopIndex i(data.numberOfStopsInRoute(fromRoute) - 1); i > 0; i--) {
             const StopId fromStop = stops[i];
             for (const RAPTOR::RouteSegment& toSegment : data.raptorData.routesContainingStop(fromStop)) {
-                if (toSegment.routeId == fromRoute && toSegment.stopIndex == i) continue;
-                routeTransfers.emplace_back(toSegment.routeId, i, toSegment.stopIndex, 0);
+                if (toSegment.getRouteId() == fromRoute && toSegment.getStopIndex() == i) continue;
+                routeTransfers.emplace_back(toSegment.getRouteId(), i, toSegment.getStopIndex(), 0);
             }
             for (const Edge edge : data.raptorData.transferGraph.edgesFrom(fromStop)) {
                 const StopId toStop = StopId(data.raptorData.transferGraph.get(ToVertex, edge));
                 const int transferTime = data.raptorData.transferGraph.get(TravelTime, edge);
                 for (const RAPTOR::RouteSegment& toRouteSegment : data.raptorData.routesContainingStop(toStop)) {
-                    routeTransfers.emplace_back(toRouteSegment.routeId, i, toRouteSegment.stopIndex, transferTime);
+                    routeTransfers.emplace_back(toRouteSegment.getRouteId(), i, toRouteSegment.getStopIndex(), transferTime);
                 }
             }
         }
@@ -208,10 +214,10 @@ private:
         for (const RAPTOR::RouteSegment& toSegment : data.raptorData.routesContainingStop(toStop)) {
             const TripId toTrip = data.getEarliestTrip(toSegment, toArrivalTime);
             if (toTrip == noTripId) continue;
-            if ((toSegment.routeId == fromRoute) && (toTrip >= fromTrip) && (toSegment.stopIndex >= fromIndex)) continue;
-            if (isUTurn(fromTrip, fromIndex, toTrip, toSegment.stopIndex)) continue;
+            if ((toSegment.getRouteId() == fromRoute) && (toTrip >= fromTrip) && (toSegment.getStopIndex() >= fromIndex)) continue;
+            if (isUTurn(fromTrip, fromIndex, toTrip, toSegment.getStopIndex())) continue;
             const Vertex fromVertex = Vertex(data.getStopEventId(fromTrip, fromIndex));
-            const Vertex toVertex = Vertex(data.getStopEventId(toTrip, toSegment.stopIndex));
+            const Vertex toVertex = Vertex(data.getStopEventId(toTrip, toSegment.getStopIndex()));
             generatedTransfers.addEdge(fromVertex, toVertex);
         }
     }
@@ -338,3 +344,4 @@ inline void ComputeStopEventGraphRouteBased(Data& data, const int numberOfThread
 }
 
 }
+

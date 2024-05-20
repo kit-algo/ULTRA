@@ -441,13 +441,13 @@ private:
     inline void collectRoutesServingUpdatedStops() noexcept {
         for (const StopId stop : stopsUpdatedByTransfer) {
             for (const RouteSegment& route : raptorData.routesContainingStop(stop)) {
-                AssertMsg(raptorData.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-                AssertMsg(raptorData.stopIds[raptorData.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
-                if (route.stopIndex + 1 == raptorData.numberOfStopsInRoute(route.routeId)) continue;
-                if (routesServingUpdatedStops.contains(route.routeId)) {
-                    routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
+                AssertMsg(raptorData.isRoute(route.getRouteId()), "Route " << route.getRouteId() << " is out of range!");
+                AssertMsg(raptorData.stopIds[raptorData.firstStopIdOfRoute[route.getRouteId()] + route.getStopIndex()] == stop, "RAPTOR data contains invalid route segments!");
+                if (route.getStopIndex() + 1 == raptorData.numberOfStopsInRoute(route.getRouteId())) continue;
+                if (routesServingUpdatedStops.contains(route.getRouteId())) {
+                    routesServingUpdatedStops[route.getRouteId()] = std::min(routesServingUpdatedStops[route.getRouteId()], route.getStopIndex());
                 } else {
-                    routesServingUpdatedStops.insert(route.routeId, route.stopIndex);
+                    routesServingUpdatedStops.insert(route.getRouteId(), route.getStopIndex());
                 }
             }
         }
