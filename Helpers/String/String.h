@@ -8,7 +8,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <iostream>
-#include <limits.h>
+#include <climits>
 #include <algorithm>
 
 #include "../Assert.h"
@@ -174,7 +174,7 @@ namespace String {
     }
 
     inline bool isWhiteSpace(const char c) {
-        return (c == ' ') || (c == '\t') || (c == '\n');
+        return (c == ' ') || (c == '\t') || (c == '\n') || (c == '\r');
     }
 
     inline bool isDigit(const char c) {
@@ -560,4 +560,11 @@ namespace String {
         return ss.str();
     }
 
+    inline std::string ensureFileExtension(const std::string& fileName, const std::string& extension) noexcept {
+        if (endsWith(fileName, extension)) {
+            return fileName;
+        } else {
+            return fileName + extension;
+        }
+    }
 }

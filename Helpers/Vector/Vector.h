@@ -5,8 +5,9 @@
 #include <vector>
 #include <string>
 #include <limits>
+#include <concepts>
+#include <cmath>
 
-#include "../Meta.h"
 #include "../Helpers.h"
 #include "../Assert.h"
 
@@ -61,15 +62,6 @@ namespace Vector {
         return a;
     }
 
-    template<typename T>
-    inline T& remove(T& array, size_t index) {
-        Assert(index >= 0);
-        Assert(index < array.size());
-        array[index] = array.back();
-        array.pop_back();
-        return array;
-    }
-
     template<typename T, typename FUNCTION>
     inline void removeIf(std::vector<T>& container, const FUNCTION& condition) noexcept {
         container.erase(std::remove_if(container.begin(), container.end(), condition), container.end());
@@ -77,14 +69,14 @@ namespace Vector {
 
     template<typename T, typename FUNCTION>
     inline void removeIf(std::vector<T>& container, const size_t beginIndex, const FUNCTION& condition) noexcept {
-        AssertMsg(beginIndex < container.size(), "Index " << beginIndex << " is out of bounds! (" << container.size() << ")");
+        Assert(beginIndex < container.size(), "Index " << beginIndex << " is out of bounds! (" << container.size() << ")");
         container.erase(std::remove_if(container.begin() + beginIndex, container.end(), condition), container.end());
     }
 
     template<typename T, typename FUNCTION>
     inline void removeIf(std::vector<T>& container, const size_t beginIndex, const size_t endIndex, const FUNCTION& condition) noexcept {
-        AssertMsg(beginIndex < container.size(), "Index " << beginIndex << " is out of bounds! (" << container.size() << ")");
-        AssertMsg(endIndex <= container.size(), "Index " << endIndex << " is out of bounds! (" << container.size() << ")");
+        Assert(beginIndex < container.size(), "Index " << beginIndex << " is out of bounds! (" << container.size() << ")");
+        Assert(endIndex <= container.size(), "Index " << endIndex << " is out of bounds! (" << container.size() << ")");
         container.erase(std::remove_if(container.begin() + beginIndex, container.begin() + endIndex, condition), container.begin() + endIndex);
     }
 
@@ -152,8 +144,8 @@ namespace Vector {
     template<typename T>
     inline std::vector<T> sortedIntersection(const std::vector<T>& a, const std::vector<T>& b) noexcept {
         std::vector<T> result;
-        AssertMsg(isSorted(a), "First vector is not sorted!");
-        AssertMsg(isSorted(b), "Second vector is not sorted!");
+        Assert(isSorted(a), "First vector is not sorted!");
+        Assert(isSorted(b), "Second vector is not sorted!");
         std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result));
         return result;
     }
@@ -161,21 +153,21 @@ namespace Vector {
     template<typename T>
     inline std::vector<T> sortedUnion(const std::vector<T>& a, const std::vector<T>& b) noexcept {
         std::vector<T> result;
-        AssertMsg(isSorted(a), "First vector is not sorted!");
-        AssertMsg(isSorted(b), "Second vector is not sorted!");
+        Assert(isSorted(a), "First vector is not sorted!");
+        Assert(isSorted(b), "Second vector is not sorted!");
         std::set_union(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result));
         return result;
     }
 
     template<typename T, typename U, typename COMPARE>
     inline size_t lowerBound(const std::vector<T>& vec, const U& val, const COMPARE& compare) noexcept {
-        AssertMsg(isSorted(vec), "Vector is not sorted!");
+        Assert(isSorted(vec), "Vector is not sorted!");
         return std::lower_bound(vec.begin(), vec.end(), val, compare) - vec.begin();
     }
 
     template<typename T, typename U, typename COMPARE>
     inline size_t upperBound(const std::vector<T>& vec, const U& val, const COMPARE& compare) noexcept {
-        AssertMsg(isSorted(vec), "Vector is not sorted!");
+        Assert(isSorted(vec), "Vector is not sorted!");
         return std::upper_bound(vec.begin(), vec.end(), val, compare) - vec.begin();
     }
 
@@ -215,7 +207,7 @@ namespace Vector {
 
     template<typename T, typename LESS>
     inline T max(const std::vector<T>& vec, const LESS& less) {
-        Assert(!vec.empty());
+        Assert(!vec.empty(), "Vector is empty!");
         T result = vec.front();
         for (const T& element : vec) {
             if (less(result, element)) result = element;
@@ -225,7 +217,7 @@ namespace Vector {
 
     template<typename T, typename LESS>
     inline T min(const std::vector<T>& vec, const LESS& less) {
-        Assert(!vec.empty());
+        Assert(!vec.empty(), "Vector is empty!");
         T result = vec.front();
         for (const T& element : vec) {
             if (less(element, result)) result = element;
@@ -245,7 +237,7 @@ namespace Vector {
 
     template<typename T, typename LESS>
     inline std::array<T, 2> twoSmallestValues(const std::vector<T>& vec, const LESS& less) {
-        Assert(!vec.empty());
+        Assert(!vec.empty(), "Vector is empty!");
         std::array<T, 2> result{std::numeric_limits<T>::max(), std::numeric_limits<T>::max()};
         for (const T& element : vec) {
             if (less(element, result[1])) {
@@ -312,9 +304,9 @@ namespace Vector {
 
     template<typename T, typename EVALUATE>
     inline double percentile(const std::vector<T>& sortedData, const double p, const EVALUATE& evaluate) noexcept {
-        AssertMsg(!sortedData.empty(), "Percentile is not defined for empty data sets!");
-        AssertMsg(p >= 0, "Percentile cannot be negative!");
-        AssertMsg(p <= 1, "Percentile cannot be greater than one!");
+        Assert(!sortedData.empty(), "Percentile is not defined for empty data sets!");
+        Assert(p >= 0, "Percentile cannot be negative!");
+        Assert(p <= 1, "Percentile cannot be greater than one!");
         if (sortedData.size() == 1) return evaluate(sortedData.front());
         const double index = (sortedData.size() - 1) * p;
         const size_t lowerIndex = index;
@@ -346,12 +338,12 @@ namespace Vector {
         std::fill(vector.begin(), vector.end(), value);
     }
 
-    template<typename T, typename U, typename = std::enable_if_t<!Meta::Equals<T, U>()>>
+    template<typename T, typename U> requires (!std::same_as<T, U>)
     inline void assign(std::vector<T>& to, const std::vector<U>& from) noexcept {
         to.clear();
         to.reserve(from.size());
         for (const U& u : from) {
-            to.push_back(u);
+            to.emplace_back(u);
         }
     }
 
@@ -433,7 +425,7 @@ namespace Vector {
     }
 
     inline double difference(const std::vector<bool>& firstVector, const std::vector<bool>& secondVector) noexcept {
-        AssertMsg(firstVector.size() == secondVector.size(), "Vectors have different sizes!");
+        Assert(firstVector.size() == secondVector.size(), "Vectors have different sizes!");
         if (firstVector.size() != secondVector.size()) return -1;
         size_t common = 1;
         size_t different = 0;

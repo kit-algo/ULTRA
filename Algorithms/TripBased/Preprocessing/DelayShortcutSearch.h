@@ -7,12 +7,11 @@
 #include "../../Dijkstra/Dijkstra.h"
 #include "../Query/ReachedIndex.h"
 
-#include "../../../Helpers/Meta.h"
 #include "../../../Helpers/Helpers.h"
 #include "../../../Helpers/Vector/Vector.h"
 
 #include "../../../DataStructures/Container/Map.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 #include "../../../DataStructures/Container/ExternalKHeap.h"
 #include "../../../DataStructures/RAPTOR/Data.h"
 #include "../../../DataStructures/TripBased/Data.h"
@@ -184,7 +183,7 @@ public:
         arrivalDelayBuffer(arrivalDelayBuffer),
         departureDelayBuffer(departureDelayBuffer),
         shortcuts(shortcuts) {
-        AssertMsg(data.hasImplicitBufferTimes(), "Shortcut search requires implicit departure buffer times!");
+        Assert(data.hasImplicitBufferTimes(), "Shortcut search requires implicit departure buffer times!");
         Dijkstra<TransferGraph, false> dijkstra(data.transferGraph);
         for (const StopId stop : data.stops()) {
             dijkstra.run(stop, noVertex, [&](const Vertex u) {
@@ -197,7 +196,7 @@ public:
     }
 
     inline void run(const StopId source, const int minTime, const int maxTime) noexcept {
-        AssertMsg(data.isStop(source), "source (" << source << ") is not a stop!");
+        Assert(data.isStop(source), "source (" << source << ") is not a stop!");
         if (stationOfStop[source].representative != source) return;
         setSource(source);
 
@@ -212,8 +211,8 @@ public:
 
 private:
     inline void setSource(const StopId source) noexcept {
-        AssertMsg(directTransferQueue.empty(), "Queue for round 0 is not empty!");
-        AssertMsg(stationOfStop[source].representative == source, "Source " << source << " is not representative of its station!");
+        Assert(directTransferQueue.empty(), "Queue for round 0 is not empty!");
+        Assert(stationOfStop[source].representative == source, "Source " << source << " is not representative of its station!");
         clear();
         sourceStation = stationOfStop[source];
         initialDijkstra();
@@ -225,7 +224,7 @@ private:
     }
 
     inline std::vector<ConsolidatedDepartureLabel> collectDepartures(const int minTime, const int maxTime) noexcept {
-        AssertMsg(directTransferArrivalLabels[sourceStation.representative].arrivalTime == 0, "Direct transfer for source " << sourceStation.representative << " is incorrect!");
+        Assert(directTransferArrivalLabels[sourceStation.representative].arrivalTime == 0, "Direct transfer for source " << sourceStation.representative << " is incorrect!");
         const int cutoffTime = std::max(minTime, earliestDepartureTime);
         std::vector<DepartureLabel> departureLabels;
         for (const RouteId route : data.routes()) {
@@ -313,7 +312,7 @@ private:
 
         std::vector<TripMinOriginDelay>(data.numberOfTrips()).swap(tripMinOriginDelay);
 
-        AssertMsg(candidateQueue.empty(), "candidateQueue not empty!");
+        Assert(candidateQueue.empty(), "candidateQueue not empty!");
         std::vector<CandidateDijkstraLabel>(data.transferGraph.numVertices()).swap(preOriginDijkstraLabels);
         std::vector<CandidateDijkstraLabel>(data.transferGraph.numVertices()).swap(candidateDijkstraLabels);
 
@@ -325,8 +324,8 @@ private:
 
     inline void collectRoutes1(const std::vector<RAPTOR::RouteSegment>& routes) noexcept {
         for (const RAPTOR::RouteSegment& route : routes) {
-            AssertMsg(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-            AssertMsg(route.stopIndex + 1 < data.numberOfStopsInRoute(route.routeId), "RouteSegment " << route << " is not a departure event!");
+            Assert(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
+            Assert(route.stopIndex + 1 < data.numberOfStopsInRoute(route.routeId), "RouteSegment " << route << " is not a departure event!");
             if (routesServingUpdatedStops.contains(route.routeId)) {
                 routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
             } else {
@@ -338,8 +337,8 @@ private:
     inline void collectRoutes2() noexcept {
         for (const StopId stop : stopsUpdatedByTransfer) {
             for (const RAPTOR::RouteSegment& route : data.routesContainingStop(stop)) {
-                AssertMsg(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-                AssertMsg(data.stopIds[data.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
+                Assert(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
+                Assert(data.stopIds[data.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
                 if (route.stopIndex + 1 == data.numberOfStopsInRoute(route.routeId)) continue;
                 if (data.lastTripOfRoute(route.routeId)[route.stopIndex].departureTime < witnessArrivals1[stop].arrivalTime) continue;
                 if (routesServingUpdatedStops.contains(route.routeId)) {
@@ -406,12 +405,12 @@ private:
             }
         }
         for (const StopId sourceStop : sourceStation.stops) {
-            AssertMsg(Vector::contains(stopsReachedByDirectTransfer, sourceStop), "Source was not updated by transfer!");
+            Assert(Vector::contains(stopsReachedByDirectTransfer, sourceStop), "Source was not updated by transfer!");
         }
     }
 
     inline void relaxInitialTransfers() noexcept {
-        AssertMsg(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
+        Assert(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
         for (const StopId stop : stopsReachedByDirectTransfer) {
             const int newArrivalTime = sourceDepartureTime + directTransferArrivalLabels[stop].arrivalTime;
             witnessArrivals0[stop].arrivalTime = newArrivalTime;
@@ -420,7 +419,7 @@ private:
     }
 
     inline void intermediateDijkstra() noexcept {
-        AssertMsg(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
+        Assert(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
 
         for (const StopId stop : stopsUpdatedByRoute) {
             queue1.update(&(witnessArrivals1[stop]));
@@ -445,7 +444,7 @@ private:
     }
 
     inline void finalDijkstra() noexcept {
-        AssertMsg(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
+        Assert(stopsUpdatedByTransfer.empty(), "stopsUpdatedByTransfer is not empty!");
 
         for (const StopId stop : stopsUpdatedByRoute) {
             queue2.update(&(witnessArrivals2[stop]));
@@ -480,7 +479,7 @@ private:
     inline int arrivalTime(const Vertex vertex) const noexcept {
         static_assert((ROUND == 0) | (ROUND == 1) | (ROUND == 2), "Invalid round!");
         if constexpr (ROUND == 0) {
-            AssertMsg(data.isStop(vertex), "Arrival time in round 0 only available for stops!");
+            Assert(data.isStop(vertex), "Arrival time in round 0 only available for stops!");
             return witnessArrivals0[vertex].arrivalTime;
         } else if constexpr (ROUND == 1) {
             return witnessArrivals1[vertex].arrivalTime;
@@ -974,7 +973,7 @@ private:
     }
 
     inline StopIndex getFirstDominatedIndex(const TripId trip) const noexcept {
-        AssertMsg(routeTimestamp[tripData.routeOfTrip[trip]] == sourceTimestamp, "witnessDominatedIndex for trip " << trip << " has not been updated yet!");
+        Assert(routeTimestamp[tripData.routeOfTrip[trip]] == sourceTimestamp, "witnessDominatedIndex for trip " << trip << " has not been updated yet!");
         return std::min(getWitnessReachedIndex2(trip), witnessDominatedIndex(trip));
     }
 

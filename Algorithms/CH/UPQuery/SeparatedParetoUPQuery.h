@@ -16,7 +16,7 @@
 #include "../../../Helpers/Vector/Vector.h"
 
 #include "../../../DataStructures/Container/ExternalKHeap.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 #include "BucketBuilder.h"
 
 namespace CH {
@@ -257,7 +257,7 @@ private:
         distance[vertex] = initialDistance;
         parent[vertex] = parentVertex;
         if constexpr (FOR_SWEEP) {
-            AssertMsg(upwardSweepGraph.externalToInternal(vertex) < upwardSweepGraph.graph.numVertices(), "Vertex is not in sweep graph! (original: "<< internalToOriginal(vertex) << ", CH: " << vertex << ", sweep: " << upwardSweepGraph.externalToInternal(vertex) << ")");
+            Assert(upwardSweepGraph.externalToInternal(vertex) < upwardSweepGraph.graph.numVertices(), "Vertex is not in sweep graph! (original: "<< internalToOriginal(vertex) << ", CH: " << vertex << ", sweep: " << upwardSweepGraph.externalToInternal(vertex) << ")");
             sweepStart = std::min(sweepStart, upwardSweepGraph.externalToInternal(vertex));
             timestamp[vertex] = currentTimestamp;
         } else {
@@ -267,7 +267,7 @@ private:
 
     inline void settle() noexcept {
         const Vertex u = Vertex(Q.extractFront() - &(dijkstraLabel[0]));
-        AssertMsg(u < graph[FORWARD].numVertices(), u << " is not a valid vertex!");
+        Assert(u < graph[FORWARD].numVertices(), u << " is not a valid vertex!");
         if constexpr (StallOnDemand) {
             for (Edge edge : graph[BACKWARD].edgesFrom(u)) {
                 const Vertex v = graph[BACKWARD].get(ToVertex, edge);
@@ -282,7 +282,7 @@ private:
             if (distance[v] > newDistance) {
                 Q.update(&dijkstraLabel[v]);
                 distance[v] = newDistance;
-                AssertMsg(parent[u] != int(noVertex), "Invalid parent!");
+                Assert(parent[u] != int(noVertex), "Invalid parent!");
                 parent[v] = parent[u];
             }
         }

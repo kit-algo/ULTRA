@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "../../Algorithms/CH/CH.h"
-#include "../Container/Set.h"
+#include "../Container/IndexedSet.h"
 #include "../Graph/Graph.h"
 #include "../../Helpers/Vector/Permutation.h"
 #include "../../Helpers/Vector/Vector.h"

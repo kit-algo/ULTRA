@@ -78,7 +78,7 @@ namespace ImplementationDetail {
     using ToVertexType = AttributeNameWrapper<10>;
     using ViaVertexType = AttributeNameWrapper<11>;
     using ReverseEdgeType = AttributeNameWrapper<12>;
-    using ConsumptionType = AttributeNameWrapper<13>;
+    // 13 is unused
     using FunctionType = AttributeNameWrapper<14>;
     using CapacityType = AttributeNameWrapper<15>;
     using ValidType = AttributeNameWrapper<16>;
@@ -87,12 +87,12 @@ namespace ImplementationDetail {
     using BeginOutType = AttributeNameWrapper<19>;
     using OutDegreeType = AttributeNameWrapper<20>;
     using IncomingEdgesType = AttributeNameWrapper<21>;
-    using EdgeFlagsType = AttributeNameWrapper<22>;
+    // 22 is unused
     using AnyAttributeType = AttributeNameWrapper<23>;
     using SizeType = AttributeNameWrapper<24>;
     using ProfileIndexType = AttributeNameWrapper<25>;
     using OriginalEdgeType = AttributeNameWrapper<26>;
-    using BundleSizeType = AttributeNameWrapper<27>;
+    // 27 is unused
     using MinOriginDelayType = AttributeNameWrapper<28>;
     using MaxOriginDelayType = AttributeNameWrapper<29>;
     using UnknownType = AttributeNameWrapper<30>;
@@ -113,7 +113,6 @@ constexpr ImplementationDetail::FromVertexType FromVertex;
 constexpr ImplementationDetail::ToVertexType ToVertex;
 constexpr ImplementationDetail::ViaVertexType ViaVertex;
 constexpr ImplementationDetail::ReverseEdgeType ReverseEdge;
-constexpr ImplementationDetail::ConsumptionType Consumption;
 constexpr ImplementationDetail::FunctionType Function;
 constexpr ImplementationDetail::CapacityType Capacity;
 constexpr ImplementationDetail::ValidType Valid;
@@ -122,12 +121,10 @@ constexpr ImplementationDetail::CoordinatesType Coordinates;
 constexpr ImplementationDetail::BeginOutType BeginOut;
 constexpr ImplementationDetail::OutDegreeType OutDegree;
 constexpr ImplementationDetail::IncomingEdgesType IncomingEdges;
-constexpr ImplementationDetail::EdgeFlagsType EdgeFlags;
 constexpr ImplementationDetail::AnyAttributeType AnyAttribute;
 constexpr ImplementationDetail::SizeType Size;
 constexpr ImplementationDetail::ProfileIndexType ProfileIndex;
 constexpr ImplementationDetail::OriginalEdgeType OriginalEdge;
-constexpr ImplementationDetail::BundleSizeType BundleSize;
 constexpr ImplementationDetail::MinOriginDelayType MinOriginDelay;
 constexpr ImplementationDetail::MaxOriginDelayType MaxOriginDelay;
 constexpr ImplementationDetail::UnknownType Unknown;
@@ -149,7 +146,7 @@ namespace ImplementationDetail {
         /* 10 */ "ToVertex",
         /* 11 */ "ViaVertex",
         /* 12 */ "ReverseEdge",
-        /* 13 */ "Consumption",
+        /* 13 */ "(Unused)",
         /* 14 */ "Function",
         /* 15 */ "Capacity",
         /* 16 */ "Valid",
@@ -158,12 +155,12 @@ namespace ImplementationDetail {
         /* 19 */ "BeginOut",
         /* 20 */ "OutDegree",
         /* 21 */ "IncomingEdges",
-        /* 22 */ "EdgeFlags",
+        /* 22 */ "(Unused)",
         /* 23 */ "AnyAttribute",
         /* 24 */ "Size",
         /* 25 */ "ProfileIndex",
         /* 26 */ "OriginalEdge",
-        /* 27 */ "BundleSize",
+        /* 27 */ "(Unused)",
         /* 28 */ "MinOriginDelay",
         /* 29 */ "MaxOriginDelay",
         /* 30 */ "Unknown"
@@ -228,13 +225,13 @@ namespace ImplementationDetail {
     struct GetOldAttributeName<NAME, Meta::List<>> : AttributeNameWrapper<NAME> {};
 
     template<AttributeNameType NAME, AttributeNameType OLD_NAME, AttributeNameType NEW_NAME, typename... NAME_CHANGES>
-    struct GetOldAttributeName<NAME, Meta::List<NameChange<OLD_NAME, NEW_NAME>, NAME_CHANGES...>> : Meta::IF<(NAME == OLD_NAME),
+    struct GetOldAttributeName<NAME, Meta::List<NameChange<OLD_NAME, NEW_NAME>, NAME_CHANGES...>> : std::conditional_t<(NAME == OLD_NAME),
         UnknownType,
         GetOldAttributeName<NAME, Meta::List<NAME_CHANGES...>>> {
     };
 
     template<AttributeNameType NAME, AttributeNameType OLD_NAME, AttributeNameType NEW_NAME, typename... NAME_CHANGES, typename... LIST>
-    struct GetOldAttributeName<NAME, Meta::List<LIST...>, NameChange<OLD_NAME, NEW_NAME>, NAME_CHANGES...> : Meta::IF<(NAME == NEW_NAME),
+    struct GetOldAttributeName<NAME, Meta::List<LIST...>, NameChange<OLD_NAME, NEW_NAME>, NAME_CHANGES...> : std::conditional_t<(NAME == NEW_NAME),
         AttributeNameWrapper<OLD_NAME>,
         GetOldAttributeName<NAME, Meta::List<NameChange<OLD_NAME, NEW_NAME>, LIST...>, NAME_CHANGES...>> {
     };

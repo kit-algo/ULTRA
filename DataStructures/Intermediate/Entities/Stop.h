@@ -64,7 +64,7 @@ public:
     }
 
     inline void update(const Stop& other) noexcept {
-        AssertMsg(matches(other), "Updating a stop with one that does not match!");
+        Assert(matches(other), "Updating a stop with one that does not match!");
         coordinates = other.coordinates;
         name = other.name;
         minTransferTime = std::max(minTransferTime, other.minTransferTime);

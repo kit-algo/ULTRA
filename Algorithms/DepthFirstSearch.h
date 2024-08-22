@@ -30,31 +30,31 @@ public:
         graph(graph) {
     }
 
-    inline void initialize() {
+    inline void initialize() noexcept {
         std::vector<bool>(graph.numVertices(), false).swap(settled);
         stack.clear();
     }
 
-    inline void run() {
+    inline void run() noexcept {
         initialize();
-        for (Vertex vertex : graph.vertices()) {
+        for (const Vertex vertex : graph.vertices()) {
             if (!settled[vertex]) {
                 run(vertex);
             }
         }
     }
 
-    inline void run(Vertex u) {
+    inline void run(const Vertex u) noexcept {
         root(u);
         settle(u);
         while (!stack.empty()) {
-            Edge edge = topEdge();
-            Vertex v = topVertex();
+            const Edge edge = topEdge();
+            const Vertex v = topVertex();
             if (topBacktrack()) {
                 backtrack(edge, v);
                 pop();
             } else {
-                Vertex w = graph.get(ToVertex, edge);
+                const Vertex w = graph.get(ToVertex, edge);
                 if (settled[w]) {
                     traverseNonTreeEdge(edge, v);
                     pop();
@@ -67,38 +67,38 @@ public:
         finalize(u);
     }
 
-    inline bool hasSettled(Vertex vertex) const {
+    inline bool hasSettled(const Vertex vertex) const noexcept {
         return settled[vertex];
     }
 
 private:
-    inline void settle(Vertex v) {
-        Assert(!settled[v]);
+    inline void settle(const Vertex v) noexcept {
+        Assert(!settled[v], "Vertex " << v << " is already settled!");
         settled[v] = true;
-        for (Edge edge : graph.edgesFrom(v)) {
+        for (const Edge edge : graph.edgesFrom(v)) {
             push(edge, v);
         }
     }
 
-    inline void push(Edge edge, Vertex from) {
+    inline void push(const Edge edge, const Vertex from) noexcept {
         stack.push_back(Item({edge, from, false}));
     }
 
-    inline Edge topEdge() const {
+    inline Edge topEdge() const noexcept {
         return stack.back().edge;
     }
 
-    inline Vertex topVertex() const {
+    inline Vertex topVertex() const noexcept {
         return stack.back().from;
     }
 
-    inline bool topBacktrack() {
-        bool backtrack = stack.back().backtrack;
+    inline bool topBacktrack() noexcept {
+        const bool backtrack = stack.back().backtrack;
         stack.back().backtrack = true;
         return backtrack;
     }
 
-    inline void pop() {
+    inline void pop() noexcept {
         stack.pop_back();
     }
 

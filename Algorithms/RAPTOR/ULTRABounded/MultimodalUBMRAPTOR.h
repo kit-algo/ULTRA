@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <concepts>
 
 #include "../../../Helpers/Vector/Vector.h"
 
@@ -13,7 +14,7 @@
 #include "../../../DataStructures/RAPTOR/Entities/Journey.h"
 #include "../../../DataStructures/RAPTOR/Entities/ArrivalLabel.h"
 #include "../../../DataStructures/RAPTOR/Entities/Bags.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 #include "../../../DataStructures/Container/Map.h"
 #include "../../../DataStructures/Container/ExternalKHeap.h"
 
@@ -199,8 +200,8 @@ private:
         targetVertex(noVertex),
         targetStop(noStop),
         sourceDepartureTime(intMax) {
-        AssertMsg(data.modes.size() == NumTransferModes, "Wrong number of modes");
-        AssertMsg(data.raptorData.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
+        Assert(data.modes.size() == NumTransferModes, "Wrong number of modes");
+        Assert(data.raptorData.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
         profiler.registerExtraRounds({EXTRA_ROUND_CLEAR, EXTRA_ROUND_FORWARD_PRUNING, EXTRA_ROUND_BACKWARD_PRUNING, EXTRA_ROUND_INITIALIZATION});
         profiler.registerPhases({PHASE_INITIALIZATION, PHASE_COLLECT, PHASE_SCAN, PHASE_TRANSFERS});
         for (const size_t mode : data.modes) {
@@ -211,19 +212,17 @@ private:
     }
 
 public:
-    template<typename T = CHGraph, typename = std::enable_if_t<Meta::Equals<T, CHGraph>() && Meta::Equals<T, InitialTransferGraph>()>>
-    MultimodalUBMRAPTOR(const MultimodalData& data, const Data& forwardPruningData, const Data& backwardPruningData, const TransferGraph& backwardTransitiveGraph, const std::vector<CH::CH>& chData, const Profiler& profilerTemplate = Profiler()) :
+    MultimodalUBMRAPTOR(const MultimodalData& data, const Data& forwardPruningData, const Data& backwardPruningData, const TransferGraph& backwardTransitiveGraph, const std::vector<CH::CH>& chData, const Profiler& profilerTemplate = Profiler()) requires std::same_as<InitialTransferGraph, CHGraph> :
         MultimodalUBMRAPTOR(data, forwardPruningData, backwardPruningData, backwardTransitiveGraph, chData[0].forward.numVertices(), profilerTemplate) {
-        AssertMsg(chData.size() == NumTransferModes, "Wrong number of modes");
+        Assert(chData.size() == NumTransferModes, "Wrong number of modes");
         for (size_t i = 0; i < chData.size(); i++) {
             initialTransfers.emplace_back(chData[i], FORWARD, data.raptorData.numberOfStops());
         }
     }
 
-    template<typename T = TransferGraph, typename = std::enable_if_t<Meta::Equals<T, TransferGraph>() && Meta::Equals<T, InitialTransferGraph>()>>
-    MultimodalUBMRAPTOR(const MultimodalData& data, const Data& forwardPruningData, const Data& backwardPruningData, const TransferGraph& backwardTransitiveGraph, const std::vector<TransferGraph>& backwardGraphs, const Profiler& profilerTemplate = Profiler()) :
+    MultimodalUBMRAPTOR(const MultimodalData& data, const Data& forwardPruningData, const Data& backwardPruningData, const TransferGraph& backwardTransitiveGraph, const std::vector<TransferGraph>& backwardGraphs, const Profiler& profilerTemplate = Profiler()) requires std::same_as<InitialTransferGraph, TransferGraph> :
         MultimodalUBMRAPTOR(data, forwardPruningData, backwardPruningData, backwardTransitiveGraph, backwardGraphs[0].numVertices(), profilerTemplate) {
-        AssertMsg(backwardGraphs.size() == NumTransferModes, "Wrong number of modes");
+        Assert(backwardGraphs.size() == NumTransferModes, "Wrong number of modes");
         for (size_t i = 0; i < backwardGraphs.size(); i++) {
             initialTransfers.emplace_back(getTransferGraph(i), backwardGraphs[i], data.raptorData.numberOfStops(), TravelTime);
         }
@@ -389,8 +388,8 @@ private:
     inline void collectRoutesServingUpdatedStops() noexcept {
         for (const StopId stop : stopsUpdatedByTransfer) {
             for (const RouteSegment& route : data.raptorData.routesContainingStop(stop)) {
-                AssertMsg(data.raptorData.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-                AssertMsg(data.raptorData.stopIds[data.raptorData.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
+                Assert(data.raptorData.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
+                Assert(data.raptorData.stopIds[data.raptorData.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
                 if (route.stopIndex + 1 == data.raptorData.numberOfStopsInRoute(route.routeId)) continue;
                 if (routesServingUpdatedStops.contains(route.routeId)) {
                     routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
@@ -407,7 +406,7 @@ private:
             profiler.countMetric(METRIC_ROUTES);
             StopIndex stopIndex = routesServingUpdatedStops[route];
             const size_t tripSize = data.raptorData.numberOfStopsInRoute(route);
-            AssertMsg(stopIndex < tripSize - 1, "Cannot scan a route starting at/after the last stop (Route: " << route << ", StopIndex: " << stopIndex << ", TripSize: " << tripSize << ")!");
+            Assert(stopIndex < tripSize - 1, "Cannot scan a route starting at/after the last stop (Route: " << route << ", StopIndex: " << stopIndex << ", TripSize: " << tripSize << ")!");
 
             const StopId* stops = data.raptorData.stopArrayOfRoute(route);
             StopId stop = stops[stopIndex];
@@ -441,8 +440,8 @@ private:
         //Initial transfers have already been run in the forward pruning search
         for (const Vertex stop : initialTransfers[mode].getForwardPOIs()) {
             if (stop == targetStop) continue;
-            AssertMsg(data.raptorData.isStop(stop), "Reached POI " << stop << " is not a stop!");
-            AssertMsg(initialTransfers[mode].getForwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
+            Assert(data.raptorData.isStop(stop), "Reached POI " << stop << " is not a stop!");
+            Assert(initialTransfers[mode].getForwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
             const Label newLabel(sourceDepartureTime, mode, initialTransfers[mode].getForwardDistance(stop) + TransferModeOverhead[mode], StopId(sourceVertex));
             arrivalByTransfer(StopId(stop), newLabel);
         }
@@ -468,7 +467,7 @@ private:
             for (const Edge edge : data.raptorData.transferGraph.edgesFrom(stop)) {
                 profiler.countMetric(METRIC_EDGES);
                 const Vertex toStop = data.raptorData.transferGraph.get(ToVertex, edge);
-                AssertMsg(data.raptorData.isStop(toStop), "Graph contains edges to non-stop vertices!");
+                Assert(data.raptorData.isStop(toStop), "Graph contains edges to non-stop vertices!");
                 const int travelTime = data.raptorData.transferGraph.get(TravelTime, edge);
                 for (size_t i = 0; i < bag.size(); i++) {
                     const Label newLabel(bag[i], travelTime, stop, i, edge);
@@ -485,7 +484,7 @@ private:
                 profiler.countMetric(METRIC_EDGES);
                 const StopId toStop = StopId(getTransferGraph(mode).get(ToVertex, edge));
                 if (toStop == targetStop) continue;
-                AssertMsg(data.raptorData.isStop(toStop), "Graph contains edges to non-stop vertices!");
+                Assert(data.raptorData.isStop(toStop), "Graph contains edges to non-stop vertices!");
                 const int travelTime = getIntermediateTravelTime(mode, edge);
                 for (size_t i = 0; i < bag.size(); i++) {
                     const Label newLabel(bag[i], mode, travelTime, stop, i, edge);
@@ -516,12 +515,12 @@ private:
     }
 
     inline Round& currentRound() noexcept {
-        AssertMsg(!rounds.empty(), "Cannot return current round, because no round exists!");
+        Assert(!rounds.empty(), "Cannot return current round, because no round exists!");
         return rounds.back();
     }
 
     inline Round& previousRound() noexcept {
-        AssertMsg(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
+        Assert(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
         return rounds[rounds.size() - 2];
     }
 
@@ -541,7 +540,7 @@ private:
     }
 
     inline void arrivalByRoute(const StopId stop, const Label& label) noexcept {
-        AssertMsg(data.raptorData.isStop(stop), "Stop " << stop << " is out of range!");
+        Assert(data.raptorData.isStop(stop), "Stop " << stop << " is out of range!");
         if (-backwardPruningRAPTOR.getArrivalTime(stop, maxTrips - currentNumberOfTrips()) < label.arrivalTime) return;
         if (checkTargetPruning(label)) return;
         if (!bestBagByRoute[stop].merge(BestLabel(label))) return;
@@ -551,7 +550,7 @@ private:
     }
 
     inline void arrivalByTransfer(const StopId stop, const Label& label) noexcept {
-        AssertMsg(data.raptorData.isStop(stop) || stop == targetStop, "Stop " << stop << " is out of range!");
+        Assert(data.raptorData.isStop(stop) || stop == targetStop, "Stop " << stop << " is out of range!");
         if (-backwardPruningRAPTOR.getArrivalTime(stop, maxTrips - currentNumberOfTrips()) < label.arrivalTime) return;
         if (checkTargetPruning(label)) return;
         if (bestBagByRoute[stop].dominates(label)) return;
@@ -564,7 +563,7 @@ private:
     inline void getJourney(std::vector<Journey>& journeys, size_t round, StopId stop, size_t index) const noexcept {
         Journey journey;
         do {
-            AssertMsg(round != size_t(-1), "Backtracking parent pointers did not pass through the source stop!");
+            Assert(round != size_t(-1), "Backtracking parent pointers did not pass through the source stop!");
             const Label& label = rounds[round][stop][index];
             journey.emplace_back(label.parentStop, stop, label.parentDepartureTime, label.arrivalTime, round % 2 == 0, label.routeId);
             stop = label.parentStop;

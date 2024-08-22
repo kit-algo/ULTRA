@@ -31,7 +31,7 @@ public:
     }
 
     inline StopIndex operator()(const TripId trip) const noexcept {
-        AssertMsg(trip < labels.size(), "Trip " << trip << " is out of bounds!");
+        Assert(trip < labels.size(), "Trip " << trip << " is out of bounds!");
         return StopIndex(labels[trip]);
     }
 
@@ -40,7 +40,7 @@ public:
     }
 
     inline void update(const TripId trip, const StopIndex index) noexcept {
-        AssertMsg(trip < labels.size(), "Trip " << trip << " is out of bounds!");
+        Assert(trip < labels.size(), "Trip " << trip << " is out of bounds!");
         const TripId routeEnd = data.firstTripOfRoute[data.routeOfTrip[trip] + 1];
         for (TripId i = trip; i < routeEnd; i++) {
             if (labels[i] <= index) break;
@@ -49,8 +49,8 @@ public:
     }
 
     inline void updateRaw(const TripId trip, const TripId tripEnd, const StopIndex index) noexcept {
-        AssertMsg(trip < labels.size(), "Trip " << trip << " is out of bounds!");
-        AssertMsg(tripEnd <= data.firstTripOfRoute[data.routeOfTrip[trip] + 1], "Trip end" << tripEnd << " is out of bounds!");
+        Assert(trip < labels.size(), "Trip " << trip << " is out of bounds!");
+        Assert(tripEnd <= data.firstTripOfRoute[data.routeOfTrip[trip] + 1], "Trip end" << tripEnd << " is out of bounds!");
         std::fill(labels.begin() + trip, labels.begin() + tripEnd, index);
     }
 

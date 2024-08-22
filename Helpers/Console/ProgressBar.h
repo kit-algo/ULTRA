@@ -26,14 +26,14 @@ public:
     }
 
     void iterateTo(long long target) {
-        Assert(target >= stepsDone);
+        Assert(target >= stepsDone, "Cannot iterate backwards!");
         stepsDone = target;
         unsigned int until = (stepsDone*100) / numSteps;
         draw(until);
     }
 
     void operator+=(long long addend) {
-        Assert(addend >= 0);
+        Assert(addend >= 0, "Addend is negative!");
         stepsDone += addend;
         unsigned int until = (stepsDone*100) / numSteps;
         draw(until);

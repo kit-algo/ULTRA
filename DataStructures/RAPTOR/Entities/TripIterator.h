@@ -22,7 +22,7 @@ public:
     }
 
     inline void setStopIndex(const StopIndex newStopIndex) noexcept {
-        AssertMsg(newStopIndex < tripSize, "Stop index " << newStopIndex << " is out of bounds, because the trip has only " << tripSize << " stops!");
+        Assert(newStopIndex < tripSize, "Stop index " << newStopIndex << " is out of bounds, because the trip has only " << tripSize << " stops!");
         stopIndex = newStopIndex;
     }
 
@@ -31,7 +31,7 @@ public:
     }
 
     inline void nextStop() noexcept {
-        AssertMsg(hasFurtherStops(), "There is no next stop (number of stops: " << tripSize << ")!");
+        Assert(hasFurtherStops(), "There is no next stop (number of stops: " << tripSize << ")!");
         ++stopIndex;
     }
 
@@ -58,12 +58,12 @@ public:
     }
 
     inline void previousTrip() noexcept {
-        AssertMsg(hasEarlierTrip(), "There is no earlier trip!");
+        Assert(hasEarlierTrip(), "There is no earlier trip!");
         trip = trip - tripSize;
     }
 
     inline const StopEvent* previousTrip(const StopEvent* otherTrip) const noexcept {
-        AssertMsg(hasEarlierTrip(otherTrip), "There is no earlier trip!");
+        Assert(hasEarlierTrip(otherTrip), "There is no earlier trip!");
         return otherTrip - tripSize;
     }
 
@@ -90,17 +90,17 @@ public:
     }
 
     inline int previousArrivalTime() const noexcept {
-        AssertMsg(hasEarlierTrip(), "There is no earlier trip!");
+        Assert(hasEarlierTrip(), "There is no earlier trip!");
         return (trip + stopIndex - tripSize)->arrivalTime;
     }
 
     inline int previousDepartureTime() const noexcept {
-        AssertMsg(hasEarlierTrip(), "There is no earlier trip!");
+        Assert(hasEarlierTrip(), "There is no earlier trip!");
         return (trip + stopIndex - tripSize)->departureTime;
     }
 
     inline int previousDepartureTime(const StopEvent* otherTrip) const noexcept {
-        AssertMsg(hasEarlierTrip(otherTrip), "There is no earlier trip!");
+        Assert(hasEarlierTrip(otherTrip), "There is no earlier trip!");
         return (otherTrip + stopIndex - tripSize)->departureTime;
     }
 

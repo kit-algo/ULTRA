@@ -97,7 +97,7 @@ struct WalkingParetoLabel {
     }
 
     inline int getCriterion(const size_t i) const noexcept {
-        AssertMsg(i < NumberOfCriteria, "Invalid criterion " << i << "!");
+        Assert(i < NumberOfCriteria, "Invalid criterion " << i << "!");
         if (i == 0) {
             return arrivalTime;
         } else if (i == 1) {
@@ -201,7 +201,7 @@ struct MultimodalParetoLabel {
     }
 
     inline int getCriterion(const size_t i) const noexcept {
-        AssertMsg(i < NumberOfCriteria, "Invalid criterion " << i << "!");
+        Assert(i < NumberOfCriteria, "Invalid criterion " << i << "!");
         if (i == 0) {
             return arrivalTime;
         } else if (i == 1) {

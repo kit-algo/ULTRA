@@ -10,23 +10,6 @@
 #include "../../Helpers/Vector/Vector.h"
 #include "../../Helpers/Vector/Permutation.h"
 
-template<typename VALUE>
-class Set : public std::set<VALUE> {
-
-public:
-    using Value = VALUE;
-    using Type = Set<Value>;
-
-private:
-    using Super = std::set<Value>;
-
-public:
-    inline bool contains(const Value& value) const noexcept {
-        return Super::count(value) == 1;
-    }
-
-};
-
 template<bool RESIZEABLE = false, typename VALUE_TYPE = size_t>
 class IndexedSet {
 
@@ -102,22 +85,22 @@ public:
     }
 
     inline ValueType operator[](const size_t i) const noexcept {
-        AssertMsg(i < size(), "Index " << i << " is out of range!");
+        Assert(i < size(), "Index " << i << " is out of range!");
         return values[i];
     }
 
     inline ValueType front() const noexcept {
-        AssertMsg(!empty(), "The set is empty!");
+        Assert(!empty(), "The set is empty!");
         return values.front();
     }
 
     inline ValueType back() const noexcept {
-        AssertMsg(!empty(), "The set is empty!");
+        Assert(!empty(), "The set is empty!");
         return values.back();
     }
 
     inline bool contains(const ValueType value) const noexcept {
-        AssertMsg(value < capacity(), "Value " << value << " is out of range!");
+        Assert(value < capacity(), "Value " << value << " is out of range!");
         return indices[value] != NotContained;
     }
 
@@ -125,7 +108,7 @@ public:
         if (Resizeable) {
             if ((size_t)value >= capacity()) indices.resize(value + 1, NotContained);
         } else {
-            AssertMsg((size_t)value < capacity(), "Value " << value << " is out of range!");
+            Assert((size_t)value < capacity(), "Value " << value << " is out of range!");
         }
         return indices[value] != NotContained;
     }

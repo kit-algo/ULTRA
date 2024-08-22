@@ -3,7 +3,7 @@
 #include "../../../DataStructures/RAPTOR/Entities/ArrivalLabel.h"
 #include "../../../DataStructures/RAPTOR/Entities/Journey.h"
 #include "../../../DataStructures/TripBased/Data.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 #include "../../../DataStructures/TripBased/RouteLabel.h"
 
 #include "Profiler.h"
@@ -93,8 +93,8 @@ public:
     }
 
     inline void run(const Vertex source, const int departureTime, const Vertex target) noexcept {
-        AssertMsg(data.isStop(source), "Source " << source << " is not a stop!");
-        AssertMsg(data.isStop(target), "Target " << target << " is not a stop!");
+        Assert(data.isStop(source), "Source " << source << " is not a stop!");
+        Assert(data.isStop(target), "Target " << target << " is not a stop!");
         run(StopId(source), departureTime, StopId(target));
     }
 
@@ -263,7 +263,7 @@ private:
         const StopEventId firstEvent = data.firstStopEventOfTrip[trip];
         queue[queueSize] = TripLabel(StopEventId(firstEvent + index), StopEventId(firstEvent + reachedIndex(trip)));
         queueSize++;
-        AssertMsg(queueSize <= queue.size(), "Queue is overfull!");
+        Assert(queueSize <= queue.size(), "Queue is overfull!");
         reachedIndex.update(trip, index);
     }
 
@@ -273,7 +273,7 @@ private:
         if (reachedIndex.alreadyReached(label.trip, label.stopEvent - label.firstEvent)) return;
         queue[queueSize] = TripLabel(label.stopEvent, StopEventId(label.firstEvent + reachedIndex(label.trip)), parent);
         queueSize++;
-        AssertMsg(queueSize <= queue.size(), "Queue is overfull!");
+        Assert(queueSize <= queue.size(), "Queue is overfull!");
         reachedIndex.update(label.trip, StopIndex(label.stopEvent - label.firstEvent));
     }
 
@@ -295,7 +295,7 @@ private:
         StopEventId departureStopEvent = noStopEvent;
         Vertex departureStop = targetStop;
         while (parent != u_int32_t(-1)) {
-            AssertMsg(parent < queueSize, "Parent " << parent << " is out of range!");
+            Assert(parent < queueSize, "Parent " << parent << " is out of range!");
             const TripLabel& label = queue[parent];
             StopEventId arrivalStopEvent;
             Edge edge;

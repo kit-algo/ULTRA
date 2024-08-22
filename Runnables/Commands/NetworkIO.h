@@ -93,27 +93,15 @@ public:
         ParameterizedCommand(shell, "intermediateToRAPTOR", "Converts binary intermediate data to RAPTOR network format.") {
         addParameter("Input file");
         addParameter("Output file");
-        addParameter("Route type", "FIFO", {"Geographic", "FIFO", "Offset", "Frequency"});
     }
 
     virtual void execute() noexcept {
         const std::string inputFile = getParameter("Input file");
         const std::string outputFile = getParameter("Output file");
-        const std::string routeTypeString = getParameter("Route type");
-        int routeType;
-        if (routeTypeString == "Geographic") {
-            routeType = 0;
-        } else if (routeTypeString == "FIFO") {
-            routeType = 1;
-        } else if (routeTypeString == "Offset") {
-            routeType = 2;
-        } else {
-            routeType = 3;
-        }
 
         Intermediate::Data inter = Intermediate::Data::FromBinary(inputFile);
         inter.printInfo();
-        RAPTOR::Data data = RAPTOR::Data::FromIntermediate(inter, routeType);
+        RAPTOR::Data data = RAPTOR::Data::FromIntermediate(inter);
         data.printInfo();
         Graph::printInfo(data.transferGraph);
         data.transferGraph.printAnalysis();

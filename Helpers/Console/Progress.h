@@ -39,13 +39,13 @@ public:
     }
 
     inline void iterateTo(long long target) {
-        Assert(target >= stepsDone);
+        Assert(target >= stepsDone, "Cannot iterate backwards!");
         stepsDone = target;
         checkDraw();
     }
 
     inline void operator+=(long long addend) {
-        Assert(addend >= 0);
+        Assert(addend >= 0, "Addend is negative!");
         stepsDone += addend;
         checkDraw();
     }

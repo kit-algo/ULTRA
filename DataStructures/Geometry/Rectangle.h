@@ -23,7 +23,7 @@ public:
         Rectangle r;
         r.min = Geometry::min(a, b);
         r.max = Geometry::max(a, b);
-        Assert(r.isPositive());
+        Assert(r.isPositive(), "Rectangle does not have positive area!");
         return r;
     }
     template<typename T>
@@ -36,14 +36,14 @@ public:
         Rectangle r;
         r.min = min;
         r.max = Geometry::max(min, max);
-        Assert(r.isPositive());
+        Assert(r.isPositive(), "Rectangle does not have positive area!");
         return r;
     }
     inline static Rectangle Union(const Rectangle& a, const Rectangle& b) {
         Rectangle r;
         r.min = Geometry::min(a.min, b.min);
         r.max = Geometry::max(a.max, b.max);
-        Assert(r.isPositive());
+        Assert(r.isPositive(), "Rectangle does not have positive area!");
         return r;
     }
     template<typename T>
@@ -57,7 +57,7 @@ public:
         r.min = Geometry::max(a.min, b.min);
         r.max = Geometry::min(a.max, b.max);
         r.max.max(r.min);
-        Assert(r.isPositive());
+        Assert(r.isPositive(), "Rectangle does not have positive area!");
         return r;
     }
     inline static Rectangle Negative(const double d = 1000000) {
@@ -82,13 +82,13 @@ public:
     inline void extend(const Point& p) noexcept {
         min.min(p);
         max.max(p);
-        Assert(isPositive());
+        Assert(isPositive(), "Rectangle does not have positive area!");
     }
 
     inline void extend(const Rectangle& r) noexcept {
         min.min(r.min);
         max.max(r.max);
-        Assert(isPositive());
+        Assert(isPositive(), "Rectangle does not have positive area!");
     }
 
     template<typename T>
@@ -131,7 +131,7 @@ public:
     }
 
     inline double area() const noexcept {
-        Assert(isPositive());
+        Assert(isPositive(), "Rectangle does not have positive area!");
         return dx() * dy();
     }
 

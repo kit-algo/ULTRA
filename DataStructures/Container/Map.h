@@ -85,18 +85,18 @@ public:
         if (Resizeable) {
             if ((size_t)key >= capacity()) indices.resize(key + 1, NotContained);
         } else {
-            AssertMsg((size_t)key < capacity(), "Key " << key << " is out of range!");
+            Assert((size_t)key < capacity(), "Key " << key << " is out of range!");
         }
         return indices[key] != NotContained;
     }
 
     inline const Value& operator[](const KeyType key) const noexcept {
-        AssertMsg((size_t)key < capacity(), "No value for key " << key << " contained!");
+        Assert((size_t)key < capacity(), "No value for key " << key << " contained!");
         return values[indices[key]];
     }
 
     inline Value& operator[](const KeyType key) noexcept {
-        AssertMsg(contains(key), "No value for key " << key << " contained!");
+        Assert(contains(key), "No value for key " << key << " contained!");
         return values[indices[key]];
     }
 
@@ -152,7 +152,7 @@ public:
 
     template<typename LESS>
     inline void sortLastNKeys(const size_t n, const LESS& less) noexcept {
-        AssertMsg(n <= indices.size(), "n = " << n << " is greater than the number of keys = " << indices.size());
+        Assert(n <= indices.size(), "n = " << n << " is greater than the number of keys = " << indices.size());
         if (n == 0) return;
         std::sort(keys.end() - n, keys.end(), less);
         std::vector<Value> valuesCopy(values.end() - n, values.end());

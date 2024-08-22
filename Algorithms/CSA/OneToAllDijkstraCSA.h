@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <type_traits>
+#include <concepts>
 
 #include "../../Helpers/Assert.h"
 #include "../../Helpers/Timer.h"
@@ -24,7 +26,7 @@ public:
     constexpr static bool PathRetrieval = PATH_RETRIEVAL;
     using Profiler = PROFILER;
     using Type = OneToAllDijkstraCSA<InitialTransferGraph, PathRetrieval, Profiler>;
-    using TripFlag = Meta::IF<PathRetrieval, ConnectionId, bool>;
+    using TripFlag = std::conditional_t<PathRetrieval, ConnectionId, bool>;
 
 private:
     struct DijkstraLabel : public ExternalKHeapElement {
@@ -55,7 +57,7 @@ public:
         parentTrip(PathRetrieval ? data.numberOfStops() : 0, noTripId),
         dijkstraParent(PathRetrieval ? initialTransferGraph.numVertices() : 0, noVertex),
         profiler(profilerTemplate) {
-        AssertMsg(Vector::isSorted(data.connections), "Connections must be sorted in ascending order!");
+        Assert(Vector::isSorted(data.connections), "Connections must be sorted in ascending order!");
         profiler.registerPhases({PHASE_CLEAR, PHASE_INITIALIZATION, PHASE_CONNECTION_SCAN, PHASE_FINAL_TRANSFERS});
         profiler.registerMetrics({METRIC_CONNECTIONS, METRIC_EDGES, METRIC_STOPS_BY_TRIP, METRIC_STOPS_BY_TRANSFER});
         profiler.initialize();
@@ -64,8 +66,7 @@ public:
         }
     }
 
-    template<typename T = TransferGraph, typename = std::enable_if_t<Meta::Equals<T, TransferGraph>() && Meta::Equals<T, InitialTransferGraph>()>>
-    OneToAllDijkstraCSA(const Data& data, const Profiler& profilerTemplate = Profiler()) :
+    OneToAllDijkstraCSA(const Data& data, const Profiler& profilerTemplate = Profiler()) requires std::same_as<InitialTransferGraph, TransferGraph> :
         OneToAllDijkstraCSA(data, data.transferGraph, TravelTime, profilerTemplate) {
     }
 
@@ -105,8 +106,7 @@ public:
         return arrivalTime[vertex];
     }
 
-    template<bool T = PathRetrieval, typename = std::enable_if_t<T == PathRetrieval && T>>
-    inline Journey getJourney(const Vertex vertex) noexcept {
+    inline Journey getJourney(const Vertex vertex) noexcept requires PathRetrieval {
         Journey journey;
         if (!reachable(vertex)) return journey;
         StopId stop(vertex);
@@ -124,16 +124,6 @@ public:
         }
         Vector::reverse(journey);
         return journey;
-    }
-
-    template<bool T = PathRetrieval, typename = std::enable_if_t<T == PathRetrieval && T>>
-    inline std::vector<Vertex> getPath(const Vertex vertex) noexcept {
-        return journeyToPath(getJourney(vertex));
-    }
-
-    template<bool T = PathRetrieval, typename = std::enable_if_t<T == PathRetrieval && T>>
-    inline std::vector<std::string> getRouteDescription(const Vertex vertex) noexcept {
-        return data.journeyToText(getJourney(vertex));
     }
 
     inline const Profiler& getProfiler() const noexcept {

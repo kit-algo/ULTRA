@@ -12,7 +12,6 @@
 #include "../../../DataStructures/TripBased/DelayInfo.h"
 #include "../../../DataStructures/TripBased/DelayUpdateData.h"
 
-#include "../../../Helpers/IO/File.h"
 #include "../../../Helpers/String/String.h"
 #include "../../../Helpers/Vector/Permutation.h"
 #include "../../../Helpers/Vector/Vector.h"
@@ -143,7 +142,8 @@ private:
         std::vector<double> totalTime;
 
         inline void writeToFile(const std::string& filename) const noexcept {
-            IO::OFStream file(filename);
+            std::ofstream file(filename);
+            file << std::setprecision(10);
             file << "Start time,Finish time,Processed updates,Delayed events,Highly delayed events,Filtered shortcuts,Infeasible shortcuts,Replacement shortcuts,Query shortcuts,Data update time,Replacement search time,Origin search time,Target search time,Shortcut merge time,Total time\n";
             for (size_t i = 0; i < numUpdates.size(); i++) {
                 file << String::secToTime(startTimes[i], true) << "," << String::secToTime(finishTimes[i], true) << "," << numUpdates[i] << "," << numDelayedEvents[i] << "," << numHighlyDelayedEvents[i] << "," << numFilteredShortcuts[i] << "," << numInfeasibleShortcuts[i] << "," << numAddedShortcuts[i] << "," << numQueryShortcuts[i] << "," << dataUpdateTime[i] << "," << searchTime[i] << "," << originSearchTime[i] << "," << targetSearchTime[i] << "," << mergeTime[i] << "," << totalTime[i] << "\n";
@@ -298,7 +298,8 @@ private:
         std::vector<double> totalTime;
 
         inline void writeToFile(const std::string& filename) const noexcept {
-            IO::OFStream file(filename);
+            std::ofstream file(filename);
+            file << std::setprecision(10);
             file << "Start time,Finish time,Processed updates,Query shortcuts,Total time\n";
             for (size_t i = 0; i < numUpdates.size(); i++) {
                 file << String::secToTime(startTimes[i], true) << "," << String::secToTime(finishTimes[i], true) << "," << numUpdates[i] << "," << numQueryShortcuts[i] << "," << totalTime[i] << "\n";
@@ -395,7 +396,7 @@ public:
     }
 
     inline void applyNextUpdate(const bool allowDepartureDelays) noexcept {
-        AssertMsg(nextLogEntry < updateLog.size(), "No update log entries left!");
+        Assert(nextLogEntry < updateLog.size(), "No update log entries left!");
         applyUpdate(updateLog[nextLogEntry], allowDepartureDelays);
         nextLogEntry++;
     }
@@ -412,7 +413,7 @@ public:
     }
 
     inline int nextUpdateFinishTime() const noexcept {
-        AssertMsg(nextLogEntry < updateLog.size(), "No update log entries left!");
+        Assert(nextLogEntry < updateLog.size(), "No update log entries left!");
         return updateLog[nextLogEntry].finishTime;
     }
 

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <type_traits>
+#include <concepts>
 
 #include "../CH/CH.h"
 #include "../RAPTOR/InitialTransfers.h"
@@ -26,10 +28,10 @@ public:
     constexpr static bool UseTargetBuckets = USE_TARGET_BUCKETS;
     constexpr static bool PathRetrieval = PATH_RETRIEVAL;
     using Profiler = PROFILER;
-    constexpr static bool Debug = Meta::Equals<Profiler, SimpleProfiler>();
+    constexpr static bool Debug = std::is_same_v<Profiler, SimpleProfiler>;
     using Type = UPCSA<UseStopBuckets, UseTargetBuckets, PathRetrieval, Profiler>;
     using InitialAndFinalTransfers = RAPTOR::BasicInitialAndFinalTransfers<Debug, UseStopBuckets, UseTargetBuckets>;
-    using TripFlag = Meta::IF<PathRetrieval, ConnectionId, bool>;
+    using TripFlag = std::conditional_t<PathRetrieval, ConnectionId, bool>;
 
 private:
     inline static Order vertexOrder(const CH::CH& chData, const bool useDFSOrder) noexcept {
@@ -107,8 +109,8 @@ public:
         arrivalTime(data.numberOfStops(), never),
         parentLabel(PathRetrieval ? data.numberOfStops() : 0),
         profiler(profilerTemplate) {
-        AssertMsg(Vector::isSorted(data.connections), "Connections must be sorted in ascending order!");
-        AssertMsg(!Graph::hasLoops(data.transferGraph), "Shortcut graph may not have loops!");
+        Assert(Vector::isSorted(data.connections), "Connections must be sorted in ascending order!");
+        Assert(!Graph::hasLoops(data.transferGraph), "Shortcut graph may not have loops!");
         profiler.registerPhases({PHASE_CLEAR, PHASE_INITIALIZATION, PHASE_CONNECTION_SCAN, PHASE_UPWARD_SWEEP, PHASE_DOWNWARD_SEARCH});
         profiler.registerMetrics({METRIC_CONNECTIONS, METRIC_EDGES, METRIC_STOPS_BY_TRIP, METRIC_STOPS_BY_TRANSFER});
         profiler.initialize();
@@ -151,18 +153,17 @@ public:
 
     inline bool reachable(const Vertex vertex) noexcept {
         const Vertex internalVertex(queryData.externalToInternal[vertex]);
-        AssertMsg(targetVertices.contains(internalVertex), "Vertex " << internalVertex << " is not a target!");
+        Assert(targetVertices.contains(internalVertex), "Vertex " << internalVertex << " is not a target!");
         return getEarliestArrivalTime(internalVertex) < never;
     }
 
     inline int getEarliestArrivalTime(const Vertex vertex) noexcept {
         const Vertex internalVertex(queryData.externalToInternal[vertex]);
-        AssertMsg(targetVertices.contains(internalVertex), "Vertex " << internalVertex << " is not a target!");
+        Assert(targetVertices.contains(internalVertex), "Vertex " << internalVertex << " is not a target!");
         return initialAndFinalTransfers.getDistance(internalVertex);
     }
 
-    template<bool T = PathRetrieval, typename = std::enable_if_t<T == PathRetrieval && T>>
-    inline Journey getJourney(const Vertex vertex) noexcept {
+    inline Journey getJourney(const Vertex vertex) noexcept requires PathRetrieval {
         const Vertex internalVertex(queryData.externalToInternal[vertex]);
         Journey journey;
         const int distance = initialAndFinalTransfers.getDistance(internalVertex);
@@ -195,18 +196,6 @@ public:
             leg.to = Vertex(queryData.internalToExternal[leg.to]);
         }
         return journey;
-    }
-
-    inline std::vector<Vertex> getPath(const Vertex vertex) noexcept {
-        const Vertex internalVertex(queryData.externalToInternal[vertex]);
-        AssertMsg(targetVertices.contains(internalVertex), "Vertex " << internalVertex << " is not a target!");
-        return journeyToPath(getJourney(internalVertex));
-    }
-
-    inline std::vector<std::string> getRouteDescription(const Vertex vertex) noexcept {
-        const Vertex internalVertex(queryData.externalToInternal[vertex]);
-        AssertMsg(targetVertices.contains(internalVertex), "Vertex " << internalVertex << " is not a target!");
-        return data.journeyToText(getJourney(internalVertex));
     }
 
     inline const Profiler& getProfiler() const noexcept {

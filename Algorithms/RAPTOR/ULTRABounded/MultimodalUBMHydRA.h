@@ -13,7 +13,7 @@
 #include "../../../DataStructures/RAPTOR/Entities/Journey.h"
 #include "../../../DataStructures/RAPTOR/Entities/ArrivalLabel.h"
 #include "../../../DataStructures/RAPTOR/Entities/Bags.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 #include "../../../DataStructures/Container/Map.h"
 #include "../../../DataStructures/Container/ExternalKHeap.h"
 #include "../../../DataStructures/TripBased/MultimodalData.h"
@@ -258,9 +258,9 @@ public:
         targetVertex(noVertex),
         targetStop(noStop),
         sourceDepartureTime(intMax) {
-        AssertMsg(raptorData.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
-        AssertMsg(data.modes.size() == NumTransferModes, "Wrong number of modes");
-        AssertMsg(chData.size() == NumTransferModes, "Wrong number of modes");
+        Assert(raptorData.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
+        Assert(data.modes.size() == NumTransferModes, "Wrong number of modes");
+        Assert(chData.size() == NumTransferModes, "Wrong number of modes");
         for (size_t i = 0; i < chData.size(); i++) {
             initialTransfers.emplace_back(chData[i], FORWARD, raptorData.numberOfStops());
         }
@@ -441,8 +441,8 @@ private:
     inline void collectRoutesServingUpdatedStops() noexcept {
         for (const StopId stop : stopsUpdatedByTransfer) {
             for (const RouteSegment& route : raptorData.routesContainingStop(stop)) {
-                AssertMsg(raptorData.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-                AssertMsg(raptorData.stopIds[raptorData.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
+                Assert(raptorData.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
+                Assert(raptorData.stopIds[raptorData.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
                 if (route.stopIndex + 1 == raptorData.numberOfStopsInRoute(route.routeId)) continue;
                 if (routesServingUpdatedStops.contains(route.routeId)) {
                     routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
@@ -459,7 +459,7 @@ private:
             profiler.countMetric(METRIC_ROUTES);
             StopIndex stopIndex = routesServingUpdatedStops[route];
             const size_t tripSize = raptorData.numberOfStopsInRoute(route);
-            AssertMsg(stopIndex < tripSize - 1, "Cannot scan a route starting at/after the last stop (Route: " << route << ", StopIndex: " << stopIndex << ", TripSize: " << tripSize << ")!");
+            Assert(stopIndex < tripSize - 1, "Cannot scan a route starting at/after the last stop (Route: " << route << ", StopIndex: " << stopIndex << ", TripSize: " << tripSize << ")!");
 
             const StopId* stops = raptorData.stopArrayOfRoute(route);
             StopId stop = stops[stopIndex];
@@ -526,7 +526,7 @@ private:
         currentRound()[sourceVertex].resize(1);
         currentRound()[sourceVertex][0] = Label(previousRound()[sourceVertex][0], StopId(sourceVertex), 0);
         for (const Vertex toStop : transitiveInitialTransfers.getForwardPOIs()) {
-            AssertMsg(raptorData.isStop(toStop), "Transitive transfer graph has edges to non-stop vertices!");
+            Assert(raptorData.isStop(toStop), "Transitive transfer graph has edges to non-stop vertices!");
             const int travelTime = transitiveInitialTransfers.getForwardDistance(toStop);
             const Label newLabel(sourceDepartureTime, travelTime, StopId(sourceVertex));
             if (toStop == targetStop) {
@@ -541,8 +541,8 @@ private:
         //Initial transfers have already been run in the forward pruning search
         for (const Vertex stop : initialTransfers[mode].getForwardPOIs()) {
             if (stop == targetStop) continue;
-            AssertMsg(raptorData.isStop(stop), "Reached POI " << stop << " is not a stop!");
-            AssertMsg(initialTransfers[mode].getForwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
+            Assert(raptorData.isStop(stop), "Reached POI " << stop << " is not a stop!");
+            Assert(initialTransfers[mode].getForwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
             const Label newLabel(sourceDepartureTime, mode, initialTransfers[mode].getForwardDistance(stop) + TransferModeOverhead[mode], StopId(sourceVertex));
             arrivalByTransfer(StopId(stop), newLabel);
         }
@@ -607,12 +607,12 @@ private:
     }
 
     inline Round& currentRound() noexcept {
-        AssertMsg(!rounds.empty(), "Cannot return current round, because no round exists!");
+        Assert(!rounds.empty(), "Cannot return current round, because no round exists!");
         return rounds.back();
     }
 
     inline Round& previousRound() noexcept {
-        AssertMsg(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
+        Assert(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
         return rounds[rounds.size() - 2];
     }
 
@@ -632,7 +632,7 @@ private:
     }
 
     inline void arrivalByRoute(const StopId stop, const Label& label) noexcept {
-        AssertMsg(raptorData.isStop(stop), "Stop " << stop << " is out of range!");
+        Assert(raptorData.isStop(stop), "Stop " << stop << " is out of range!");
         if (checkTargetPruning(label)) return;
         if (!bestBagByRoute[stop].mergeWithStrongDominance(BestLabel(label))) return;
         if (!currentRound()[stop].mergeUndominatedUnlessEqual(label)) return;
@@ -641,7 +641,7 @@ private:
     }
 
     inline void arrivalByTransfer(const StopId stop, const Label& label) noexcept {
-        AssertMsg(raptorData.isStop(stop), "Stop " << stop << " is out of range!");
+        Assert(raptorData.isStop(stop), "Stop " << stop << " is out of range!");
         if (-backwardPruningQuery.getArrivalTime(stop, maxTrips - currentNumberOfTrips()) < label.arrivalTime) return;
         if (checkTargetPruning(label)) return;
         if (!bestBagByTransfer[stop].mergeWithStrongDominance(BestLabel(label))) return;
@@ -660,7 +660,7 @@ private:
     inline void getJourney(std::vector<Journey>& journeys, size_t round, StopId stop, size_t index) const noexcept {
         Journey journey;
         do {
-            AssertMsg(round != size_t(-1), "Backtracking parent pointers did not pass through the source stop!");
+            Assert(round != size_t(-1), "Backtracking parent pointers did not pass through the source stop!");
             const Label& label = rounds[round][stop][index];
             journey.emplace_back(label.parentStop, stop, label.parentDepartureTime, label.arrivalTime, round % 2 == 0, label.routeId);
             stop = label.parentStop;

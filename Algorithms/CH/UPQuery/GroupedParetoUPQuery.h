@@ -16,7 +16,7 @@
 #include "../../../Helpers/Vector/Vector.h"
 
 #include "../../../DataStructures/Container/ExternalKHeap.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 
 namespace CH {
 
@@ -112,7 +112,7 @@ public:
     }
 
     inline void startNewRound() noexcept {
-        AssertMsg(Q.empty(), "Queue should be empty!");
+        Assert(Q.empty(), "Queue should be empty!");
         round++;
         if (round == GroupedRounds) {
             timestamp++;
@@ -162,7 +162,7 @@ public:
         while (!Q.empty()) {
             Distance* distanceU = Q.extractFront();
             const Vertex u = Vertex(distanceU - &(distance[0]));
-            AssertMsg(u < searchGraph.numVertices(), u << " is not a valid vertex!");
+            Assert(u < searchGraph.numVertices(), u << " is not a valid vertex!");
             for (Edge edge : searchGraph.edgesFrom(u)) {
                 const Vertex v = searchGraph.get(ToVertex, edge);
                 const int newDistance = distanceU->distance + searchGraph.get(TravelTime, edge);
@@ -367,7 +367,7 @@ private:
         vertexLabel.distance[numTrips] = initialDistance;
         vertexLabel.parent[numTrips] = parentVertex;
         if constexpr (FOR_SWEEP) {
-            AssertMsg(upwardSweepGraph.externalToInternal(vertex) < upwardSweepGraph.graph.numVertices(), "Vertex is not in sweep graph! (original: "<< internalToOriginal(vertex) << ", CH: " << vertex << ", sweep: " << upwardSweepGraph.externalToInternal(vertex) << ")");
+            Assert(upwardSweepGraph.externalToInternal(vertex) < upwardSweepGraph.graph.numVertices(), "Vertex is not in sweep graph! (original: "<< internalToOriginal(vertex) << ", CH: " << vertex << ", sweep: " << upwardSweepGraph.externalToInternal(vertex) << ")");
             sweepStart = std::min(sweepStart, sweepStartOf[upwardSweepGraph.externalToInternal(vertex)]);
         } else {
             distance[vertex].distance = initialDistance;
@@ -388,7 +388,7 @@ private:
     inline void settleInitial() noexcept {
         Distance* distanceU = Q.extractFront();
         const Vertex u = Vertex(distanceU - &(distance[0]));
-        AssertMsg(u < graph[FORWARD].numVertices(), u << " is not a valid vertex!");
+        Assert(u < graph[FORWARD].numVertices(), u << " is not a valid vertex!");
         if constexpr (StallOnDemand) {
             for (Edge edge : graph[BACKWARD].edgesFrom(u)) {
                 const Vertex v = graph[BACKWARD].get(ToVertex, edge);
@@ -405,7 +405,7 @@ private:
                 Q.update(&distance[v]);
                 GroupedLabel& vLabel = getGroupedLabel(v);
                 vLabel.distance[round] = newDistance;
-                AssertMsg(groupedLabel[u].parent[round] != int(noVertex), "Invalid parent!");
+                Assert(groupedLabel[u].parent[round] != int(noVertex), "Invalid parent!");
                 vLabel.parent[round] = groupedLabel[u].parent[round];
             }
         }

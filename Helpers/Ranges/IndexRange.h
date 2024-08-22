@@ -69,17 +69,17 @@ public:
     }
 
     inline auto operator[](const size_t i) const noexcept {
-        AssertMsg(i < size(), "Index " << i << " is out of range!");
+        Assert(i < size(), "Index " << i << " is out of range!");
         return (*index)[(*range)[beginIndex + i]];
     }
 
     inline auto front() const noexcept {
-        AssertMsg(!empty(), "Range is empty!");
+        Assert(!empty(), "Range is empty!");
         return (*index)[(*range)[beginIndex]];
     }
 
     inline auto back() const noexcept {
-        AssertMsg(!empty(), "Range is empty!");
+        Assert(!empty(), "Range is empty!");
         return (*index)[(*range)[endIndex - 1]];
     }
 

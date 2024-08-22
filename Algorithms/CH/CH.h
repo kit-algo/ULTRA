@@ -78,7 +78,7 @@ public:
     }
 
     inline EdgeRange edgesFrom(const Vertex vertex) const noexcept {
-        Assert(isVertex(vertex));
+        Assert(isVertex(vertex), "Invalid vertex!");
         return EdgeRange(forward.edgesFrom(vertex), backward.edgesFrom(vertex), Edge(forward.numEdges()));
     }
 

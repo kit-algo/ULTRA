@@ -12,7 +12,7 @@
 
 #include "../GTFS/Data.h"
 #include "../Container/Map.h"
-#include "../Container/Set.h"
+#include "../Container/IndexedSet.h"
 #include "../Graph/Graph.h"
 #include "../Geometry/Point.h"
 #include "../Geometry/Rectangle.h"
@@ -21,107 +21,16 @@
 #include "../../Helpers/Assert.h"
 #include "../../Helpers/Timer.h"
 #include "../../Helpers/IO/Serialization.h"
-#include "../../Helpers/IO/ParserCSV.h"
 #include "../../Helpers/Ranges/Range.h"
 #include "../../Helpers/String/String.h"
 #include "../../Helpers/Vector/Vector.h"
 #include "../../Helpers/Vector/Permutation.h"
 #include "../../Helpers/Console/Progress.h"
-#include "../../Helpers/Console/ProgressBar.h"
-#include "../../Algorithms/StronglyConnectedComponents.h"
 #include "../../Algorithms/Dijkstra/Dijkstra.h"
 
 namespace Intermediate {
 
 using TransferGraph = DynamicTransferGraph;
-
-class Index {
-
-public:
-    Index() {}
-    Index(const std::string& fileNameBase, const bool verbose = true) {
-        readCSV(fileNameBase, verbose);
-    }
-
-public:
-    inline void writeCSV(const std::string& fileNameBase) const noexcept {
-        writeMap(fileNameBase + "gtfsStopIdToIntermediateStopId.csv", gtfsStopIdToIntermediateStopId, "gtfs_stop_id", "intermediate_stop_id");
-        writeMap(fileNameBase + "gtfsTripIdToIntermediateTripId.csv", gtfsTripIdToIntermediateTripId, "gtfs_trip_id", "intermediate_trip_id");
-        writeVector(fileNameBase + "gtfsStopSequenceToIntermediateTripIndex.csv", gtfsStopSequenceToIntermediateTripIndex, "gtfs_stop_sequence", "intermediate_trip_index");
-        writeVector(fileNameBase + "gtfsStopIdToIntermediateTripIndex.csv", gtfsStopIdToIntermediateTripIndex, "gtfs_stop_id", "intermediate_trip_index");
-    }
-
-    inline void readCSV(const std::string& fileNameBase, const bool verbose = true) noexcept {
-        readMap(fileNameBase + "gtfsStopIdToIntermediateStopId.csv", gtfsStopIdToIntermediateStopId, "gtfs_stop_id", "intermediate_stop_id", verbose);
-        readMap(fileNameBase + "gtfsTripIdToIntermediateTripId.csv", gtfsTripIdToIntermediateTripId, "gtfs_trip_id", "intermediate_trip_id", verbose);
-        readVector(fileNameBase + "gtfsStopSequenceToIntermediateTripIndex.csv", gtfsStopSequenceToIntermediateTripIndex, "gtfs_stop_sequence", "intermediate_trip_index", verbose);
-        readVector(fileNameBase + "gtfsStopIdToIntermediateTripIndex.csv", gtfsStopIdToIntermediateTripIndex, "gtfs_stop_id", "intermediate_trip_index", verbose);
-    }
-
-private:
-    inline void writeMap(const std::string& fileName, const Map<std::string, int>& map, const std::string& indexHeader, const std::string& valueHeader) const noexcept {
-        std::ofstream file(fileName);
-        AssertMsg(file, "Cannot open file " << fileName << '!');
-        AssertMsg(file.is_open(), "Cannot open file " << fileName << '!');
-        file << indexHeader << ',' << valueHeader << '\n';
-        for (const auto& entry : map) {
-            file << '\"' << entry.first << "\"," << entry.second << '\n';
-        }
-        file.close();
-    }
-
-    inline void writeVector(const std::string& fileName, const std::vector<Map<int, int>>& vector, const std::string& indexHeader, const std::string& valueHeader) const noexcept {
-        std::ofstream file(fileName);
-        AssertMsg(file, "Cannot open file " << fileName << '!');
-        AssertMsg(file.is_open(), "Cannot open file " << fileName << '!');
-        file << "intermediate_trip_id," << indexHeader << ',' << valueHeader << '\n';
-        for (size_t i = 0; i < vector.size(); i++) {
-            for (const auto& entry : vector[i]) {
-                file << i << ',' << entry.first << ',' << entry.second << '\n';
-            }
-        }
-        file.close();
-    }
-
-    inline void readMap(const std::string& fileName, Map<std::string, int>& map, const std::string& indexHeader, const std::string& valueHeader, const bool verbose = true) const noexcept {
-        IO::readFile(fileName, "Map", [&](){
-            int count = 0;
-            IO::CSVReader<2, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
-            in.readHeader(indexHeader, valueHeader);
-            std::string index;
-            int value;
-            while (in.readRow(index, value)) {
-                map[index] = value;
-                count++;
-            }
-            return count;
-        }, verbose);
-    }
-
-    inline void readVector(const std::string& fileName, std::vector<Map<int, int>>& vector, const std::string& indexHeader, const std::string& valueHeader, const bool verbose = true) const noexcept {
-        IO::readFile(fileName, "Vector", [&](){
-            int count = 0;
-            IO::CSVReader<3, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
-            in.readHeader("intermediate_trip_id", indexHeader, valueHeader);
-            size_t tripID;
-            size_t index;
-            int value;
-            while (in.readRow(tripID, index, value)) {
-                if (tripID >= vector.size()) vector.resize(tripID + 1);
-                vector[tripID][index] = value;
-                count++;
-            }
-            return count;
-        }, verbose);
-    }
-
-public:
-    Map<std::string, int> gtfsStopIdToIntermediateStopId;
-    Map<std::string, int> gtfsTripIdToIntermediateTripId;
-    std::vector<Map<int, int>> gtfsStopSequenceToIntermediateTripIndex;
-    std::vector<Map<int, int>> gtfsStopIdToIntermediateTripIndex;
-
-};
 
 class Data {
 
@@ -233,15 +142,6 @@ public:
         return data;
     }
 
-    inline static Data FromCSV(const std::string& fileNameBase, const std::string& stopFileName = "stops.csv", const std::string& stopEventFileName = "stopEvenents.csv", const std::string& tripFileName = "trips.csv", const std::string& transferFileName = "transfers.csv") noexcept {
-        Data data;
-        data.readStops(fileNameBase + stopFileName);
-        data.readTrips(fileNameBase + tripFileName);
-        data.readStopEvents(fileNameBase + stopEventFileName);
-        data.readTransfers(fileNameBase + transferFileName);
-        return data;
-    }
-
     template<typename CSA>
     inline static Data FromCSA(const CSA& csa, const bool validate = false) noexcept {
         Intermediate::Data data;
@@ -322,12 +222,6 @@ public:
     inline bool isTrip(const TripId trip) const noexcept {return trip < numberOfTrips();}
     inline Range<TripId> tripIds() const noexcept {return Range<TripId>(TripId(0), TripId(numberOfTrips()));}
 
-    inline void addBoundedTransferGraph(const TransferGraph& graph, const double maxUnificationDistanceInCM = 500, const double maxConnectingDistanceInCM = 5000, const double speedInKMH = 4.5) noexcept {
-        TransferGraph boundedGraph = graph;
-        Graph::applyBoundingBox(boundedGraph, boundingBox());
-        addTransferGraph(boundedGraph, maxUnificationDistanceInCM, maxConnectingDistanceInCM, speedInKMH);
-    }
-
     inline void connectIsolatedStops(const double maxConnectingDistanceInCM = 1000, const double speedInKMH = 4.5) noexcept {
         std::cout << "Connecting Isolated Stops." << std::endl;
         size_t edgeCount = 0;
@@ -337,7 +231,7 @@ public:
             for (const Vertex other : ct.getNeighbors(transferGraph.get(Coordinates, stop), maxConnectingDistanceInCM)) {
                 if (other == stop) continue;
                 const double distance = std::max(1.0, Geometry::geoDistanceInCM(transferGraph.get(Coordinates, stop), transferGraph.get(Coordinates, other)));
-                AssertMsg(distance <= maxConnectingDistanceInCM, "CoordinateTree returned a neighbor with distance " << distance << " > " << maxConnectingDistanceInCM << "!");
+                Assert(distance <= maxConnectingDistanceInCM, "CoordinateTree returned a neighbor with distance " << distance << " > " << maxConnectingDistanceInCM << "!");
                 const double travelTime = (distance / speedInKMH) * 0.036;
                 transferGraph.addEdge(other, stop).set(TravelTime, travelTime);
                 transferGraph.addEdge(stop, other).set(TravelTime, travelTime);
@@ -564,43 +458,14 @@ public:
         for (const StopId from : stopIds()) {
             graph.set(Coordinates, from, stops[from].coordinates);
             for (const StopId to : stopIds()) {
-                const Geometry::Point& a = transferGraph.get(Coordinates, from);
-                const Geometry::Point& b = graph.get(Coordinates, to);
+                const Geometry::Point& a = stops[from].coordinates;
+                const Geometry::Point& b = stops[to].coordinates;
                 const double distance = Geometry::geoDistanceInCM(a, b);
                 if (distance <= maxDistance) {
                     const int travelTime = (distance / speedInKMH) * 0.036;
                     graph.addEdge(from, to).set(TravelTime, travelTime);
                 }
             }
-            progress++;
-        }
-        graph.packEdges();
-        Graph::move(std::move(graph), transferGraph);
-        validate();
-        if (verbose) std::cout << " done." << std::endl;
-    }
-
-    inline void makeTransitiveStopGraph(const bool verbose = false) noexcept {
-        TransferGraph graph;
-        graph.addVertices(transferGraph.numVertices());
-        for (const Vertex from : transferGraph.vertices()) {
-            for (const Edge edge : transferGraph.edgesFrom(from)) {
-                const Vertex to = transferGraph.get(ToVertex, edge);
-                if (from < stops.size() && to < stops.size()) continue;
-                graph.addEdge(from, to).set(TravelTime, transferGraph.get(TravelTime, edge));
-            }
-        }
-        transferGraph.deleteVertices([&](const Vertex vertex){return vertex >= stops.size();});
-        Dijkstra<TransferGraph, false> dijkstra(transferGraph, transferGraph[TravelTime]);
-        Progress progress(stops.size(), verbose);
-        for (const StopId stop : stopIds()) {
-            graph.set(Coordinates, stop, stops[stop].coordinates);
-            dijkstra.run(stop, noVertex, [&](const Vertex u) {
-                if (u >= stop) return;
-                const int travelTime = dijkstra.getDistance(u);
-                graph.addEdge(stop, u).set(TravelTime, travelTime);
-                graph.addEdge(u, stop).set(TravelTime, travelTime);
-            });
             progress++;
         }
         graph.packEdges();
@@ -698,18 +563,8 @@ public:
         }
         transferGraph.packEdges();
         for (const StopId stop : stopIds()) {
-            AssertMsg(stops[stop].coordinates == transferGraph.get(Coordinates, stop), "Transit stop " << stop << " does no match with its transfer vertex!");
+            Assert(stops[stop].coordinates == transferGraph.get(Coordinates, stop), "Transit stop " << stop << " does no match with its transfer vertex!");
         }
-    }
-
-    inline void removeTripsWithoutBicycleTransport(const std::vector<bool>& bicycleTransportIsAllowedForTrip) noexcept {
-        std::vector<Trip> filteredTrips;
-        for (size_t i = 0; i < trips.size(); i++) {
-            if (bicycleTransportIsAllowedForTrip[i]) {
-                filteredTrips.emplace_back(trips[i]);
-            }
-        }
-        filteredTrips.swap(trips);
     }
 
 private:
@@ -738,25 +593,6 @@ private:
     }
 
 public:
-    inline std::vector<std::vector<Intermediate::Trip>> fifoBikeRoutes(const std::vector<bool>& bicycleTransportIsAllowedForTrip, size_t& numberOfBicycleTransportRoutes) const noexcept {
-        std::vector<Intermediate::Trip> sortedTripsWithBicycleTransport;
-        std::vector<Intermediate::Trip> sortedTripsWithoutBicycleTransport;
-        for (const TripId trip : tripIds()) {
-            if (bicycleTransportIsAllowedForTrip[trip]) {
-                sortedTripsWithBicycleTransport.emplace_back(trips[trip]);
-            } else {
-                sortedTripsWithoutBicycleTransport.emplace_back(trips[trip]);
-            }
-        }
-        std::sort(sortedTripsWithBicycleTransport.begin(), sortedTripsWithBicycleTransport.end());
-        std::sort(sortedTripsWithoutBicycleTransport.begin(), sortedTripsWithoutBicycleTransport.end());
-        std::vector<std::vector<Intermediate::Trip>> routes;
-        appendRoutes(routes, sortedTripsWithBicycleTransport, [](const Trip& a, const Trip& b){return isFiFo(a, b);});
-        numberOfBicycleTransportRoutes = routes.size();
-        appendRoutes(routes, sortedTripsWithoutBicycleTransport, [](const Trip& a, const Trip& b){return isFiFo(a, b);});
-        return routes;
-    }
-
     inline std::vector<std::vector<Intermediate::Trip>> fifoRoutes() const noexcept {
         std::vector<Intermediate::Trip> sortedTrips = trips;
         std::sort(sortedTrips.begin(), sortedTrips.end());
@@ -765,33 +601,10 @@ public:
         return routes;
     }
 
-    inline std::vector<std::vector<Intermediate::Trip>> offsetRoutes() const noexcept {
-        std::vector<Intermediate::Trip> sortedTrips = trips;
-        std::sort(sortedTrips.begin(), sortedTrips.end());
-        std::vector<std::vector<Intermediate::Trip>> routes;
-        appendRoutes(routes, sortedTrips, [](const Trip& a, const Trip& b){return isOffset(a, b);});
-        return routes;
-    }
-
-    inline std::vector<std::vector<Intermediate::Trip>> geographicRoutes() const noexcept {
-        std::vector<Intermediate::Trip> sortedTrips = trips;
-        std::sort(sortedTrips.begin(), sortedTrips.end());
-        std::vector<std::vector<Intermediate::Trip>> routes;
-        routes.emplace_back(std::vector<Intermediate::Trip>{sortedTrips[0]});
-        for (size_t i = 1; i < sortedTrips.size(); i++) {
-            if (equals(sortedTrips[i].stopEvents, sortedTrips[i - 1].stopEvents)) {
-                routes.back().emplace_back(sortedTrips[i]);
-            } else {
-                routes.emplace_back(std::vector<Intermediate::Trip>{sortedTrips[i]});
-            }
-        }
-        return routes;
-    }
-
     inline TransferGraph minTravelTimeGraph() const noexcept {
         TransferGraph result;
         result.addVertices(transferGraph.numVertices());
-        for (const Trip trip : trips) {
+        for (const Trip& trip : trips) {
             for (size_t i = 1; i < trip.stopEvents.size(); i++) {
                 if (trip.stopEvents[i - 1].stopId == trip.stopEvents[i].stopId) continue;
                 const size_t numEdges = result.numEdges();
@@ -848,34 +661,6 @@ public:
         return result;
     }
 
-    inline StopId addOrUpdateStop(const Stop& stop) noexcept {
-        for (const StopId stopId : stopIds()) {
-            if (stops[stopId].matches(stop)) {
-                stops[stopId].update(stop);
-                return stopId;
-            }
-        }
-        stops.emplace_back(stop);
-        return StopId(stops.size() - 1);
-    }
-
-    inline TripId addOrUpdateTrip(const Trip& trip) noexcept {
-        for (TripId i = TripId(0); i < trips.size(); i++) {
-            if (trips[i].matches(trip)) {
-                trips[i].update(trip);
-                return i;
-            }
-        }
-        trips.emplace_back(trip);
-        return TripId(trips.size() - 1);
-    }
-
-    inline Edge addOrUpdateTransfer(Vertex from, Vertex to, int transferTime) noexcept {
-        Edge edge = transferGraph.findOrAddEdge(from, to);
-        transferGraph.set(TravelTime, edge, std::max(transferGraph.get(TravelTime, edge), transferTime));
-        return edge;
-    }
-
     inline void applyVertexPermutation(const Permutation& permutation, const bool permutateStops = true) noexcept {
         Permutation splitPermutation = permutation.splitAt(numberOfStops());
         if (!permutateStops) {
@@ -908,7 +693,7 @@ public:
         std::vector<size_t> stopEventsPerStop(numberOfStops(), 0);
         std::vector<size_t> stopEventsPerDay;
         for (const Trip& trip : trips) {
-            AssertMsg(trip.stopEvents.size() >= 2, "Trip contains an insufficient number of stops!");
+            Assert(trip.stopEvents.size() >= 2, "Trip contains an insufficient number of stops!");
             numberOfStopEvents += trip.stopEvents.size();
             if (firstDay > trip.stopEvents.front().departureTime) firstDay = trip.stopEvents.front().departureTime;
             if (lastDay < trip.stopEvents.back().arrivalTime) lastDay = trip.stopEvents.back().arrivalTime;
@@ -969,7 +754,7 @@ public:
     }
 
     inline void printTrip(const TripId trip) const noexcept {
-        AssertMsg(trip < trips.size(), "Trip id = " << trip << "is out of bounds (0, " << trips.size() << ")!");
+        Assert(trip < trips.size(), "Trip id = " << trip << "is out of bounds (0, " << trips.size() << ")!");
         std::cout << trips[trip] << std::endl;
         for (const StopEvent& stopEvent : trips[trip].stopEvents) {
             std::cout << "   " << stopEvent << std::endl;
@@ -986,139 +771,10 @@ public:
         transferGraph.readBinary(fileName + ".graph");
     }
 
-    inline void writeCSV(const std::string& fileNameBase, const std::string& stopFileName = "stops.csv", const std::string& stopEventFileName = "stopEvenents.csv", const std::string& tripFileName = "trips.csv", const std::string& transferFileName = "transfers.csv") const noexcept {
-        writeVectorCSV(fileNameBase + stopFileName, stops, "stop_id");
-        writeVectorCSV(fileNameBase + tripFileName, trips, "trip_id");
-        writeStopEventCSV(fileNameBase + stopEventFileName, Range<size_t>(trips));
-        writeTransferCSV(fileNameBase + transferFileName);
-    }
-
-    inline void writeCSV(const std::string& fileNameBase, const std::vector<size_t> tripIds, const std::string& stopEventFileName = "stopEvenents.realtime.csv") const noexcept {
-        writeStopEventCSV(fileNameBase + stopEventFileName, tripIds);
-    }
-
-protected:
-    template<typename TYPE>
-    inline void writeVectorCSV(const std::string& fileName, const std::vector<TYPE>& data, const std::string& idHeader = "id") const noexcept {
-        std::ofstream file(fileName);
-        AssertMsg(file, "Cannot open file " << fileName << "!");
-        AssertMsg(file.is_open(), "Cannot open file " << fileName << "!");
-        file << idHeader << "," << TYPE::CSV_HEADER << "\n";
-        for (size_t i = 0; i < data.size(); i++) {
-            file << i << "," << data[i].toCSV() << "\n";
-        }
-        file.close();
-    }
-
-    template<typename TRIPS_IDS>
-    inline void writeStopEventCSV(const std::string& fileName, const TRIPS_IDS& tripIds) const noexcept {
-        std::ofstream file(fileName);
-        AssertMsg(file, "Cannot open file " << fileName << "!");
-        AssertMsg(file.is_open(), "Cannot open file " << fileName << "!");
-        file << "trip_id,stop_event_index," << StopEvent::CSV_HEADER << "\n";
-        for (size_t i : tripIds) {
-            for (size_t j = 0; j < trips[i].stopEvents.size(); j++) {
-                file << i << "," << j << "," << trips[i].stopEvents[j].toCSV() << "\n";
-            }
-        }
-        file.close();
-    }
-
-    inline void writeTransferCSV(const std::string& fileName) const noexcept {
-        std::ofstream file(fileName);
-        AssertMsg(file, "Cannot open file " << fileName << "!");
-        AssertMsg(file.is_open(), "Cannot open file " << fileName << "!");
-        file << "transfer_id,dep_stop,arr_stop,duration\n";
-        for (const Vertex vertex : transferGraph.vertices()) {
-            if (!isStop(vertex)) continue;
-            for (const Edge edge : transferGraph.edgesFrom(vertex)) {
-                if (!isStop(transferGraph.get(ToVertex, edge))) continue;
-                file << edge << "," << vertex << "," << transferGraph.get(ToVertex, edge) << "," << transferGraph.get(TravelTime, edge) << "\n";
-            }
-        }
-        file.close();
-    }
-
-    inline void readStops(const std::string& fileName, const bool verbose = true) {
-        IO::readFile(fileName, "Stops", [&](){
-            size_t count = 0;
-            IO::CSVReader<5, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
-            in.readHeader("stop_id", "lon", "lat", "name", "change_time");
-            StopId stopID;
-            Stop stop;
-            while (in.readRow(stopID, stop.coordinates.longitude, stop.coordinates.latitude, stop.name, stop.minTransferTime)) {
-                if (stopID >= stops.size()) stops.resize(stopID + 1, Stop("NOT_NAMED", Geometry::Point(), -1));
-                stops[stopID] = stop;
-                count++;
-            }
-            return count;
-        }, verbose);
-    }
-
-    inline void readTrips(const std::string& fileName, const bool verbose = true) {
-        IO::readFile(fileName, "Trips", [&](){
-            size_t count = 0;
-            IO::CSVReader<4, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
-            in.readHeader(IO::IGNORE_EXTRA_COLUMN | IO::IGNORE_MISSING_COLUMN, "trip_id", "name", "route", "vehicle");
-            TripId tripID;
-            Trip trip;
-            while (in.readRow(tripID, trip.tripName, trip.routeName, trip.type)) {
-                if (tripID >= trips.size()) trips.resize(tripID + 1, Trip("NOT_NAMED", "NOT_NAMED", -1));
-                trips[tripID] = trip;
-                count++;
-            }
-            return count;
-        }, verbose);
-    }
-
-    inline void readStopEvents(const std::string& fileName, const bool verbose = true) {
-        IO::readFile(fileName, "StopEvents", [&](){
-            size_t count = 0;
-            IO::CSVReader<5, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
-            in.readHeader("trip_id", "stop_event_index", "stop_id", "arr_time", "dep_time");
-            TripId tripID;
-            size_t index;
-            StopEvent stopEvent;
-            while (in.readRow(tripID, index, stopEvent.stopId, stopEvent.arrivalTime, stopEvent.departureTime)) {
-                if (tripID >= trips.size()) trips.resize(tripID + 1, Trip("NOT_NAMED", "NOT_NAMED", -1));
-                Trip& trip = trips[tripID];
-                if (index >= trip.stopEvents.size()) trip.stopEvents.resize(index + 1, StopEvent(noStop, -1, -2));
-                trip.stopEvents[index] = stopEvent;
-                count++;
-            }
-            return count;
-        }, verbose);
-    }
-
-    inline void readTransfers(const std::string& fileName, const bool verbose = true) {
-        transferGraph.clear();
-        transferGraph.addVertices(stops.size());
-        for (const Vertex vertex : transferGraph.vertices()) {
-            transferGraph.set(Coordinates, vertex, stops[vertex].coordinates);
-        }
-        IO::readFile(fileName, "Transfers", [&](){
-            size_t count = 0;
-            IO::CSVReader<3, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
-            in.readHeader("dep_stop", "arr_stop", "duration");
-            Vertex from;
-            Vertex to;
-            int travelTime;
-            while (in.readRow(from, to, travelTime)) {
-                if (!transferGraph.isVertex(from) || stops[from].minTransferTime == -1) continue;
-                if (!transferGraph.isVertex(to) || stops[to].minTransferTime == -1) continue;
-                transferGraph.addEdge(from, to).set(TravelTime, travelTime);
-                count++;
-            }
-            return count;
-        }, verbose);
-        transferGraph.reduceMultiEdgesBy(TravelTime);
-        transferGraph.packEdges();
-    }
-
 private:
     inline void permutate(const Permutation& fullPermutation, const Permutation& stopPermutation) noexcept {
-        AssertMsg(fullPermutation.size() == transferGraph.numVertices(), "Full permutation size (" << fullPermutation.size() << ") must be the same as number of vertices (" << transferGraph.numVertices() << ")!");
-        AssertMsg(stopPermutation.size() == numberOfStops(), "Stop permutation size (" << stopPermutation.size() << ") must be the same as number of stops (" << numberOfStops() << ")!");
+        Assert(fullPermutation.size() == transferGraph.numVertices(), "Full permutation size (" << fullPermutation.size() << ") must be the same as number of vertices (" << transferGraph.numVertices() << ")!");
+        Assert(stopPermutation.size() == numberOfStops(), "Stop permutation size (" << stopPermutation.size() << ") must be the same as number of stops (" << numberOfStops() << ")!");
 
         stopPermutation.permutate(stops);
         for (Trip& trip : trips) {

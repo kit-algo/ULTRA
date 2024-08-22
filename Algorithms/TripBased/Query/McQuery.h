@@ -286,7 +286,7 @@ private:
         StopEventId departureStopEvent = noStopEvent;
         Vertex departureStop = targetVertex;
         while (parent != u_int32_t(-1)) {
-            AssertMsg(parent < queue.size(), "Parent " << parent << " is out of range!");
+            Assert(parent < queue.size(), "Parent " << parent << " is out of range!");
             const TripLabel& label = queue[parent];
             StopEventId arrivalStopEvent;
             Edge edge;

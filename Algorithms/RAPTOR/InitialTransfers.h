@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 #include "../CH/Query/BucketQuery.h"
 #include "../CH/Query/CHQuery.h"
 #include "../CH/UPQuery/GroupedParetoUPQuery.h"
@@ -21,7 +23,7 @@ using SeparatedParetoInitialAndFinalTransfers = CH::SeparatedParetoUPQuery<true,
 template<bool DEBUG, size_t MAX_TRIPS>
 using GroupedParetoInitialAndFinalTransfers = CH::GroupedParetoUPQuery<true, DEBUG, MAX_TRIPS>;
 template<bool DEBUG, size_t GROUPED_ROUNDS>
-using ParetoInitialAndFinalTransfers = Meta::IF<GROUPED_ROUNDS != 0, GroupedParetoInitialAndFinalTransfers<DEBUG, GROUPED_ROUNDS>, SeparatedParetoInitialAndFinalTransfers<DEBUG>>;
+using ParetoInitialAndFinalTransfers = std::conditional_t<GROUPED_ROUNDS != 0, GroupedParetoInitialAndFinalTransfers<DEBUG, GROUPED_ROUNDS>, SeparatedParetoInitialAndFinalTransfers<DEBUG>>;
 
 class TransitiveInitialTransfers {
 public:
@@ -132,8 +134,8 @@ public:
         distance {std::vector<int>(numVertices, INFTY), std::vector<int>(numVertices, INFTY)},
         reachedPOIs{IndexedSet<false, Vertex>(endOfPOIs), IndexedSet<false, Vertex>(endOfPOIs)},
         targetDistance(INFTY) {
-        AssertMsg(initialTransfers.size() == NumTransferModes, "Wrong number of modes");
-        AssertMsg(modes.size() == NumTransferModes, "Wrong number of modes");
+        Assert(initialTransfers.size() == NumTransferModes, "Wrong number of modes");
+        Assert(modes.size() == NumTransferModes, "Wrong number of modes");
     }
 
     template<bool TARGET_PRUNING = true>

@@ -35,7 +35,7 @@ public:
     }
 
     inline void merge(const ShortcutCollection& other) noexcept {
-        AssertMsg(shortcuts.size() == other.shortcuts.size(), "Number of origins is different!");
+        Assert(shortcuts.size() == other.shortcuts.size(), "Number of origins is different!");
         for (StopEventId origin(0); origin < shortcuts.size(); origin++) {
             merge(other.shortcuts[origin], origin);
         }

@@ -50,7 +50,7 @@ struct SlackData {
     int slack;
 
     inline bool isFeasible(const std::vector<int>& arrivalDelay) const noexcept {
-        AssertMsg(event < arrivalDelay.size(), "Event is out of bounds!");
+        Assert(event < arrivalDelay.size(), "Event is out of bounds!");
         return slack > arrivalDelay[event];
     }
 
@@ -147,7 +147,7 @@ struct WitnessData {
                 origin = candidate.origin;
                 destination = candidate.destination;
                 edge = stopEventGraph.findEdge(Vertex(origin), Vertex(destination));
-                AssertMsg(edge != noEdge, "No edge found for candidate!");
+                Assert(edge != noEdge, "No edge found for candidate!");
             }
             perShortcutData[edge].add(candidate.data);
         }

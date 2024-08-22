@@ -532,6 +532,7 @@ public:
 
     inline AggregateProfiler& operator+=(const AggregateProfiler& other) noexcept {
         totalTime += other.totalTime;
+        totalNumRounds += other.totalNumRounds;
         if (roundData.size() < other.roundData.size()) {
             roundData.resize(other.roundData.size());
         }

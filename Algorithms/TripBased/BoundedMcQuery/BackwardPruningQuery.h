@@ -199,7 +199,7 @@ private:
         const StopEventId firstEvent = data.firstStopEventOfTrip[trip];
         queue[queueSize] = TripLabel(StopEventId(firstEvent + index), StopEventId(firstEvent + reachedIndex(trip)));
         queueSize++;
-        AssertMsg(queueSize <= queue.size(), "Queue is overfull!");
+        Assert(queueSize <= queue.size(), "Queue is overfull!");
         reachedIndex.updateCopyForward(trip, index);
     }
 
@@ -210,7 +210,7 @@ private:
         if (label.departureTime < forwardPruningQuery.getArrivalTime(label.departureStop, maxTrips - round)) return;
         queue[queueSize] = TripLabel(label.stopEvent, StopEventId(label.firstEvent + reachedIndex(label.trip)));
         queueSize++;
-        AssertMsg(queueSize <= queue.size(), "Queue is overfull!");
+        Assert(queueSize <= queue.size(), "Queue is overfull!");
         reachedIndex.updateCopyForward(label.trip, StopIndex(label.stopEvent - label.firstEvent));
     }
 

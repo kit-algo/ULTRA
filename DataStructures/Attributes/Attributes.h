@@ -270,7 +270,7 @@ public:
     inline Handle front() noexcept {return Handle(*this, 0);}
     inline Handle back() noexcept {return Handle(*this, size() - 1);}
     inline void popBack() noexcept {
-        AssertMsg(!empty(), "Cannot pop back on empty attributes!");
+        Assert(!empty(), "Cannot pop back on empty attributes!");
         values.pop_back();
         Super::popBack();
     }
@@ -333,7 +333,7 @@ public:
     }
 
     inline Handle operator[](const size_t i) noexcept {
-        AssertMsg(i < size(), "Invalid Index i = " << i << ", Attributes contains only " << size() << " values!");
+        Assert(i < size(), "Invalid Index i = " << i << ", Attributes contains only " << size() << " values!");
         return Handle(*this, i);
     }
     template<AttributeNameType ATTRIBUTE_NAME>
@@ -348,19 +348,19 @@ public:
     }
 
     inline Handle& get(const size_t i) noexcept {
-        AssertMsg(i < size(), "Invalid Index i = " << i << ", Attributes contains only " << size() << " values!");
+        Assert(i < size(), "Invalid Index i = " << i << ", Attributes contains only " << size() << " values!");
         return Handle(*this, i);
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline AttributeConstReferenceType<ATTRIBUTE_NAME> get(const AttributeNameWrapper<ATTRIBUTE_NAME>, const size_t i) const noexcept {
         static_assert(HasAttribute(AttributeNameWrapper<ATTRIBUTE_NAME>()), "Current instantiation of Attributes<List<ATTRIBUTE, ATTRIBUTE_LIST...>> does not contain an Attribute named ATTRIBUTE_NAME");
-        AssertMsg(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
+        Assert(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
         return SuperByName<ATTRIBUTE_NAME>::values[i];
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline AttributeReferenceType<ATTRIBUTE_NAME> get(const AttributeNameWrapper<ATTRIBUTE_NAME>, const size_t i) noexcept {
         static_assert(HasAttribute(AttributeNameWrapper<ATTRIBUTE_NAME>()), "Current instantiation of Attributes<List<ATTRIBUTE, ATTRIBUTE_LIST...>> does not contain an Attribute named ATTRIBUTE_NAME");
-        AssertMsg(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
+        Assert(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
         return SuperByName<ATTRIBUTE_NAME>::values[i];
     }
     template<AttributeNameType ATTRIBUTE_NAME>
@@ -386,30 +386,30 @@ public:
 
     template<typename RECORD>
     inline void set(const size_t i, const RECORD& record) noexcept {
-        AssertMsg(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
+        Assert(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
         if constexpr (RECORD::HasAttribute(ThisAttribute)) values[i] = record[ThisAttribute];
         Super::set(i, record);
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline void set(const AttributeNameWrapper<ATTRIBUTE_NAME>, const size_t i, const AttributeType<ATTRIBUTE_NAME>& value) noexcept {
         static_assert(HasAttribute(AttributeNameWrapper<ATTRIBUTE_NAME>()), "Current instantiation of Attributes<List<ATTRIBUTE, ATTRIBUTE_LIST...>> does not contain an Attribute named ATTRIBUTE_NAME");
-        AssertMsg(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
+        Assert(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
         SuperByName<ATTRIBUTE_NAME>::values[i] = value;
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline void set(const AttributeNameWrapper<ATTRIBUTE_NAME>, const std::vector<AttributeType<ATTRIBUTE_NAME>>& value) noexcept {
         static_assert(HasAttribute(AttributeNameWrapper<ATTRIBUTE_NAME>()), "Current instantiation of Attributes<List<ATTRIBUTE, ATTRIBUTE_LIST...>> does not contain an Attribute named ATTRIBUTE_NAME");
-        AssertMsg(value.size() == size(), "Cannot set a vector of size " << value.size() << " to attributes of size " << size() << "!");
+        Assert(value.size() == size(), "Cannot set a vector of size " << value.size() << " to attributes of size " << size() << "!");
         SuperByName<ATTRIBUTE_NAME>::values = value;
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline void set(const AttributeNameWrapper<ATTRIBUTE_NAME>, std::vector<AttributeType<ATTRIBUTE_NAME>>&& value) noexcept {
         static_assert(HasAttribute(AttributeNameWrapper<ATTRIBUTE_NAME>()), "Current instantiation of Attributes<List<ATTRIBUTE, ATTRIBUTE_LIST...>> does not contain an Attribute named ATTRIBUTE_NAME");
-        AssertMsg(value.size() == size(), "Cannot set a vector of size " << value.size() << " to attributes of size " << size() << "!");
+        Assert(value.size() == size(), "Cannot set a vector of size " << value.size() << " to attributes of size " << size() << "!");
         SuperByName<ATTRIBUTE_NAME>::values.swap(value);
     }
     inline void setToDefault(const size_t i) noexcept {
-        AssertMsg(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
+        Assert(i < values.size(), "Invalid Index i = " << i << ", Attributes contains only " << values.size() << " values!");
         values[i] = defaultValue;
         Super::setToDefault(i);
     }
@@ -422,12 +422,12 @@ public:
     inline void serialize(IO::Serialization& serialize) const noexcept {
         serialize(defaultValue, values);
         Super::serialize(serialize);
-        AssertMsg(hasSize(size()), "Inconsistent attribute vector sizes!");
+        Assert(hasSize(size()), "Inconsistent attribute vector sizes!");
     }
     inline void deserialize(IO::Deserialization& deserialize) noexcept {
         deserialize(defaultValue, values);
         Super::deserialize(deserialize);
-        AssertMsg(hasSize(size()), "Inconsistent attribute vector sizes!");
+        Assert(hasSize(size()), "Inconsistent attribute vector sizes!");
     }
 
     inline void serialize(const std::string& fileNameBase, const std::string& separator = ".") const noexcept {
@@ -438,19 +438,19 @@ public:
     }
     inline void deserialize(const std::string& fileNameBase, const std::string& separator, const size_t size) noexcept {
         deserialize(fileNameBase, separator, false);
-        AssertMsg(hasSize(size), "Inconsistent attribute vector sizes!");
+        Assert(hasSize(size), "Inconsistent attribute vector sizes!");
     }
 
     inline void copy(const size_t from, const size_t to) noexcept {
-        AssertMsg(from < values.size(), "Invalid Index from = " << from << ", Attributes contains only " << values.size() << " values!");
-        AssertMsg(to < values.size(), "Invalid Index to = " << to << ", Attributes contains only " << values.size() << " values!");
+        Assert(from < values.size(), "Invalid Index from = " << from << ", Attributes contains only " << values.size() << " values!");
+        Assert(to < values.size(), "Invalid Index to = " << to << ", Attributes contains only " << values.size() << " values!");
         if (from == to) return;
         values[to] = values[from];
         Super::copy(from, to);
     }
     inline void swap(const size_t i, const size_t j) noexcept {
-        AssertMsg((i >= 0) || (i < values.size()), "Invalid Index i = " << i << ", Attributes range from 0 to " << values.size() << "!");
-        AssertMsg((j >= 0) || (j < values.size()), "Invalid Index j = " << j << ", Attributes range from 0 to " << values.size() << "!");
+        Assert(i < values.size(), "Invalid Index i = " << i << ", Attributes range from 0 to " << values.size() << "!");
+        Assert(j < values.size(), "Invalid Index j = " << j << ", Attributes range from 0 to " << values.size() << "!");
         std::swap(values[i], values[j]);
         Super::swap(i, j);
     }
@@ -469,13 +469,13 @@ protected:
     inline void serialize(const std::string& fileNameBase, const std::string& separator, const bool) const noexcept {
         IO::serialize(fileNameBase + separator + String::firstToLower(Attribute::String), values);
         Super::serialize(fileNameBase, separator, false);
-        AssertMsg(hasSize(size()), "Inconsistent attribute vector sizes!");
+        Assert(hasSize(size()), "Inconsistent attribute vector sizes!");
     }
     inline void deserialize(const std::string& fileNameBase, const std::string& separator, const bool) noexcept {
         IO::deserialize(fileNameBase + separator + String::firstToLower(Attribute::String), values);
         Super::deserialize(fileNameBase, separator, false);
         this->attributesSize = size();
-        AssertMsg(hasSize(size()), "Inconsistent attribute vector sizes!");
+        Assert(hasSize(size()), "Inconsistent attribute vector sizes!");
     }
 
 protected:

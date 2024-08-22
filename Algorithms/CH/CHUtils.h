@@ -135,7 +135,7 @@ inline Data expandData(const CH& ch) noexcept {
         data.order.pop_back();
     }
     for (const Vertex vertex : data.order) {
-        AssertMsg(!ch.isCoreVertex(vertex), "Vertex " << vertex << " is a core vertex!");
+        Assert(!ch.isCoreVertex(vertex), "Vertex " << vertex << " is a core vertex!");
         for (const Edge edge : ch.forward.edgesFrom(vertex)) {
             data.forwardCH.addEdge(vertex, ch.forward.get(ToVertex, edge)).set(ViaVertex, ch.forward.get(ViaVertex, edge)).set(Weight, ch.forward.get(Weight, edge));
         }
@@ -161,8 +161,8 @@ inline std::vector<Vertex> unpackShortcut(const GRAPH& forward, const GRAPH& bac
         if (forward.isVertex(via)) {
             const Edge first = backward.findEdge(via, from);
             const Edge second = forward.findEdge(via, to);
-            Assert(backward.isEdge(first));
-            Assert(forward.isEdge(second));
+            Assert(backward.isEdge(first), "Could not find edge " << first << "!");
+            Assert(forward.isEdge(second), "Could not find edge " << second << "!");
             unprocessedShortCuts.push_back(Shortcut({forward.get(ViaVertex, second), to}));
             unprocessedShortCuts.push_back(Shortcut({backward.get(ViaVertex, first), via}));
         } else {
@@ -177,8 +177,8 @@ inline std::vector<Vertex> unpackShortcut(const CH& ch, const Vertex from, const
 }
 
 inline void analyze(const CH& ch, const std::vector<Vertex>& order, std::ostream& out = std::cout) noexcept {
-    Assert(ch.numVertices() == order.size());
-    Assert(Order(order).isValid());
+    Assert(ch.numVertices() == order.size(), "Order has wrong size!");
+    Assert(Order(order).isValid(), "Order is invalid!");
     out << "Forward Graph: " << std::endl << std::flush;
     Graph::printInfo(ch.forward);
     ch.forward.printAnalysis();

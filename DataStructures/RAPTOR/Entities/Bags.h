@@ -75,7 +75,7 @@ struct Bag {
     }
 
     inline void mergeUndominated(const Label& newLabel) noexcept {
-        AssertMsg(!dominates(newLabel), "Trying to merge dominated label!");
+        Assert(!dominates(newLabel), "Trying to merge dominated label!");
         size_t removedLabels = 0;
         for (size_t i = 0; i < labels.size(); i++) {
             if (newLabel.dominates(labels[i])) {
@@ -89,7 +89,7 @@ struct Bag {
     }
 
     inline bool mergeUndominatedUnlessEqual(const Label& newLabel) noexcept {
-        AssertMsg(!dominatesStrongly(newLabel), "Trying to merge dominated label!");
+        Assert(!dominatesStrongly(newLabel), "Trying to merge dominated label!");
         size_t removedLabels = 0;
         for (size_t i = 0; i < labels.size(); i++) {
             if (labels[i] == newLabel) return false;
@@ -207,8 +207,8 @@ public:
     }
 
     inline const DijkstraLabel& front() const noexcept {
-        AssertMsg(!empty(), "An empty heap has no front!");
-        AssertMsg(heapSize > 0, "An empty heap has no front!");
+        Assert(!empty(), "An empty heap has no front!");
+        Assert(heapSize > 0, "An empty heap has no front!");
         return labels[0];
     }
 
@@ -221,8 +221,8 @@ public:
     }
 
     inline const DijkstraLabel& extractFront() noexcept {
-        AssertMsg(!empty(), "An empty heap has no front!");
-        AssertMsg(heapSize > 0, "An empty heap has no front!");
+        Assert(!empty(), "An empty heap has no front!");
+        Assert(heapSize > 0, "An empty heap has no front!");
         heapSize--;
         if (heapSize > 0) {
             std::swap(labels[0], labels[heapSize]);
@@ -258,8 +258,8 @@ public:
     }
 
     inline void initialize(const DijkstraLabel& label) noexcept {
-        AssertMsg(labels.empty(), "Trying to initialize non-empty bag!");
-        AssertMsg(heapSize == 0, "Trying to initialize non-empty bag!");
+        Assert(labels.empty(), "Trying to initialize non-empty bag!");
+        Assert(heapSize == 0, "Trying to initialize non-empty bag!");
         labels.emplace_back(label);
     }
 
@@ -272,7 +272,7 @@ private:
     }
 
     inline void siftDown(size_t i) noexcept {
-        AssertMsg(i < heapSize, "siftDown index out of range!");
+        Assert(i < heapSize, "siftDown index out of range!");
         while (true) {
             size_t minIndex = i;
             const size_t childrenStart = firstChild(i);

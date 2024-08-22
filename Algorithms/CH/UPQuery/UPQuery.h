@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <type_traits>
+#include <concepts>
 
 #include "../../../DataStructures/CH/UPGraphs.h"
 #include "../CH.h"
@@ -16,7 +18,7 @@
 #include "../../../Helpers/Vector/Vector.h"
 
 #include "../../../DataStructures/Container/ExternalKHeap.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 #include "BucketBuilder.h"
 
 namespace CH {
@@ -29,8 +31,8 @@ public:
     constexpr static bool UseTargetBuckets = USE_TARGET_BUCKETS;
     constexpr static bool StallOnDemand = STALL_ON_DEMAND;
     constexpr static bool Debug = DEBUG;
-    using StopGraph = Meta::IF<UseStopBuckets, BucketGraph, SweepGraph>;
-    using TargetGraph = Meta::IF<UseTargetBuckets, BucketGraph, SweepGraph>;
+    using StopGraph = std::conditional_t<UseStopBuckets, BucketGraph, SweepGraph>;
+    using TargetGraph = std::conditional_t<UseTargetBuckets, BucketGraph, SweepGraph>;
     using Type = UPQuery<UseStopBuckets, UseTargetBuckets, StallOnDemand, Debug>;
     using BucketBuilderType = BucketBuilder<StallOnDemand, Debug>;
 
@@ -257,7 +259,7 @@ private:
         distance[vertex] = initialDistance;
         parent[vertex] = parentVertex;
         if constexpr (FOR_SWEEP) {
-            AssertMsg(upwardSweepGraph.externalToInternal(vertex) < upwardSweepGraph.graph.numVertices(), "Vertex is not in sweep graph! (original: "<< internalToOriginal(vertex) << ", CH: " << vertex << ", sweep: " << upwardSweepGraph.externalToInternal(vertex) << ")");
+            Assert(upwardSweepGraph.externalToInternal(vertex) < upwardSweepGraph.graph.numVertices(), "Vertex is not in sweep graph! (original: "<< internalToOriginal(vertex) << ", CH: " << vertex << ", sweep: " << upwardSweepGraph.externalToInternal(vertex) << ")");
             sweepStart = std::min(sweepStart, sweepStartOf[upwardSweepGraph.externalToInternal(vertex)]);
             if constexpr (UseTargetBuckets) {
                 bucketSources.insert(vertex);
@@ -269,7 +271,7 @@ private:
 
     inline void settle() noexcept {
         const Vertex u = Vertex(Q.extractFront() - &(dijkstraLabel[0]));
-        AssertMsg(u < graph[FORWARD].numVertices(), u << " is not a valid vertex!");
+        Assert(u < graph[FORWARD].numVertices(), u << " is not a valid vertex!");
         if constexpr (StallOnDemand) {
             for (Edge edge : graph[BACKWARD].edgesFrom(u)) {
                 const Vertex v = graph[BACKWARD].get(ToVertex, edge);
@@ -284,7 +286,7 @@ private:
             if (distance[v] > newDistance) {
                 Q.update(&dijkstraLabel[v]);
                 distance[v] = newDistance;
-                AssertMsg(parent[u] != int(noVertex), "Invalid parent!");
+                Assert(parent[u] != int(noVertex), "Invalid parent!");
                 parent[v] = parent[u];
             }
         }
@@ -293,8 +295,7 @@ private:
         }
     }
 
-    template<bool T = UseStopBuckets, typename = std::enable_if_t<T == UseStopBuckets && !T>>
-    inline void downwardSweepToStops() noexcept {
+    inline void downwardSweepToStops() noexcept requires (!UseStopBuckets) {
         if constexpr (Debug) {
             std::cout << "Running downward sweep to stops" << std::endl;
             timer.restart();
@@ -318,19 +319,18 @@ private:
         }
     }
 
-    template<bool T = UseStopBuckets, typename = std::enable_if_t<T == UseStopBuckets && T>>
-    inline void evaluateStopBuckets() noexcept {
+    inline void evaluateStopBuckets() noexcept requires UseStopBuckets {
         if constexpr (Debug) {
             std::cout << "Evaluating stop buckets" << std::endl;
             timer.restart();
         }
 
         for (const Vertex vertex : bucketSources) {
-            AssertMsg(dijkstraLabel[vertex].distance[0] != never, "Reached vertex " << vertex << " has no distance set!");
+            Assert(dijkstraLabel[vertex].distance[0] != never, "Reached vertex " << vertex << " has no distance set!");
             for (const Edge edge : stopGraph.graph.edgesFrom(vertex)) {
                 const int newDistance = distance[vertex] + stopGraph.graph.get(Weight, edge);
                 const Vertex poi = stopGraph.graph.get(ToVertex, edge);
-                AssertMsg(stops.contains(poi), "POI " << poi << " is not a stop!");
+                Assert(stops.contains(poi), "POI " << poi << " is not a stop!");
                 check(poi);
                 if (newDistance < distance[poi]) {
                     distance[poi] = newDistance;
@@ -344,8 +344,7 @@ private:
         }
     }
 
-    template<bool T = UseTargetBuckets, typename = std::enable_if_t<T == UseTargetBuckets && !T>>
-    inline void downwardSweepToTargets() noexcept {
+    inline void downwardSweepToTargets() noexcept requires (!UseTargetBuckets) {
         if constexpr (Debug) {
             std::cout << "Running downward sweep to targets" << std::endl;
             timer.restart();
@@ -369,15 +368,14 @@ private:
         }
     }
 
-    template<bool T = UseTargetBuckets, typename = std::enable_if_t<T == UseTargetBuckets && T>>
-    inline void evaluateTargetBuckets() noexcept {
+    inline void evaluateTargetBuckets() noexcept requires UseTargetBuckets {
         if constexpr (Debug) {
             std::cout << "Evaluating target buckets" << std::endl;
             timer.restart();
         }
 
         for (const Vertex vertex : bucketSources) {
-            AssertMsg(parent[vertex] != int(noVertex), "Invalid parent!");
+            Assert(parent[vertex] != int(noVertex), "Invalid parent!");
             for (const Edge edge : targetGraph.graph.edgesFrom(vertex)) {
                 const int newDistance = distance[vertex] + targetGraph.graph.get(Weight, edge);
                 const Vertex poi = targetGraph.graph.get(ToVertex, edge);

@@ -59,5 +59,5 @@ struct CombinedEarliestArrivalTime {
 };
 
 template<bool SEPARATE>
-using EarliestArrivalTime = Meta::IF<SEPARATE, SeparatedEarliestArrivalTime, CombinedEarliestArrivalTime>;
+using EarliestArrivalTime = std::conditional_t<SEPARATE, SeparatedEarliestArrivalTime, CombinedEarliestArrivalTime>;
 }

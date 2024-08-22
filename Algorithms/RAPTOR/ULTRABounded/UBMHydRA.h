@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 #include "../../../DataStructures/Container/Map.h"
 #include "../../../DataStructures/RAPTOR/Data.h"
 #include "../../../DataStructures/RAPTOR/Entities/ArrivalLabel.h"
@@ -138,7 +138,7 @@ public:
         targetVertex(noVertex),
         targetStop(StopId(data.numberOfStops())),
         sourceDepartureTime(never) {
-        AssertMsg(data.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
+        Assert(data.hasImplicitBufferTimes(), "Departure buffer times have to be implicit!");
         for (StopEventId stopEvent(0); stopEvent < stopOfStopEvent.size(); stopEvent++) {
             stopOfStopEvent[stopEvent] = tripData.getStopOfStopEvent(stopEvent);
         }
@@ -292,10 +292,10 @@ private:
 
     inline void collectRoutesServingUpdatedStops() noexcept {
         for (const StopId stop : stopsUpdatedByTransfer) {
-            AssertMsg(data.isStop(stop), "Stop " << stop << " is out of range!");
+            Assert(data.isStop(stop), "Stop " << stop << " is out of range!");
             for (const RouteSegment& route : data.routesContainingStop(stop)) {
-                AssertMsg(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
-                AssertMsg(data.stopIds[data.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
+                Assert(data.isRoute(route.routeId), "Route " << route.routeId << " is out of range!");
+                Assert(data.stopIds[data.firstStopIdOfRoute[route.routeId] + route.stopIndex] == stop, "RAPTOR data contains invalid route segments!");
                 if (route.stopIndex + 1 == data.numberOfStopsInRoute(route.routeId)) continue;
                 if (routesServingUpdatedStops.contains(route.routeId)) {
                     routesServingUpdatedStops[route.routeId] = std::min(routesServingUpdatedStops[route.routeId], route.stopIndex);
@@ -312,7 +312,7 @@ private:
             profiler.countMetric(METRIC_ROUTES);
             StopIndex stopIndex = routesServingUpdatedStops[route];
             const size_t tripSize = data.numberOfStopsInRoute(route);
-            AssertMsg(stopIndex < tripSize - 1, "Cannot scan a route starting at/after the last stop (Route: " << route << ", StopIndex: " << stopIndex << ", TripSize: " << tripSize << ")!");
+            Assert(stopIndex < tripSize - 1, "Cannot scan a route starting at/after the last stop (Route: " << route << ", StopIndex: " << stopIndex << ", TripSize: " << tripSize << ")!");
 
             const StopId* stops = data.stopArrayOfRoute(route);
             StopId stop = stops[stopIndex];
@@ -401,8 +401,8 @@ private:
         }
         for (const Vertex stop : initialTransfers.getForwardPOIs()) {
             if (stop == targetVertex) continue;
-            AssertMsg(data.isStop(stop), "Reached POI " << stop << " is not a stop!");
-            AssertMsg(initialTransfers.getForwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
+            Assert(data.isStop(stop), "Reached POI " << stop << " is not a stop!");
+            Assert(initialTransfers.getForwardDistance(stop) != INFTY, "Vertex " << stop << " was not reached!");
             Label newLabel;
             newLabel.arrivalTime = sourceDepartureTime + initialTransfers.getForwardDistance(stop);
             newLabel.walkingDistance = initialTransfers.getForwardDistance(stop);
@@ -464,12 +464,12 @@ private:
     }
 
     inline Round& currentRound() noexcept {
-        AssertMsg(!rounds.empty(), "Cannot return current round, because no round exists!");
+        Assert(!rounds.empty(), "Cannot return current round, because no round exists!");
         return rounds.back();
     }
 
     inline Round& previousRound() noexcept {
-        AssertMsg(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
+        Assert(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
         return rounds[rounds.size() - 2];
     }
 
@@ -482,7 +482,7 @@ private:
     }
 
     inline void arrivalByTransfer(const StopId stop, const Label& label) noexcept {
-        AssertMsg(data.isStop(stop), "Stop " << stop << " is out of range!");
+        Assert(data.isStop(stop), "Stop " << stop << " is out of range!");
         if (-backwardPruningQuery.getArrivalTime(stop, maxTrips - currentNumberOfTrips()) < label.arrivalTime) return;
         if (bestLabels[targetStop].dominates(label)) return;
         if (!bestLabels[stop].mergeWithStrongDominance(BestLabel(label))) return;
@@ -492,7 +492,7 @@ private:
     }
 
     inline void arrivalByRoute(const StopId stop, const Label& label) noexcept {
-        AssertMsg(data.isStop(stop), "Stop " << stop << " is out of range!");
+        Assert(data.isStop(stop), "Stop " << stop << " is out of range!");
         if (bestLabels[targetStop].dominates(label)) return;
         if (!bestLabels[stop].mergeWithStrongDominance(BestLabel(label))) return;
         if (!currentRound()[stop].mergeUndominatedUnlessEqual(label)) return;
@@ -505,13 +505,13 @@ private:
         if (!bestLabels[targetStop].merge(BestLabel(label))) return;
         profiler.countMetric(METRIC_STOPS_BY_TRANSFER);
         currentRound()[targetStop].mergeUndominated(label);
-        AssertMsg(bestLabels[targetStop].dominates(currentRound()[targetStop]), "Best bag does not dominate current bag!");
+        Assert(bestLabels[targetStop].dominates(currentRound()[targetStop]), "Best bag does not dominate current bag!");
     }
 
     inline void getJourney(std::vector<Journey>& journeys, size_t round, StopId stop, size_t index) const noexcept {
         Journey journey;
         do {
-            AssertMsg(round != size_t(-1), "Backtracking parent pointers did not pass through the source stop!");
+            Assert(round != size_t(-1), "Backtracking parent pointers did not pass through the source stop!");
             const Label& label = rounds[round][stop][index];
             journey.emplace_back(label.parentStop, stop, label.parentDepartureTime, label.arrivalTime, round % 2 == 0, label.routeId);
             stop = label.parentStop;

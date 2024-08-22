@@ -151,7 +151,7 @@ public:
     virtual void execute() noexcept {
         const std::string filename = FileSystem::extendPath(shell.getDir(), getParameter("Script file"));
         std::ifstream script(filename);
-        AssertMsg(script.is_open(), "cannot open file: " << filename);
+        Assert(script.is_open(), "cannot open file: " << filename);
         while (!script.eof()) {
             std::string line;
             getline(script, line);

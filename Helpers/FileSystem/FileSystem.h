@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -35,18 +36,11 @@ namespace FileSystem {
     }
 
     inline std::vector<std::string> getFiles(const std::string& path) noexcept {
-        DIR* dir;
-        struct dirent* ent;
-        if ((dir = opendir(path.c_str())) != NULL) {
-            std::vector<std::string> dirs;
-            while ((ent = readdir(dir)) != NULL) {
-                dirs.push_back(ent->d_name);
-            }
-            closedir(dir);
-            std::sort(dirs.begin(), dirs.end());
-            return dirs;
+        std::vector<std::string> dirs;
+        for (const auto& entry : std::filesystem::directory_iterator(path)) {
+            dirs.emplace_back(entry.path().filename());
         }
-        return std::vector<std::string>();
+        return dirs;
     }
 
     inline bool isAbsolutePath(const std::string& path) noexcept {
@@ -54,13 +48,7 @@ namespace FileSystem {
     }
 
     inline bool isDirectory(const std::string& path) noexcept {
-        DIR* dir;
-        if ((dir = opendir(path.c_str())) != NULL) {
-            closedir(dir);
-            return true;
-        } else {
-            return false;
-        }
+        return std::filesystem::is_directory(path);
     }
 
     inline bool isFile(const std::string& path) noexcept {
@@ -71,34 +59,6 @@ namespace FileSystem {
         } else {
             return false;
         }
-    }
-
-    inline bool renameFile(const std::string& oldName, const std::string& newName) noexcept {
-        if (!isFile(oldName)) return false;
-        if (isFile(newName)) return false;
-        return rename(oldName.c_str(), newName.c_str()) == 0;
-    }
-
-    inline void deleteFile(const std::string& fileName) noexcept {
-        if (!isFile(fileName)) return;
-        remove(fileName.c_str());
-    }
-
-    inline bool copyFile(const std::string& oldName, const std::string& newName) noexcept {
-        if (!isFile(oldName)) return false;
-        if (isFile(newName)) return false;
-        std::ifstream source(oldName, std::ios::binary);
-        AssertMsg(source.is_open(), "cannot open file: " << oldName);
-        std::ofstream destination(newName, std::ios::binary);
-        AssertMsg(destination.is_open(), "cannot open file: " << newName);
-        destination << source.rdbuf();
-        source.close();
-        destination.close();
-        return true;
-    }
-
-    inline bool isFileOrDirectory(const std::string& path) noexcept {
-        return isFile(path) || isDirectory(path);
     }
 
     inline std::string getParentDirectory(const std::string& fileName) noexcept {
@@ -119,11 +79,11 @@ namespace FileSystem {
             } else if (file[1] == '/') {
                 return extendPath(base, file.substr(2));
             }
-            AssertMsg(file[1] == '.', "Cannot extend path '" << base << "' with file '" << file << "'!");
+            Assert(file[1] == '.', "Cannot extend path '" << base << "' with file '" << file << "'!");
             if (file.size() == 2) {
                 return getParentDirectory(base);
             }
-            AssertMsg(file[2] == '/', "Cannot extend path '" << base << "' with file '" << file << "'!");
+            Assert(file[2] == '/', "Cannot extend path '" << base << "' with file '" << file << "'!");
             return extendPath(getParentDirectory(base), file.substr(3));
         }
         if (base[base.length() - 1] == '/') {
@@ -133,66 +93,8 @@ namespace FileSystem {
         }
     }
 
-    inline std::string getAbsolutePath(const std::string& path) noexcept {
-        if (isAbsolutePath(path)) {
-            return path;
-        } else {
-            return extendPath(getWorkingDirectory(), path);
-        }
-    }
-
-    inline std::string ensureExtension(const std::string& fileName, const std::string& extension) noexcept {
-        if (String::endsWith(fileName, extension)) {
-            return fileName;
-        } else {
-            return fileName + extension;
-        }
-    }
-
-    inline std::string getFileNameWithoutExtension(const std::string& fileName) noexcept {
-        size_t directoryEnd = fileName.find_last_of('/') + 1;
-        if (directoryEnd >= fileName.size()) directoryEnd = 0;
-        size_t extensionBegin  = fileName.find_last_of('.');
-        if (extensionBegin <= directoryEnd) extensionBegin = fileName.size();
-        return fileName.substr(directoryEnd, extensionBegin - directoryEnd);
-    }
-
-    inline void unzip(const std::string& zipFileName, const std::string& ouputDirectory, const bool verbose = true, const std::string& unzipExecutable = "/usr/bin/unzip") noexcept {
-        if (!isFile(zipFileName)) return;
-        if (!isDirectory(ouputDirectory)) return;
-        pid_t pid = fork();
-        switch (pid) {
-        case -1:
-            error("Failure during fork()!");
-            exit(1);
-        case 0:
-            if (verbose) {
-                execl(unzipExecutable.c_str(), "unzip", "-o", zipFileName.c_str(), "-d", ouputDirectory.c_str(), nullptr);
-            } else {
-                execl(unzipExecutable.c_str(), "unzip", "-o", "-qq", zipFileName.c_str(), "-d", ouputDirectory.c_str(), nullptr);
-            }
-            error(unzipExecutable + " failed!");
-            exit(1);
-        default:
-            int status = 0;
-            while (!WIFEXITED(status)) {
-                waitpid(pid, &status, 0);
-            }
-        }
-    }
-
-    inline void makeDirectory(const std::string& path) noexcept {
-        if (path.empty()) return;
-        if (isDirectory(path)) return;
-        makeDirectory(getParentDirectory(path));
-        mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    }
-
     inline const std::string& ensureDirectoryExists(const std::string& fileName) noexcept {
-        const std::string parentDirectory = getParentDirectory(fileName);
-        if (parentDirectory == "") return fileName;
-        if (isDirectory(parentDirectory)) return fileName;
-        makeDirectory(parentDirectory);
+        std::filesystem::create_directories(fileName);
         return fileName;
     }
 

@@ -171,7 +171,7 @@ private:
         for (Vertex vertex = Vertex(0); vertex < endOfPOIs; vertex++) {
             baseQuery.template run<J, I>(vertex);
             for (const Vertex bucket : baseQuery.template getPOIs<J>()) {
-                AssertMsg(!temp.hasEdge(bucket, vertex), "Bucket graph contains already an edge from " << bucket << " to " << vertex << "!");
+                Assert(!temp.hasEdge(bucket, vertex), "Bucket graph contains already an edge from " << bucket << " to " << vertex << "!");
                 temp.addEdge(bucket, vertex).set(Weight, baseQuery.template getDistanceToPOI<J>(bucket));
             }
             progress++;

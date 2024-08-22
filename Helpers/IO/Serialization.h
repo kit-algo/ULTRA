@@ -7,8 +7,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <utility>
-
-#include "File.h"
+#include <type_traits>
 
 #include "../Assert.h"
 #include "../Meta.h"
@@ -126,9 +125,9 @@ namespace IO {
             checkStream(os);
             serialize(Meta::type<T>());     // Type of the vector elements, used to check consistency during deserialization
             serialize(vectorObject.size()); // Size of the serialized vector
-            if constexpr (Meta::Equals<T, bool>()) {
+            if constexpr (std::is_same_v<T, bool>) {
                 serialize(Vector::packBool(vectorObject));
-            } else if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || Meta::Equals<T, std::string>()) {
+            } else if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || std::is_same_v<T, std::string>) {
                 for (const T& element : vectorObject) {
                     serialize(element);
                 }
@@ -142,7 +141,7 @@ namespace IO {
             checkStream(os);
             serialize(Meta::type<T>());     // Type of the vector elements, used to check consistency during deserialization
             serialize(arrayObject.size());  // Size of the serialized vector
-            if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || Meta::Equals<T, std::string>()) {
+            if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || std::is_same_v<T, std::string>) {
                 for (const T& element : arrayObject) {
                     serialize(element);
                 }
@@ -232,12 +231,12 @@ namespace IO {
             Ensure(type == Meta::type<T>(), "Trying to deserialize an std::vector<" << Meta::type<T>() << "> from a file that contains an std::vector<" << type << ">!");
             decltype(vectorObject.size()) size = 0;
             deserialize(size);
-            if constexpr (Meta::Equals<T, bool>()) {
+            if constexpr (std::is_same_v<T, bool>) {
                 std::vector<uint8_t> packedVector;
                 deserialize(packedVector);
                 vectorObject = Vector::unpackBool(packedVector);
                 vectorObject.resize(size);
-            } else if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || Meta::Equals<T, std::string>()) {
+            } else if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || std::is_same_v<T, std::string>) {
                 vectorObject.resize(size);
                 for (T& element : vectorObject) {
                     deserialize(element);
@@ -257,7 +256,7 @@ namespace IO {
             decltype(arrayObject.size()) size = 0;
             deserialize(size);
             Ensure(size == N, "Trying to deserialize an array of size " << N << " from a file that contains an array of size " << size << "!");
-            if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || Meta::Equals<T, std::string>()) {
+            if constexpr (IsSerializable<T>() || IsVectorType<T>() || IsArrayType<T>() || std::is_same_v<T, std::string>) {
                 for (T& element : arrayObject) {
                     deserialize(element);
                 }

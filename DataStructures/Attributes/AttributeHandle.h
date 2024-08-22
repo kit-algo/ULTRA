@@ -3,8 +3,6 @@
 #include "Attribute.h"
 #include "AttributeNames.h"
 
-#include "../../Helpers/Meta.h"
-
 template<typename ATTRIBUTES, typename INDEX = size_t>
 class AttributeHandle {
 

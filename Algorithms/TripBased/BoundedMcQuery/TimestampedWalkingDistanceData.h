@@ -20,7 +20,7 @@ public:
     }
 
     inline int operator()(const StopEventId stopEvent) noexcept {
-        AssertMsg(stopEvent < labels.size(), "StopEvent " << stopEvent << " is out of bounds!");
+        Assert(stopEvent < labels.size(), "StopEvent " << stopEvent << " is out of bounds!");
         return getLabel(stopEvent);
     }
 

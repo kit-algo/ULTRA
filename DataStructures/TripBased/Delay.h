@@ -115,7 +115,7 @@ public:
     }
 
     inline std::vector<std::vector<TripBased::DelayIncident>> groupDelayIncidentsByQuery(const std::vector<VertexQuery>& queries) const noexcept {
-        AssertMsg(!queries.empty(), "No queries supplied!");
+        Assert(!queries.empty(), "No queries supplied!");
         std::vector<std::vector<TripBased::DelayIncident>> result(queries.size());
         result[0] = preStartIncidents;
         size_t d = 0;

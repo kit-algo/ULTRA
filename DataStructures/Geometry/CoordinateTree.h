@@ -52,7 +52,7 @@ public:
         nearestVertex(noVertex),
         nearestDistance(-1),
         minimumDistance(-1) {
-        Assert(!coordinates.empty());
+        Assert(!coordinates.empty(), "Coordinates vector is empty!");
         nodes.reserve((coordinates.size() / maxLeafSize) * 4);
         makeBoundingBox(0, numVertices(), boundingBox);
         divideTree(newNode(), 0, numVertices(), boundingBox);
@@ -65,7 +65,7 @@ public:
         nearestVertex(noVertex),
         nearestDistance(-1),
         minimumDistance(-1) {
-        Assert(!coordinates.empty());
+        Assert(!coordinates.empty(), "Coordinates vector is empty!");
         nodes.reserve((coordinates.size() / maxLeafSize) * 4);
         makeBoundingBox(0, numVertices(), boundingBox);
         divideTree(newNode(), 0, numVertices(), boundingBox);
@@ -125,15 +125,15 @@ public:
         std::vector<bool> seen(numVertices());
         check(0, boundingBox, seen);
         for (int i = 0; i < seen.size(); i++) {
-            Assert(seen[i]);
+            Assert(seen[i], "Vertex " << i << " was not seen!");
         }
     }
 
 private:
     void divideTree(const int nodeIndex, const int beginIndex, const int endIndex, const Geometry::Rectangle& boundingBox) noexcept {
-        AssertMsg(isBoundingBox(beginIndex, endIndex, boundingBox), "Invalid bounding box!");
-        AssertMsg(endIndex > beginIndex, "endIndex = " << endIndex << " <= beginIndex = " << beginIndex << "!");
-        AssertMsg(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
+        Assert(isBoundingBox(beginIndex, endIndex, boundingBox), "Invalid bounding box!");
+        Assert(endIndex > beginIndex, "endIndex = " << endIndex << " <= beginIndex = " << beginIndex << "!");
+        Assert(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
 
         Node& node = nodes[nodeIndex];
         if ((endIndex - beginIndex) <= maxLeafSize || boundingBox.isPoint()) {
@@ -163,9 +163,9 @@ private:
                 minBoundingBox.extend(coordinates[order[i++]]);
                 maxBoundingBox.extend(coordinates[order[j--]]);
             }
-            Assert(i - 1 == j);
-            Assert(i > beginIndex);
-            Assert(i < endIndex);
+            Assert(i - 1 == j, "Indices " << i << " and " << j << " did not meet!");
+            Assert(i > beginIndex, "Index " << i << " out of bounds!");
+            Assert(i < endIndex, "Index " << i << " out of bounds!");
             node.inner.minChildMax = minBoundingBox.max[node.inner.splitDimension];
             node.inner.maxChildMin = maxBoundingBox.min[node.inner.splitDimension];
             const int minChild = newNode();
@@ -179,7 +179,7 @@ private:
 
     template<bool MIN_DISTANCE = false>
     void searchLevel(const int nodeIndex, const Geometry::Point& closest) const noexcept {
-        AssertMsg(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
+        Assert(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
 
         const Node& node = nodes[nodeIndex];
         if (node.isLeaf()) {
@@ -212,7 +212,7 @@ private:
     }
 
     void searchNeighbors(const int nodeIndex, const Geometry::Point& closest) const noexcept {
-        AssertMsg(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
+        Assert(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
 
         const Node& node = nodes[nodeIndex];
         if (node.isLeaf()) {
@@ -242,7 +242,7 @@ private:
     }
 
     inline void makeBoundingBox(const int beginIndex, const int endIndex, Geometry::Rectangle& boundingBox) noexcept {
-        Assert(endIndex > beginIndex);
+        Assert(endIndex > beginIndex, "beginIndex exceeds endIndex!");
         boundingBox.clear(coordinates[order[beginIndex]]);
         for (int i = beginIndex + 1; i < endIndex; i++) {
             boundingBox.extend(coordinates[order[i]]);
@@ -256,7 +256,7 @@ private:
     }
 
     void check(const int nodeIndex, const Geometry::Rectangle& bb, std::vector<bool>& seen) const noexcept {
-        AssertMsg(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
+        Assert(isNode(nodeIndex), "Index = " << nodeIndex << " is not a node!");
         const Node& node = nodes[nodeIndex];
         if (node.isLeaf()) {
             for (int i = node.leaf.begin; i < node.leaf.end; i++) {
@@ -267,8 +267,8 @@ private:
                     std::cout << "order[i]: " << order[i] << std::endl << std::flush;
                     std::cout << "coordinates[order[i]]: " << coordinates[order[i]] << std::endl << std::flush;
                 }
-                Assert(bb.contains(coordinates[order[i]]));
-                Assert(!seen[order[i]]);
+                Assert(bb.contains(coordinates[order[i]]), "Vertex " << order[i] << " not in bounding box!");
+                Assert(!seen[order[i]], "Vertex " << order[i] << " was already seen!");
                 seen[order[i]] = true;
             }
         } else {
@@ -282,11 +282,11 @@ private:
                 std::cout << "node.minChildMax: " << node.inner.minChildMax << std::endl << std::flush;
                 std::cout << "node.maxChildMin: " << node.inner.maxChildMin << std::endl << std::flush;
             }
-            Assert(bb.contains(minBB));
+            Assert(bb.contains(minBB), "Bounding box does not contain minChildMax!");
             check(node.minChild, minBB, seen);
             Geometry::Rectangle maxBB = bb;
             maxBB.min[node.inner.splitDimension] = node.inner.maxChildMin;
-            Assert(bb.contains(maxBB));
+            Assert(bb.contains(maxBB), "Bounding box does not contain maxChildMin!");
             check(node.maxChild, maxBB, seen);
         }
     }

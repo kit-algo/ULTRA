@@ -13,16 +13,41 @@
 
 namespace Graph {
 
+    struct ReverseEdgeData {
+        Vertex from;
+        Vertex to;
+        Edge edge;
+
+        inline bool operator<(const ReverseEdgeData& other) const noexcept {
+            return std::tie(from, to) < std::tie(other.from, other.to);
+        }
+
+        inline bool operator==(const ReverseEdgeData& other) const noexcept {
+            return std::tie(from, to) == std::tie(other.from, other.to);
+        }
+    };
+
     template<typename GRAPH>
     inline void computeReverseEdgePointers(GRAPH& graph) noexcept {
         if constexpr (GRAPH::HasEdgeAttribute(ReverseEdge)) {
+            std::vector<ReverseEdgeData> forward;
+            std::vector<ReverseEdgeData> backward;
+            forward.reserve(graph.numEdges());
+            backward.reserve(graph.numEdges());
             for (const auto [edge, from] : graph.edgesWithFromVertex()) {
-                if (graph.isEdge(graph.get(ReverseEdge, edge))) continue;
-                const Edge reverse = graph.findEdge(graph.get(ToVertex, edge), from);
-                if (!graph.isEdge(reverse)) continue;
-                if (graph.isEdge(graph.get(ReverseEdge, reverse))) continue;
-                graph.set(ReverseEdge, edge, reverse);
-                graph.set(ReverseEdge, reverse, edge);
+                const Vertex to = graph.get(ToVertex, edge);
+                forward.emplace_back(ReverseEdgeData{from, to, edge});
+                backward.emplace_back(ReverseEdgeData{to, from, edge});
+            }
+            std::sort(forward.begin(), forward.end());
+            std::sort(backward.begin(), backward.end());
+            size_t j = 0;
+            for (const ReverseEdgeData& d : forward) {
+                while (j < backward.size() && backward[j] < d) j++;
+                if (j == backward.size()) break;
+                if (backward[j] != d) continue;
+                graph.set(ReverseEdge, d.edge, backward[j].edge);
+                graph.set(ReverseEdge, backward[j].edge, d.edge);
             }
         }
     }
@@ -47,7 +72,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        AssertMsg(to.satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(to.satisfiesInvariants(), "Invariants not satisfied!");
         from.clear();
     }
 
@@ -78,7 +103,7 @@ namespace Graph {
         if constexpr (!FromType::HasEdgeAttribute(ReverseEdge)) {
             computeReverseEdgePointers(to);
         }
-        Assert(to.satisfiesInvariants());
+        Assert(to.satisfiesInvariants(), "Graph does not satisfy invariants!");
         from.clear();
     }
 
@@ -118,7 +143,7 @@ namespace Graph {
         for (Vertex v = Vertex(to.beginOut.size() - 2); v < to.beginOut.size(); v--) {
             const Vertex u = Vertex(v + 1);
             if (from[OutDegree][v] == 0) to.beginOut[v] = to.beginOut[u];
-            AssertMsg(to.beginOut[v] <= to.beginOut[u], "Adjacency data structure is out of order!");
+            Assert(to.beginOut[v] <= to.beginOut[u], "Adjacency data structure is out of order!");
         }
         to.vertexAttributes.assign(from.vertexAttributes, attributeNameChanges...);
         to.edgeAttributes.assign(from.edgeAttributes, attributeNameChanges...);
@@ -126,7 +151,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        Assert(to.satisfiesInvariants());
+        Assert(to.satisfiesInvariants(), "Graph does not satisfy invariants!");
         from.clear();
     }
 
@@ -142,7 +167,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        Assert(to.satisfiesInvariants());
+        Assert(to.satisfiesInvariants(), "Graph does not satisfy invariants!");
         from.clear();
     }
 
@@ -194,7 +219,7 @@ namespace Graph {
             computeReverseEdgePointers(to);
         }
         to.checkVectorSize();
-        Assert(to.satisfiesInvariants());
+        Assert(to.satisfiesInvariants(), "Graph does not satisfy invariants!");
         from.clear();
     }
 

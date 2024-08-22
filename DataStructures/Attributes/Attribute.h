@@ -1,10 +1,11 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
+#include <type_traits>
 
 #include "AttributeNames.h"
 
-#include "../../Helpers/Meta.h"
 #include "../../Helpers/String/String.h"
 #include "../../Helpers/String/Enumeration.h"
 
@@ -41,7 +42,7 @@ namespace Meta {
         };
 
         template<AttributeNameType NAME_A, typename TYPE_A, AttributeNameType NAME_B, typename TYPE_B, typename... ATTRIBUTE_LIST, typename... RESULTING_LIST>
-        struct InsertAttribute<Attribute<NAME_A, TYPE_A>, List<Attribute<NAME_B, TYPE_B>, ATTRIBUTE_LIST...>, RESULTING_LIST...> : IF<(NAME_A < NAME_B),
+        struct InsertAttribute<Attribute<NAME_A, TYPE_A>, List<Attribute<NAME_B, TYPE_B>, ATTRIBUTE_LIST...>, RESULTING_LIST...> : std::conditional_t<(NAME_A < NAME_B),
             List<RESULTING_LIST..., Attribute<NAME_A, TYPE_A>, Attribute<NAME_B, TYPE_B>, ATTRIBUTE_LIST...>,
             InsertAttribute<Attribute<NAME_A, TYPE_A>, List<ATTRIBUTE_LIST...>, RESULTING_LIST..., Attribute<NAME_B, TYPE_B>>> {
         };
@@ -96,7 +97,7 @@ namespace Meta {
         struct ContainsAttribute<ATTRIBUTE_NAME, List<>> : False {};
 
         template<AttributeNameType ATTRIBUTE_NAME, AttributeNameType NAME_A, typename TYPE_A, typename... ATTRIBUTE_LIST>
-        struct ContainsAttribute<ATTRIBUTE_NAME, List<Attribute<NAME_A, TYPE_A>, ATTRIBUTE_LIST...>> : IF<ATTRIBUTE_NAME != NAME_A,
+        struct ContainsAttribute<ATTRIBUTE_NAME, List<Attribute<NAME_A, TYPE_A>, ATTRIBUTE_LIST...>> : std::conditional_t<ATTRIBUTE_NAME != NAME_A,
             ContainsAttribute<ATTRIBUTE_NAME, List<ATTRIBUTE_LIST...>>,
             True> {
         };
@@ -113,7 +114,7 @@ namespace Meta {
         };
 
         template<AttributeNameType ATTRIBUTE_NAME, AttributeNameType NAME_A, typename TYPE_A, typename... ATTRIBUTE_LIST>
-        struct FindAttributeList<ATTRIBUTE_NAME, List<Attribute<NAME_A, TYPE_A>, ATTRIBUTE_LIST...>> : IF<ATTRIBUTE_NAME != NAME_A,
+        struct FindAttributeList<ATTRIBUTE_NAME, List<Attribute<NAME_A, TYPE_A>, ATTRIBUTE_LIST...>> : std::conditional_t<ATTRIBUTE_NAME != NAME_A,
             FindAttributeList<ATTRIBUTE_NAME, List<ATTRIBUTE_LIST...>>,
             List<Attribute<NAME_A, TYPE_A>, ATTRIBUTE_LIST...>> {
         };
@@ -130,7 +131,7 @@ namespace Meta {
         };
 
         template<AttributeNameType ATTRIBUTE_NAME, AttributeNameType NAME_A, typename TYPE_A, typename... ATTRIBUTE_LIST>
-        struct FindAttributeType<ATTRIBUTE_NAME, List<Attribute<NAME_A, TYPE_A>, ATTRIBUTE_LIST...>> : IF<ATTRIBUTE_NAME != NAME_A,
+        struct FindAttributeType<ATTRIBUTE_NAME, List<Attribute<NAME_A, TYPE_A>, ATTRIBUTE_LIST...>> : std::conditional_t<ATTRIBUTE_NAME != NAME_A,
             FindAttributeType<ATTRIBUTE_NAME, List<ATTRIBUTE_LIST...>>,
             ID<TYPE_A>> {
         };
@@ -151,7 +152,7 @@ namespace Meta {
         struct HasDuplicateAttribute<List<ATTRIBUTE>> : False {};
 
         template<AttributeNameType FIRST_NAME, typename FIRST_TYPE, AttributeNameType SECOND_NAME, typename SECOND_TYPE, typename... ATTRIBUTE_LIST>
-        struct HasDuplicateAttribute<List<Attribute<FIRST_NAME, FIRST_TYPE>, Attribute<SECOND_NAME, SECOND_TYPE>, ATTRIBUTE_LIST...>> : IF<FIRST_NAME != SECOND_NAME,
+        struct HasDuplicateAttribute<List<Attribute<FIRST_NAME, FIRST_TYPE>, Attribute<SECOND_NAME, SECOND_TYPE>, ATTRIBUTE_LIST...>> : std::conditional_t<FIRST_NAME != SECOND_NAME,
             HasDuplicateAttribute<List<Attribute<SECOND_NAME, SECOND_TYPE>, ATTRIBUTE_LIST...>>,
             True> {
         };

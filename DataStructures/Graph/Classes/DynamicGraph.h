@@ -26,13 +26,13 @@
 
 template<typename LIST_OF_VERTEX_ATTRIBUTES, typename LIST_OF_EDGE_ATTRIBUTES>
 class DynamicGraphImplementation {
-    static_assert(Meta::Equals<Edge, Meta::FindAttributeType<BeginOut, LIST_OF_VERTEX_ATTRIBUTES>>(), "A dynamic graph requires a vertex attribute named BeginOut of type Edge!");
-    static_assert(Meta::Equals<size_t, Meta::FindAttributeType<OutDegree, LIST_OF_VERTEX_ATTRIBUTES>>(), "A dynamic graph requires a vertex attribute named OutDegree of type size_t!");
-    static_assert(Meta::Equals<std::vector<Edge>, Meta::FindAttributeType<IncomingEdges, LIST_OF_VERTEX_ATTRIBUTES>>(), "A dynamic graph requires a vertex attribute named IncomingEdges of type vector<Edge>!");
-    static_assert(Meta::Equals<bool, Meta::FindAttributeType<Valid, LIST_OF_EDGE_ATTRIBUTES>>(), "A dynamic graph requires an edge attribute named Valid of type bool!");
-    static_assert(Meta::Equals<size_t, Meta::FindAttributeType<IncomingEdgePointer, LIST_OF_EDGE_ATTRIBUTES>>(), "A dynamic graph requires an edge attribute named IncomingEdgePointer of type size_t!");
-    static_assert(Meta::Equals<Vertex, Meta::FindAttributeType<FromVertex, LIST_OF_EDGE_ATTRIBUTES>>(), "A dynamic graph requires an edge attribute named FromVertex of type Vertex!");
-    static_assert(Meta::Equals<Vertex, Meta::FindAttributeType<ToVertex, LIST_OF_EDGE_ATTRIBUTES>>(), "A dynamic graph requires an edge attribute named ToVertex of type Vertex!");
+    static_assert(std::is_same_v<Edge, Meta::FindAttributeType<BeginOut, LIST_OF_VERTEX_ATTRIBUTES>>, "A dynamic graph requires a vertex attribute named BeginOut of type Edge!");
+    static_assert(std::is_same_v<size_t, Meta::FindAttributeType<OutDegree, LIST_OF_VERTEX_ATTRIBUTES>>, "A dynamic graph requires a vertex attribute named OutDegree of type size_t!");
+    static_assert(std::is_same_v<std::vector<Edge>, Meta::FindAttributeType<IncomingEdges, LIST_OF_VERTEX_ATTRIBUTES>>, "A dynamic graph requires a vertex attribute named IncomingEdges of type vector<Edge>!");
+    static_assert(std::is_same_v<bool, Meta::FindAttributeType<Valid, LIST_OF_EDGE_ATTRIBUTES>>, "A dynamic graph requires an edge attribute named Valid of type bool!");
+    static_assert(std::is_same_v<size_t, Meta::FindAttributeType<IncomingEdgePointer, LIST_OF_EDGE_ATTRIBUTES>>, "A dynamic graph requires an edge attribute named IncomingEdgePointer of type size_t!");
+    static_assert(std::is_same_v<Vertex, Meta::FindAttributeType<FromVertex, LIST_OF_EDGE_ATTRIBUTES>>, "A dynamic graph requires an edge attribute named FromVertex of type Vertex!");
+    static_assert(std::is_same_v<Vertex, Meta::FindAttributeType<ToVertex, LIST_OF_EDGE_ATTRIBUTES>>, "A dynamic graph requires an edge attribute named ToVertex of type Vertex!");
 
 public:
     using ListOfVertexAttributes = LIST_OF_VERTEX_ATTRIBUTES;
@@ -121,17 +121,17 @@ public:
     }
 
     inline size_t outDegree(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return get(OutDegree, vertex);
     }
 
     inline size_t inDegree(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return get(IncomingEdges, vertex).size();
     }
 
     inline size_t degree(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return neighbors(vertex).size();
     }
 
@@ -140,22 +140,22 @@ public:
     }
 
     inline Range<Edge> edgesFrom(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return Range<Edge>(get(BeginOut, vertex), Edge(get(BeginOut, vertex) + get(OutDegree, vertex)));
     }
 
     inline Edge beginEdgeFrom(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex) || vertex == numVertices(), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex) || vertex == numVertices(), vertex << " is not a valid vertex!");
         return get(BeginOut, vertex);
     }
 
     inline Edge endEdgeFrom(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return Edge(get(BeginOut, vertex) + get(OutDegree, vertex));
     }
 
     inline const std::vector<Edge>& edgesTo(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return get(IncomingEdges, vertex);
     }
 
@@ -168,17 +168,17 @@ public:
     }
 
     inline SubRange<std::vector<Vertex>> outgoingNeighbors(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return SubRange<std::vector<Vertex>>(get(ToVertex), get(BeginOut, vertex), get(BeginOut, vertex) + get(OutDegree, vertex));
     }
 
     inline IndexRange<std::vector<Vertex>, std::vector<Edge>> incomingNeighbors(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return IndexRange<std::vector<Vertex>, std::vector<Edge>>(get(FromVertex), get(IncomingEdges, vertex));
     }
 
     inline std::set<Vertex> neighbors(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         std::set<Vertex> neighbors;
         for (const Vertex neighbor : outgoingNeighbors(vertex)) {
             neighbors.insert(neighbor);
@@ -212,7 +212,7 @@ public:
     }
 
     inline bool isIsolated(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return (get(OutDegree, vertex) == 0) && (get(IncomingEdges, vertex).empty());
     }
 
@@ -272,8 +272,8 @@ public:
     }
 
     inline EdgeHandle addEdge(const Vertex from, const Vertex to) noexcept {
-        AssertMsg(isVertex(from), from << " is not a valid vertex!");
-        AssertMsg(isVertex(to), to << " is not a valid vertex!");
+        Assert(isVertex(from), from << " is not a valid vertex!");
+        Assert(isVertex(to), to << " is not a valid vertex!");
         const Edge newEdge = insertNewEdge(from, to);
         if constexpr (HasEdgeAttribute(ReverseEdge)) {
             const Edge reverse = findEdge(to, from);
@@ -290,14 +290,14 @@ public:
     }
 
     inline EdgeHandle addReverseEdge(const Edge edge) noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         if constexpr (HasEdgeAttribute(ReverseEdge)) {
-            AssertMsg(!isEdge(get(ReverseEdge, edge)), edge << " has already a reverse edge!");
+            Assert(!isEdge(get(ReverseEdge, edge)), edge << " has already a reverse edge!");
         }
         const Edge newEdge = insertNewEdge(get(ToVertex, edge), get(FromVertex, edge));
         edgeAttributes.set(newEdge, edgeRecord(edge));
         if constexpr (HasEdgeAttribute(ReverseEdge)) {
-            AssertMsg(!isEdge(get(ReverseEdge, edge)), "Edge " << edge << " already has reverse edge " << get(ReverseEdge, edge));
+            Assert(!isEdge(get(ReverseEdge, edge)), "Edge " << edge << " already has reverse edge " << get(ReverseEdge, edge));
             set(ReverseEdge, newEdge, edge);
             set(ReverseEdge, edge, newEdge);
         }
@@ -305,8 +305,8 @@ public:
     }
 
     inline void redirectEdge(const Edge edge, const Vertex newTo) noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
-        AssertMsg(isVertex(newTo), newTo << " is not a valid vertex!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isVertex(newTo), newTo << " is not a valid vertex!");
         const Vertex oldTo = get(ToVertex, edge);
         if (get(IncomingEdgePointer, edge) != get(IncomingEdges, oldTo).size() - 1) {
             get(IncomingEdgePointer, get(IncomingEdges, oldTo).back()) = get(IncomingEdgePointer, edge);
@@ -337,20 +337,20 @@ public:
     }
 
     inline void deleteEdge(const Edge edge) noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         deleteEdge(get(FromVertex, edge), get(ToVertex, edge), edge);
     }
 
     inline void deleteEdge(const Vertex from, const Edge edge) noexcept {
-        AssertMsg(isVertex(from), from << " is not a valid vertex!");
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
-        AssertMsg(from == get(FromVertex, edge), from << " is not the from vertex of edge " << edge << " !");
+        Assert(isVertex(from), from << " is not a valid vertex!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
+        Assert(from == get(FromVertex, edge), from << " is not the from vertex of edge " << edge << " !");
         deleteEdge(from, get(ToVertex, edge), edge);
     }
 
     inline void deleteEdge(const Vertex from, const Vertex to) noexcept {
-        AssertMsg(isVertex(from), from << " is not a valid vertex!");
-        AssertMsg(isVertex(to), to << " is not a valid vertex!");
+        Assert(isVertex(from), from << " is not a valid vertex!");
+        Assert(isVertex(to), to << " is not a valid vertex!");
         deleteEdge(from, to, findEdge(from, to));
     }
 
@@ -387,18 +387,18 @@ public:
     }
 
     inline void deleteAllOutgoingEdges(const Vertex vertex) noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         const Edge beginEdge = get(BeginOut, vertex);
         const size_t outDegree = get(OutDegree, vertex);
         for (size_t i = outDegree - 1; i < outDegree; i--) {
             const Edge edge = Edge(beginEdge + i);
             deleteEdge(vertex, get(ToVertex, edge), edge);
         }
-        AssertMsg(get(OutDegree, vertex) == 0, "OutDegree of " << vertex << " was not reset correctly (" << get(OutDegree, vertex) << ")");
+        Assert(get(OutDegree, vertex) == 0, "OutDegree of " << vertex << " was not reset correctly (" << get(OutDegree, vertex) << ")");
     }
 
     inline void deleteAllIncomingEdges(const Vertex vertex) noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         const size_t edgeCount = get(IncomingEdges, vertex).size();
         for (size_t i = edgeCount - 1; i < edgeCount; i--) {
             Edge edge = get(IncomingEdges, vertex)[i];
@@ -435,14 +435,14 @@ public:
 
     inline void deleteVertices(const std::vector<Vertex>& vertexList) noexcept {
         for (const Vertex vertex : vertexList) {
-            AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+            Assert(isVertex(vertex), vertex << " is not a valid vertex!");
             isolateVertex(vertex);
         }
         deleteIsolatedVertices();
     }
 
     inline void packEdges() noexcept {
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Graph does not satisfy invariants!");
         size_t i = 0;
         Permutation permutation(edgeAttributes.size());
         for (const Vertex vertex : vertices()) {
@@ -466,7 +466,7 @@ public:
             permutation.permutate(values);
         });
         edgeAttributes.resize(edgeCount);
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Graph does not satisfy invariants!");
     }
 
     inline void revert() noexcept {
@@ -505,7 +505,7 @@ public:
             get(IncomingEdges, get(ToVertex, edge)).emplace_back(edge);
         }
         checkVectorSize();
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Graph does not satisfy invariants!");
     }
 
     template<typename LESS>
@@ -528,7 +528,7 @@ public:
             if (attribute == Valid) return;
             edgePermutation.permutate(values);
         });
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Graph does not satisfy invariants!");
     }
 
     template<AttributeNameType ATTRIBUTE_NAME>
@@ -674,23 +674,23 @@ public:
 
     template<AttributeNameType ATTRIBUTE_NAME>
     inline AttributeReferenceType<ATTRIBUTE_NAME> get(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName, const Vertex vertex) noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return vertexAttributes.get(attributeName, vertex);
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline AttributeReferenceType<ATTRIBUTE_NAME> get(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName, const Edge edge) noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         return edgeAttributes.get(attributeName, edge);
     }
 
     template<AttributeNameType ATTRIBUTE_NAME>
     inline AttributeConstReferenceType<ATTRIBUTE_NAME> get(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName, const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return vertexAttributes.get(attributeName, vertex);
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline AttributeConstReferenceType<ATTRIBUTE_NAME> get(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName, const Edge edge) const noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         return edgeAttributes.get(attributeName, edge);
     }
 
@@ -705,42 +705,42 @@ public:
 
     template<AttributeNameType ATTRIBUTE_NAME>
     inline void set(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName, const Vertex vertex, const VertexAttributeType<ATTRIBUTE_NAME>& value) noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return vertexAttributes.set(attributeName, vertex, value);
     }
     template<AttributeNameType ATTRIBUTE_NAME>
     inline void set(const AttributeNameWrapper<ATTRIBUTE_NAME> attributeName, const Edge edge, const EdgeAttributeType<ATTRIBUTE_NAME>& value) noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         return edgeAttributes.set(attributeName, edge, value);
     }
 
     inline VertexRecord vertexRecord(const Vertex vertex) const noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return VertexRecord(vertexAttributes, vertex);
     }
 
     inline EdgeRecord edgeRecord(const Edge edge) const noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         return EdgeRecord(edgeAttributes, edge);
     }
 
     inline void setVertexAttributes(const Vertex vertex, const VertexRecord& record) noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         vertexAttributes.set(vertex, record);
     }
 
     inline void setEdgeAttributes(const Edge edge, const EdgeRecord& record) noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         edgeAttributes.set(edge, record);
     }
 
     inline EdgeHandle edge(const Edge edge) noexcept {
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
         return EdgeHandle(edgeAttributes, edge);
     }
 
     inline VertexHandle vertex(const Vertex vertex) noexcept {
-        AssertMsg(isVertex(vertex), vertex << " is not a valid vertex!");
+        Assert(isVertex(vertex), vertex << " is not a valid vertex!");
         return VertexHandle(vertexAttributes, vertex);
     }
 
@@ -757,11 +757,11 @@ public:
         vertexAttributes.deserialize(fileName, separator);
         edgeAttributes.deserialize(fileName, separator);
         for (const Vertex vertex : vertices()) edgeCount += outDegree(vertex);
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Graph does not satisfy invariants!");
     }
 
     inline void printAnalysis(std::ostream& out = std::cout) const noexcept {
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Graph does not satisfy invariants!");
         size_t vertexCount = 0;
         size_t isolatedVertexCount = 0;
         size_t degreeOneVertexCount = 0;
@@ -890,9 +890,9 @@ public:
         out << "          #FromVertexErrors : " << std::setw(tabSize) << String::prettyInt(fromVertexErrorCount) << std::endl;
         edgeAttributes.forEach([&](const auto& values, const AttributeNameType attribute) {
             if (attribute == IncomingEdgePointer) return;
-            using ValueType = typename Meta::RemoveReference<decltype (values)>::value_type;
+            using ValueType = typename std::remove_reference_t<decltype (values)>::value_type;
             const std::string attributeName = attributeToString(attribute);
-            if constexpr (std::is_arithmetic<ValueType>::value && !Meta::Equals<ValueType, bool>()) {
+            if constexpr (std::is_arithmetic<ValueType>::value && !std::is_same_v<ValueType, bool>) {
                 ValueType minWeight = std::numeric_limits<ValueType>::max();
                 ValueType maxWeight = std::numeric_limits<ValueType>::lowest();
                 size_t negativeWeightCount = 0;
@@ -939,9 +939,9 @@ public:
 
 private:
     inline void moveEdge(const Edge oldEdge, const Edge newEdge) noexcept {
-        AssertMsg(isEdge(oldEdge), oldEdge << " is not a valid edge!");
-        AssertMsg(!isEdge(newEdge), "Edge " << newEdge << " already exists!");
-        AssertMsg(newEdge <= Edge(edgeAttributes.size()), "New edge " << newEdge << " is out of bounds! (#edges: " << edgeAttributes.size() << ")");
+        Assert(isEdge(oldEdge), oldEdge << " is not a valid edge!");
+        Assert(!isEdge(newEdge), "Edge " << newEdge << " already exists!");
+        Assert(newEdge <= Edge(edgeAttributes.size()), "New edge " << newEdge << " is out of bounds! (#edges: " << edgeAttributes.size() << ")");
         if (newEdge == Edge(edgeAttributes.size())) {
             edgeAttributes.emplaceBack();
         }
@@ -952,7 +952,7 @@ private:
             if (get(ReverseEdge, newEdge) == oldEdge) {
                 set(ReverseEdge, newEdge, newEdge);
             } else if (isEdge(get(ReverseEdge, newEdge))) {
-                AssertMsg(get(ReverseEdge, get(ReverseEdge, newEdge)) == oldEdge, "Reverse edge of reverse edge of " << newEdge << " should be " << oldEdge << " but is " << get(ReverseEdge, get(ReverseEdge, newEdge)));
+                Assert(get(ReverseEdge, get(ReverseEdge, newEdge)) == oldEdge, "Reverse edge of reverse edge of " << newEdge << " should be " << oldEdge << " but is " << get(ReverseEdge, get(ReverseEdge, newEdge)));
                 set(ReverseEdge, get(ReverseEdge, newEdge), newEdge);
             }
         }
@@ -971,8 +971,8 @@ private:
     }
 
     inline Edge insertNewEdge(const Vertex from, const Vertex to) noexcept {
-        AssertMsg(isVertex(from), from << " is not a valid vertex!");
-        AssertMsg(isVertex(to), to << " is not a valid vertex!");
+        Assert(isVertex(from), from << " is not a valid vertex!");
+        Assert(isVertex(to), to << " is not a valid vertex!");
         if (get(OutDegree, from) == 0) {
             set(BeginOut, from, Edge(edgeAttributes.size()));
         }
@@ -988,7 +988,7 @@ private:
                 newEdge = Edge(edgeAttributes.size());
             }
         }
-        AssertMsg(newEdge <= Edge(edgeAttributes.size()), "New edge " << newEdge << " is out of bounds (#edges: " << edgeAttributes.size() << ")");
+        Assert(newEdge <= Edge(edgeAttributes.size()), "New edge " << newEdge << " is out of bounds (#edges: " << edgeAttributes.size() << ")");
         get(IncomingEdges, to).emplace_back(newEdge);
         if (newEdge == get(BeginOut, from) - 1) {
             get(BeginOut, from)--;
@@ -1008,23 +1008,23 @@ private:
     }
 
     inline void deleteEdge(const Vertex from, const Vertex to, const Edge edge) noexcept {
-        AssertMsg(isVertex(from), from << " is not a valid vertex!");
-        AssertMsg(isVertex(to), to << " is not a valid vertex!");
-        AssertMsg(isEdge(edge), edge << " is not a valid edge!");
-        AssertMsg(get(ToVertex, edge) == to, "To vertex of " << edge << " should be " << to << " but is " << get(ToVertex, edge));
-        AssertMsg(get(FromVertex, edge) == from, "From vertex of " << edge << " should be " << from << " but is " << get(FromVertex, edge));
+        Assert(isVertex(from), from << " is not a valid vertex!");
+        Assert(isVertex(to), to << " is not a valid vertex!");
+        Assert(isEdge(edge), edge << " is not a valid edge!");
+        Assert(get(ToVertex, edge) == to, "To vertex of " << edge << " should be " << to << " but is " << get(ToVertex, edge));
+        Assert(get(FromVertex, edge) == from, "From vertex of " << edge << " should be " << from << " but is " << get(FromVertex, edge));
         if (get(IncomingEdgePointer, edge) != get(IncomingEdges, to).size() - 1) {
-            AssertMsg(get(IncomingEdgePointer, get(IncomingEdges, to).back()) == get(IncomingEdges, to).size() - 1, "Vertex " << to << ": Incoming edge pointer of incoming edge #" << get(IncomingEdges, to).size() - 1 << " points to " << get(IncomingEdgePointer, get(IncomingEdges, to).back()));
+            Assert(get(IncomingEdgePointer, get(IncomingEdges, to).back()) == get(IncomingEdges, to).size() - 1, "Vertex " << to << ": Incoming edge pointer of incoming edge #" << get(IncomingEdges, to).size() - 1 << " points to " << get(IncomingEdgePointer, get(IncomingEdges, to).back()));
             get(IncomingEdgePointer, get(IncomingEdges, to).back()) = get(IncomingEdgePointer, edge);
             get(IncomingEdges, to)[get(IncomingEdgePointer, edge)] = get(IncomingEdges, to).back();
         }
         get(IncomingEdges, to).pop_back();
         for (size_t i = 0; i < get(IncomingEdges, to).size(); i++) {
-            AssertMsg(get(IncomingEdgePointer, get(IncomingEdges, to)[i]) == i, "Vertex " << to << ": Incoming edge pointer of incoming edge #" << i << " points to " << get(IncomingEdgePointer, get(IncomingEdges, to)[i]));
+            Assert(get(IncomingEdgePointer, get(IncomingEdges, to)[i]) == i, "Vertex " << to << ": Incoming edge pointer of incoming edge #" << i << " points to " << get(IncomingEdgePointer, get(IncomingEdges, to)[i]));
         }
         if constexpr (HasEdgeAttribute(ReverseEdge)) {
             if (isEdge(get(ReverseEdge, edge))) {
-                AssertMsg(get(ReverseEdge, get(ReverseEdge, edge)) == edge, "Reverse edge of reverse edge of " << edge << "  is " << get(ReverseEdge, get(ReverseEdge, edge)));
+                Assert(get(ReverseEdge, get(ReverseEdge, edge)) == edge, "Reverse edge of reverse edge of " << edge << "  is " << get(ReverseEdge, get(ReverseEdge, edge)));
                 set(ReverseEdge, get(ReverseEdge, edge), noEdge);
             }
         }
@@ -1050,52 +1050,52 @@ private:
 
 public:
     inline void checkVectorSize() const noexcept {
-        AssertMsg(vertexAttributes.hasSize(vertexAttributes.size()), "Size of vertex attributes is inconsistent!");
-        AssertMsg(edgeAttributes.hasSize(edgeAttributes.size()), "Size of edge attributes is inconsistent!");
+        Assert(vertexAttributes.hasSize(vertexAttributes.size()), "Size of vertex attributes is inconsistent!");
+        Assert(edgeAttributes.hasSize(edgeAttributes.size()), "Size of edge attributes is inconsistent!");
     }
 
     inline bool satisfiesInvariants() const noexcept {
         std::vector<bool> hasEdgeFlag(edgeAttributes.size(), false);
         for (const Vertex v : vertices()) {
             for (Edge e = get(BeginOut, v); e < get(BeginOut, v) + get(OutDegree, v); e++) {
-                AssertMsg(!hasEdgeFlag[e], "Edge " << e << " was already scanned!");
+                Assert(!hasEdgeFlag[e], "Edge " << e << " was already scanned!");
                 if (hasEdgeFlag[e]) return false;
                 hasEdgeFlag[e] = true;
-                AssertMsg(get(FromVertex, e) == v, "From vertex of edge " << e << " should be " << v << " but is " << get(FromVertex, e));
+                Assert(get(FromVertex, e) == v, "From vertex of edge " << e << " should be " << v << " but is " << get(FromVertex, e));
                 if (get(FromVertex, e) != v) return false;
-                AssertMsg(get(IncomingEdgePointer, e) < get(IncomingEdges, get(ToVertex, e)).size(), "Incoming edge pointer of edge " << e << " is out of bounds! (size: " << get(IncomingEdges, get(ToVertex, e)).size() << ")");
+                Assert(get(IncomingEdgePointer, e) < get(IncomingEdges, get(ToVertex, e)).size(), "Incoming edge pointer of edge " << e << " is out of bounds! (size: " << get(IncomingEdges, get(ToVertex, e)).size() << ")");
                 if (get(IncomingEdgePointer, e) >= get(IncomingEdges, get(ToVertex, e)).size()) return false;
-                AssertMsg(get(IncomingEdges, get(ToVertex, e))[get(IncomingEdgePointer, e)] == e, "IncomingEdges entry for " << e << " points to " << get(IncomingEdges, get(ToVertex, e))[get(IncomingEdgePointer, e)]);
+                Assert(get(IncomingEdges, get(ToVertex, e))[get(IncomingEdgePointer, e)] == e, "IncomingEdges entry for " << e << " points to " << get(IncomingEdges, get(ToVertex, e))[get(IncomingEdgePointer, e)]);
                 if (get(IncomingEdges, get(ToVertex, e))[get(IncomingEdgePointer, e)] != e) return false;
             }
             for (size_t i = 0; i < get(IncomingEdges, v).size(); i++) {
                 const Edge e = get(IncomingEdges, v)[i];
-                AssertMsg(isEdge(e), "Incoming edge #" << i << " of vertex " << v << " (" << e << ") is not a valid edge!");
+                Assert(isEdge(e), "Incoming edge #" << i << " of vertex " << v << " (" << e << ") is not a valid edge!");
                 if (!isEdge(e)) return false;
-                AssertMsg(get(ToVertex, e) == v, "Incoming edge " << e << " of vertex " << v << " does not have " << v << " as its to vertex!");
+                Assert(get(ToVertex, e) == v, "Incoming edge " << e << " of vertex " << v << " does not have " << v << " as its to vertex!");
                 if (get(ToVertex, e) != v) return false;
-                AssertMsg(get(IncomingEdgePointer, e) == i, "Incoming edge pointer of " << e << " should be " << i << " but is " << get(IncomingEdgePointer, e));
+                Assert(get(IncomingEdgePointer, e) == i, "Incoming edge pointer of " << e << " should be " << i << " but is " << get(IncomingEdgePointer, e));
                 if (get(IncomingEdgePointer, e) != i) return false;
             }
         }
         for (Edge e = Edge(0); e < edgeAttributes.size(); e++) {
             if (get(Valid)[e]) {
-                AssertMsg(hasEdgeFlag[e], "Valid edge " << e << " was not scanned!");
+                Assert(hasEdgeFlag[e], "Valid edge " << e << " was not scanned!");
                 if (!hasEdgeFlag[e]) return false;
             } else {
-                AssertMsg(!hasEdgeFlag[e], "Scanned edge " << e << " is invalid!");
+                Assert(!hasEdgeFlag[e], "Scanned edge " << e << " is invalid!");
                 if (hasEdgeFlag[e]) return false;
             }
         }
         if constexpr (HasEdgeAttribute(ReverseEdge)) {
             for (const Edge edge : edges()) {
-                AssertMsg(isEdge(get(ReverseEdge, edge)) || get(ReverseEdge, edge) == noEdge, "Reverse edge " << get(ReverseEdge, edge) << " of edge " << edge << " is invalid but not noEdge!");
+                Assert(isEdge(get(ReverseEdge, edge)) || get(ReverseEdge, edge) == noEdge, "Reverse edge " << get(ReverseEdge, edge) << " of edge " << edge << " is invalid but not noEdge!");
                 if (isEdge(get(ReverseEdge, edge))) {
-                    AssertMsg(get(ReverseEdge, get(ReverseEdge, edge)) == edge, "Reverse edge of reverse edge of " << edge << "  is " << get(ReverseEdge, get(ReverseEdge, edge)));
+                    Assert(get(ReverseEdge, get(ReverseEdge, edge)) == edge, "Reverse edge of reverse edge of " << edge << "  is " << get(ReverseEdge, get(ReverseEdge, edge)));
                     if (get(ReverseEdge, get(ReverseEdge, edge)) != edge) return false;
-                    AssertMsg(get(FromVertex, get(ReverseEdge, edge)) == get(ToVertex, edge), "From vertex of reverse edge of " << edge << " (" << get(FromVertex, get(ReverseEdge, edge)) << ") is not to vertex of " << edge << " (" << get(ToVertex, edge) << ")");
+                    Assert(get(FromVertex, get(ReverseEdge, edge)) == get(ToVertex, edge), "From vertex of reverse edge of " << edge << " (" << get(FromVertex, get(ReverseEdge, edge)) << ") is not to vertex of " << edge << " (" << get(ToVertex, edge) << ")");
                     if (get(FromVertex, get(ReverseEdge, edge)) != get(ToVertex, edge)) return false;
-                    AssertMsg(get(ToVertex, get(ReverseEdge, edge)) == get(FromVertex, edge), "To vertex of reverse edge of " << edge << " (" << get(ToVertex, get(ReverseEdge, edge)) << ") is not from vertex of " << edge << " (" << get(FromVertex, edge) << ")");
+                    Assert(get(ToVertex, get(ReverseEdge, edge)) == get(FromVertex, edge), "To vertex of reverse edge of " << edge << " (" << get(ToVertex, get(ReverseEdge, edge)) << ") is not from vertex of " << edge << " (" << get(FromVertex, edge) << ")");
                     if (get(ToVertex, get(ReverseEdge, edge)) != get(FromVertex, edge)) return false;
                 }
             }

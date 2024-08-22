@@ -158,7 +158,7 @@ public:
     }
 
     inline void setFirstCharColumn(const size_t newFirstCharColumn) noexcept {
-        AssertMsg(prefix.size() + suffix.size() == 0, "Cannot change first char column if the buffer is not empty!");
+        Assert(prefix.size() + suffix.size() == 0, "Cannot change first char column if the buffer is not empty!");
         firstCharColumn = newFirstCharColumn;
     }
 
@@ -240,7 +240,7 @@ private:
 
     inline void moveCursorLeft(const size_t textSize, const size_t amount = 1) noexcept {
         if (amount == 0) return;
-        AssertMsg(textSize >= amount, "Cannot move left for " << amount << " steps, because the buffer contains only " << textSize << " chars!");
+        Assert(textSize >= amount, "Cannot move left for " << amount << " steps, because the buffer contains only " << textSize << " chars!");
         CursorPosition oldPosition = getCursorPosition(textSize, cursorCouldBeOffScreen);
         CursorPosition newPosition = getCursorPosition(textSize - amount, false);
         while (newPosition.y < oldPosition.y) {

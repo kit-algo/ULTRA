@@ -56,17 +56,17 @@ public:
     }
 
     inline EdgeWithFromVertex operator[](const size_t i) const noexcept  {
-        AssertMsg(i < size(), "Index " << i << " is out of range!");
+        Assert(i < size(), "Index " << i << " is out of range!");
         return begin()[i];
     }
 
     inline EdgeWithFromVertex front() const noexcept {
-        AssertMsg(!empty(), "Range is empty!");
+        Assert(!empty(), "Range is empty!");
         return begin()[0];
     }
 
     inline EdgeWithFromVertex back() const noexcept {
-        AssertMsg(!empty(), "Range is empty!");
+        Assert(!empty(), "Range is empty!");
         return begin()[size() - 1];
     }
 

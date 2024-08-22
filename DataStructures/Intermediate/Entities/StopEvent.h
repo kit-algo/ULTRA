@@ -62,7 +62,7 @@ public:
     }
 
     inline void update(const StopEvent& other) noexcept {
-        AssertMsg(matches(other), "Updating a stop event with one that does not match!");
+        Assert(matches(other), "Updating a stop event with one that does not match!");
         stopId = other.stopId;
         departureTime = other.departureTime;
         arrivalTime = std::max(arrivalTime, other.arrivalTime);

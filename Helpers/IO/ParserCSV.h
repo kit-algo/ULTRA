@@ -11,10 +11,12 @@
 #include <future>
 #include <cassert>
 #include <cerrno>
+#include <cstdio>
+#include <concepts>
 
-#include "File.h"
 #include "../Timer.h"
 #include "../TaggedInteger.h"
+#include "../String/Enumeration.h"
 #include "../Vector/Vector.h"
 #include "../FileSystem/FileSystem.h"
 
@@ -39,7 +41,7 @@ struct WithFileName {
     WithFileName() {std::memset(fileName, 0, MAX_FILE_NAME_LENGTH + 1);}
 
     void setFileName(const char* fileName) {
-        std::strncpy(this->fileName, fileName, MAX_FILE_NAME_LENGTH);
+        std::memcpy(this->fileName, fileName, strnlen(fileName, MAX_FILE_NAME_LENGTH));
         this->fileName[MAX_FILE_NAME_LENGTH] = '\0';
     }
 
@@ -98,6 +100,30 @@ private:
     char fileName[Error::MAX_FILE_NAME_LENGTH + 1];
     unsigned fileLine;
 
+    inline static FILE* openFile(const std::string& fileName) noexcept {
+        FILE* file = std::fopen(fileName.c_str(), "rb");
+        Ensure(file != nullptr, "cannot open file: " << fileName);
+        return file;
+    }
+
+    inline static FILE* openFile(const std::vector<std::string>& fileNameAliases) noexcept {
+        FILE* file;
+        for (const std::string& fileName : fileNameAliases) {
+            file = std::fopen(fileName.c_str(), "rb");
+            if (file != nullptr) {
+                break;
+            }
+        }
+        if (file == nullptr) {
+            Enumeration e;
+            for (const std::string& fileName : fileNameAliases) {
+                e << fileName << sep;
+            }
+            Ensure(false, "Cannot open any of the files: " << e);
+        }
+        return file;
+    }
+
     void init() {
         fileLine = 0;
 
@@ -118,7 +144,7 @@ private:
         if (dataEnd >= 3 && buffer[0] == '\xEF' && buffer[1] == '\xBB' && buffer[2] == '\xBF') dataBegin = 3;
 
         if (dataEnd == 2 * BLOCK_LENGTH) {
-            bytesRead = std::async(std::launch::async, [=]()->int {return std::fread(buffer + 2 * BLOCK_LENGTH, 1, BLOCK_LENGTH, file);});
+            bytesRead = std::async(std::launch::async, [=, this]()->int {return std::fread(buffer + 2 * BLOCK_LENGTH, 1, BLOCK_LENGTH, file);});
         }
     }
 
@@ -137,12 +163,12 @@ public:
         init();
     }
 
-    explicit LineReader(const std::string& fileName) : file(IO::openFile(fileName)) {
+    explicit LineReader(const std::string& fileName) : file(openFile(fileName)) {
         setFileName(fileName.c_str());
         init();
     }
 
-    explicit LineReader(const std::vector<std::string>& fileNameAliases) : file(IO::openFile(fileNameAliases)) {
+    explicit LineReader(const std::vector<std::string>& fileNameAliases) : file(openFile(fileNameAliases)) {
         setFileName(fileNameAliases.front().c_str());
         init();
     }
@@ -183,7 +209,7 @@ public:
             if (bytesRead.valid()) {
                 dataEnd += bytesRead.get();
                 std::memcpy(buffer + BLOCK_LENGTH, buffer + 2 * BLOCK_LENGTH, BLOCK_LENGTH);
-                bytesRead = std::async(std::launch::async, [=]()->int {return std::fread(buffer + 2 * BLOCK_LENGTH, 1, BLOCK_LENGTH, file);});
+                bytesRead = std::async(std::launch::async, [=, this]()->int {return std::fread(buffer + 2 * BLOCK_LENGTH, 1, BLOCK_LENGTH, file);});
             }
         }
 
@@ -826,13 +852,13 @@ public:
         init();
     }
 
-    template<typename... T, typename = std::enable_if_t<sizeof...(T) == COLUMN_COUNT>>
+    template<typename... T> requires (sizeof...(T) == COLUMN_COUNT)
     void readHeader(const T&... columnNames) {
         columnNameAliases = std::array<std::vector<std::string>, COLUMN_COUNT>{std::vector<std::string>{columnNames}...};
         readHeader(IGNORE_EXTRA_COLUMN);
     }
 
-    template<typename... T, typename = std::enable_if_t<sizeof...(T) == COLUMN_COUNT>>
+    template<typename... T> requires (sizeof...(T) == COLUMN_COUNT)
     void readHeader(const IgnoreColumn ignorePolicy, const T&... columnNames) {
         columnNameAliases = std::array<std::vector<std::string>, COLUMN_COUNT>{std::vector<std::string>{columnNames}...};
         readHeader(ignorePolicy);

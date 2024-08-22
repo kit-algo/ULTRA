@@ -43,7 +43,7 @@ public:
     }
 
     inline void addTransferGraph(const size_t mode, const TransferGraph& graph) noexcept {
-        AssertMsg(mode < RAPTOR::NUM_TRANSFER_MODES, "Mode is not supported!");
+        Assert(mode < RAPTOR::NUM_TRANSFER_MODES, "Mode is not supported!");
         if (!Vector::contains(modes, mode)) {
             modes.emplace_back(mode);
         }
@@ -51,7 +51,7 @@ public:
     }
 
     inline const TransferGraph& getTransferGraph(const size_t mode) const noexcept {
-        AssertMsg(Vector::contains(modes, mode), "Mode is not supported!");
+        Assert(Vector::contains(modes, mode), "Mode is not supported!");
         return stopEventGraphs[mode];
     }
 
@@ -66,7 +66,7 @@ public:
     }
 
     inline Data getPruningData(const std::vector<size_t>& pruningModes) const noexcept {
-        AssertMsg(!pruningModes.empty(), "Cannot build pruning data without transfer modes!");
+        Assert(!pruningModes.empty(), "Cannot build pruning data without transfer modes!");
         Data resultData(tripData);
         DynamicTransferGraph temp;
         Graph::copy(tripData.stopEventGraph, temp);

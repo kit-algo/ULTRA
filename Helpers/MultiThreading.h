@@ -26,7 +26,6 @@ public:
         threadToNumaNode(numThreads, 0),
         threadToNumaMaster(numThreads, false),
         numaNodeToLogicalCpus(numNumaNodes) {
-        Assert(1 != -1);
         initialize(strategy);
     }
 
@@ -34,22 +33,22 @@ public:
     inline size_t getNumNumaNodesUsed() const {return numNumaNodesUsed;}
 
     inline size_t getNumaNodeFromThreadId(const size_t threadId) const {
-        Assert(threadId < threadToNumaNode.size());
+        Assert(threadId < threadToNumaNode.size(), "Invalid thread ID " << threadId << "!");
         return threadToNumaNode[threadId];
     }
 
     inline size_t getLogicalCpuFromThreadId(const size_t threadId) const {
-        Assert(threadId < threadToLogicalCpu.size());
+        Assert(threadId < threadToLogicalCpu.size(), "Invalid thread ID " << threadId << "!");
         return threadToLogicalCpu[threadId];
     }
 
     inline bool isNumaNodeMaster(const size_t threadId) const {
-        Assert(threadId < threadToNumaMaster.size());
+        Assert(threadId < threadToNumaMaster.size(), "Invalid thread ID " << threadId << "!");
         return threadToNumaMaster[threadId];
     }
 
     inline void pinThread(const size_t threadId) {
-        Assert(threadId < threadToLogicalCpu.size());
+        Assert(threadId < threadToLogicalCpu.size(), "Invalid thread ID " << threadId << "!");
         cpu_set_t mask;
         CPU_ZERO(&mask);
         CPU_SET(threadToLogicalCpu[threadId], &mask);
@@ -156,7 +155,7 @@ public:
 
     inline void pinThread() const noexcept {
         pinThreadToCoreId((omp_get_thread_num() * pinMultiplier) % numberOfCores());
-        AssertMsg(static_cast<size_t>(omp_get_num_threads()) == numberOfThreads, "Number of threads is " << omp_get_num_threads() << ", but should be " << numberOfThreads << "!");
+        Assert(static_cast<size_t>(omp_get_num_threads()) == numberOfThreads, "Number of threads is " << omp_get_num_threads() << ", but should be " << numberOfThreads << "!");
     }
 
     size_t numberOfThreads;

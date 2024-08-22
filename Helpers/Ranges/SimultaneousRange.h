@@ -41,7 +41,7 @@ public:
     SimultaneousRange(const RangeA& rangeA, const RangeB& rangeB) :
         rangeA(&rangeA),
         rangeB(&rangeB) {
-        AssertMsg(rangeA.size() == rangeB.size(), "Both ranges must have the same size (" << rangeA.size() << ", " << rangeB.size() << ")!");
+        Assert(rangeA.size() == rangeB.size(), "Both ranges must have the same size (" << rangeA.size() << ", " << rangeB.size() << ")!");
     }
 
     SimultaneousRange(const RangeA&&, const RangeB&) = delete;
@@ -64,16 +64,16 @@ public:
     }
 
     inline Element operator[](const size_t i) const noexcept {
-        AssertMsg(i < size(), "Index " << i << " is out of range!");
+        Assert(i < size(), "Index " << i << " is out of range!");
         return std::make_tuple((*rangeA)[i], (*rangeB)[i]);
     }
     inline Element front() const noexcept {
-        AssertMsg(!empty(), "Range is empty!");
+        Assert(!empty(), "Range is empty!");
         return std::make_tuple(rangeA->front(), rangeB->front());
     }
 
     inline Element back() const noexcept {
-        AssertMsg(!empty(), "Range is empty!");
+        Assert(!empty(), "Range is empty!");
         return std::make_tuple(rangeA->back(), rangeB->back());
     }
 

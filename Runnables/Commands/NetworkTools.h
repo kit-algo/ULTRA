@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <concepts>
 
 #include "../../Algorithms/StronglyConnectedComponents.h"
 
@@ -116,7 +117,7 @@ public:
     }
 
 private:
-    template<typename GRAPH, typename = std::enable_if_t<std::is_rvalue_reference<GRAPH&&>::value>>
+    template<typename GRAPH> requires std::is_rvalue_reference_v<GRAPH&&>
     inline void chooseNetwork(GRAPH&& graph) noexcept {
         const std::string inputFile = getParameter("Input file");
         const std::string networkType = getParameter("Network type");
@@ -133,7 +134,7 @@ private:
         }
     }
 
-    template<typename GRAPH, typename NETWORK, typename = std::enable_if_t<std::is_rvalue_reference<GRAPH&&>::value>>
+    template<typename GRAPH, typename NETWORK> requires std::is_rvalue_reference_v<GRAPH&&>
     inline void replaceGraph(GRAPH&& graph, NETWORK& network) noexcept {
         const std::string outputFile = getParameter("Output file");
 

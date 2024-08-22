@@ -101,7 +101,7 @@ public:
     }
 
     inline void update(const Trip& other) noexcept {
-        AssertMsg(matches(other), "Updating a trip with one that does not match!");
+        Assert(matches(other), "Updating a trip with one that does not match!");
         for (size_t i = 0; i < stopEvents.size(); i++) {
             stopEvents[i].update(other.stopEvents[i]);
         }
@@ -134,7 +134,7 @@ public:
 const std::string Trip::CSV_HEADER = "name,route,vehicle";
 
 inline bool isFiFo(const Trip& a, const Trip& b) noexcept {
-    AssertMsg(a.stopEvents.size() == b.stopEvents.size(), "FiFO property can only be tested for trips of equal size!");
+    Assert(a.stopEvents.size() == b.stopEvents.size(), "FiFO property can only be tested for trips of equal size!");
     for (size_t i = 0; i < a.stopEvents.size(); i++) {
         if (a.stopEvents[i].arrivalTime > b.stopEvents[i].arrivalTime) return false;
         if (a.stopEvents[i].departureTime > b.stopEvents[i].departureTime) return false;
@@ -143,7 +143,7 @@ inline bool isFiFo(const Trip& a, const Trip& b) noexcept {
 }
 
 inline bool isOffset(const Trip& a, const Trip& b) noexcept {
-    AssertMsg(a.stopEvents.size() == b.stopEvents.size(), "Shifted property can only be tested for trips of equal size!");
+    Assert(a.stopEvents.size() == b.stopEvents.size(), "Shifted property can only be tested for trips of equal size!");
     if (a.stopEvents.size() == 0) return true;
     int ofset = a.stopEvents.front().departureTime - b.stopEvents.front().departureTime;
     if (a.stopEvents.back().arrivalTime - b.stopEvents.back().arrivalTime != ofset) return false;

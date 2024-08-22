@@ -75,7 +75,7 @@ public:
     inline size_t numberOfStopsInRoute(const RouteId route) const noexcept {return raptorData.numberOfStopsInRoute(route);}
     inline size_t numberOfTripsInRoute(const RouteId route) const noexcept {return raptorData.numberOfTripsInRoute(route);}
     inline size_t numberOfStopsInTrip(const TripId trip) const noexcept {
-        AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
+        Assert(isTrip(trip), "The id " << trip << " does not represent a trip!");
         return firstStopEventOfTrip[trip + 1] - firstStopEventOfTrip[trip];
     }
 
@@ -88,8 +88,8 @@ public:
     }
 
     inline StopId getStop(const TripId trip, const StopIndex index) const noexcept {
-        AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
-        AssertMsg(index < numberOfStopsInTrip(trip), "The trip " << trip << " has only " << numberOfStopsInTrip(trip) << " stops!");
+        Assert(isTrip(trip), "The id " << trip << " does not represent a trip!");
+        Assert(index < numberOfStopsInTrip(trip), "The trip " << trip << " has only " << numberOfStopsInTrip(trip) << " stops!");
         return raptorData.stopIds[firstStopIdOfTrip[trip] + index];
     }
 
@@ -102,14 +102,14 @@ public:
     }
 
     inline StopEventId getStopEventId(const TripId trip, const StopIndex index) const noexcept {
-        AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
-        AssertMsg(index < numberOfStopsInTrip(trip), "The trip " << trip << " has only " << numberOfStopsInTrip(trip) << " stops!");
+        Assert(isTrip(trip), "The id " << trip << " does not represent a trip!");
+        Assert(index < numberOfStopsInTrip(trip), "The trip " << trip << " has only " << numberOfStopsInTrip(trip) << " stops!");
         return StopEventId(firstStopEventOfTrip[trip] + index);
     }
 
     inline const RAPTOR::StopEvent& getStopEvent(const TripId trip, const StopIndex index) const noexcept {
-        AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
-        AssertMsg(index < numberOfStopsInTrip(trip), "The trip " << trip << " has only " << numberOfStopsInTrip(trip) << " stops!");
+        Assert(isTrip(trip), "The id " << trip << " does not represent a trip!");
+        Assert(index < numberOfStopsInTrip(trip), "The trip " << trip << " has only " << numberOfStopsInTrip(trip) << " stops!");
         return raptorData.stopEvents[firstStopEventOfTrip[trip] + index];
     }
 
@@ -130,27 +130,27 @@ public:
     }
 
     inline SubRange<std::vector<RAPTOR::RouteSegment>> routesContainingStop(const StopId stop) const noexcept {
-        AssertMsg(isStop(stop), "The id " << stop << " does not represent a stop!");
+        Assert(isStop(stop), "The id " << stop << " does not represent a stop!");
         return raptorData.routesContainingStop(stop);
     }
 
     inline Range<TripId> tripsOfRoute(const RouteId route) const noexcept {
-        AssertMsg(isRoute(route), "The id " << route << " does not represent a route!");
+        Assert(isRoute(route), "The id " << route << " does not represent a route!");
         return Range<TripId>(firstTripOfRoute[route], firstTripOfRoute[route + 1]);
     }
 
     inline const StopId* stopArrayOfRoute(const RouteId route) const noexcept {
-        AssertMsg(isRoute(route), "The id " << route << " does not represent a route!");
+        Assert(isRoute(route), "The id " << route << " does not represent a route!");
         return raptorData.stopArrayOfRoute(route);
     }
 
     inline const StopId* stopArrayOfTrip(const TripId trip) const noexcept {
-        AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
+        Assert(isTrip(trip), "The id " << trip << " does not represent a trip!");
         return stopArrayOfRoute(routeOfTrip[trip]);
     }
 
     inline const RAPTOR::StopEvent* eventArrayOfTrip(const TripId trip) const noexcept {
-        AssertMsg(isTrip(trip), "The id " << trip << " does not represent a trip!");
+        Assert(isTrip(trip), "The id " << trip << " does not represent a trip!");
         return &(raptorData.stopEvents[firstStopEventOfTrip[trip]]);
     }
 

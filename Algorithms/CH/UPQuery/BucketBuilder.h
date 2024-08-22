@@ -14,7 +14,7 @@
 #include "../../../Helpers/Vector/Vector.h"
 
 #include "../../../DataStructures/Container/ExternalKHeap.h"
-#include "../../../DataStructures/Container/Set.h"
+#include "../../../DataStructures/Container/IndexedSet.h"
 
 namespace CH {
 
@@ -61,7 +61,7 @@ public:
                 settle();
             }
             for (const Vertex bucket : reachedVertices) {
-                AssertMsg(!temp.hasEdge(bucket, vertex), "Bucket graph contains already an edge from " << bucket << " to " << vertex << "!");
+                Assert(!temp.hasEdge(bucket, vertex), "Bucket graph contains already an edge from " << bucket << " to " << vertex << "!");
                 temp.addEdge(bucket, vertex).set(Weight, distance[bucket].distance);
             }
             progress++;
@@ -81,7 +81,7 @@ private:
     inline void settle() noexcept {
         Distance* distanceU = Q.extractFront();
         const Vertex u = Vertex(distanceU - &(distance[0]));
-        AssertMsg(u < graph[BACKWARD]->numVertices(), u << " is not a valid vertex!");
+        Assert(u < graph[BACKWARD]->numVertices(), u << " is not a valid vertex!");
         if constexpr (StallOnDemand) {
             for (Edge edge : graph[FORWARD]->edgesFrom(u)) {
                 const Vertex v = graph[FORWARD]->get(ToVertex, edge);

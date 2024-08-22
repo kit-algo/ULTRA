@@ -260,7 +260,7 @@ inline void ComputeStopEventGraph(Data& data, const int numberOfThreads, const i
     {
         int threadId = omp_get_thread_num();
         pinThreadToCoreId((threadId * pinMultiplier) % numCores);
-        AssertMsg(omp_get_num_threads() == numberOfThreads, "Number of threads is " << omp_get_num_threads() << ", but should be " << numberOfThreads << "!");
+        Assert(omp_get_num_threads() == numberOfThreads, "Number of threads is " << omp_get_num_threads() << ", but should be " << numberOfThreads << "!");
 
         StopEventGraphBuilder builder(data);
         const size_t numberOfTrips = data.numberOfTrips();
@@ -311,7 +311,7 @@ inline void ComputeStopEventGraphRouteBased(Data& data, const int numberOfThread
     {
         int threadId = omp_get_thread_num();
         pinThreadToCoreId((threadId * pinMultiplier) % numCores);
-        AssertMsg(omp_get_num_threads() == numberOfThreads, "Number of threads is " << omp_get_num_threads() << ", but should be " << numberOfThreads << "!");
+        Assert(omp_get_num_threads() == numberOfThreads, "Number of threads is " << omp_get_num_threads() << ", but should be " << numberOfThreads << "!");
 
         StopEventGraphBuilder builder(data);
         const size_t numberOfRoutes = data.numberOfRoutes();

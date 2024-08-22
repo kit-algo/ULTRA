@@ -48,7 +48,7 @@ public:
         stallCount(0),
         endOfPOIs(endOfPOIs),
         reachedPOIs {std::vector<Vertex>(), std::vector<Vertex>()} {
-        Assert(forward.numVertices() == backward.numVertices());
+        Assert(forward.numVertices() == backward.numVertices(), "Forward and backward graph have a different number of vertices!");
     }
 
     template<typename ATTRIBUTE>
@@ -284,7 +284,7 @@ private:
         Vertex p = parent[I][path.back()];
         while (p != noVertex) {
             Edge edge = graph[I]->findEdge(p, path.back());
-            Assert(graph[I]->isEdge(edge));
+            Assert(graph[I]->isEdge(edge), "Invalid edge " << edge << "!");
             const Vertex via = graph[I]->get(ViaVertex, edge);
             if (UNPACK && graph[I]->isVertex(via)) {
                 path += unpackShortcut(*(graph[J]), *(graph[I]), path.back(), via, p);

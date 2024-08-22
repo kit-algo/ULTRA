@@ -97,6 +97,10 @@ public:
         return (a.x * b.x) + (a.y * b.y);
     }
 
+    inline friend double crossProduct(const Point& a, const Point& b) {
+        return (a.x * b.y) - (a.y * b.x);
+    }
+
     inline double distanceToPoint(const Point& p) const {
         const double dx = x - p.x;
         const double dy = y - p.y;

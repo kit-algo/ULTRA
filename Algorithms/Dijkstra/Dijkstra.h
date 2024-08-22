@@ -5,14 +5,13 @@
 #include <string>
 #include <set>
 
-#include "../../Helpers/Meta.h"
 #include "../../Helpers/Types.h"
 #include "../../Helpers/Timer.h"
 #include "../../Helpers/String/String.h"
 #include "../../Helpers/Vector/Vector.h"
 
 #include "../../DataStructures/Container/ExternalKHeap.h"
-#include "../../DataStructures/Container/Set.h"
+#include "../../DataStructures/Container/IndexedSet.h"
 #include "../../DataStructures/Attributes/AttributeNames.h"
 
 template<typename GRAPH, bool DEBUG = false>
@@ -31,7 +30,7 @@ public:
             parent = noVertex;
             timeStamp = time;
         }
-        inline bool hasSmallerKey(const VertexLabel* other) const {
+        inline bool hasSmallerKey(const VertexLabel* other) const noexcept {
             return distance < other->distance;
         }
 
@@ -117,7 +116,7 @@ public:
     inline void run(const Vertex target, const SETTLE& settle, const STOP& stop = NoOperation, const PRUNE_EDGE& pruneEdge = NoOperation) noexcept {
         while(!Q.empty()) {
             if (stop()) break;
-            VertexLabel* uLabel = Q.extractFront();
+            const VertexLabel* uLabel = Q.extractFront();
             const Vertex u = Vertex(uLabel - &(label[0]));
             if (u == target) break;
             for (const Edge edge : graph.edgesFrom(u)) {

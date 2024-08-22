@@ -37,13 +37,13 @@ public:
     }
 
     inline StopIndex operator()(const TripId trip) const noexcept {
-        AssertMsg(trip < labels[currentRound].size(), "Trip " << trip << " is out of bounds!");
+        Assert(trip < labels[currentRound].size(), "Trip " << trip << " is out of bounds!");
         return StopIndex(labels[currentRound][trip]);
     }
 
     inline StopIndex operator()(const TripId trip, const size_t round) const noexcept {
         const size_t trueRound = std::min(round, labels.size() - 1);
-        AssertMsg(trip < labels[trueRound].size(), "Trip " << trip << " is out of bounds!");
+        Assert(trip < labels[trueRound].size(), "Trip " << trip << " is out of bounds!");
         return StopIndex(labels[trueRound][trip]);
     }
 
@@ -52,7 +52,7 @@ public:
     }
 
     inline void update(const TripId trip, const StopIndex index) noexcept {
-        AssertMsg(trip < labels[currentRound].size(), "Trip " << trip << " is out of bounds!");
+        Assert(trip < labels[currentRound].size(), "Trip " << trip << " is out of bounds!");
         const TripId routeEnd = data.firstTripOfRoute[data.routeOfTrip[trip] + 1];
         for (TripId i = trip; i < routeEnd; i++) {
             if (labels[currentRound][i] <= index) break;
@@ -61,7 +61,7 @@ public:
     }
 
     inline void updateCopyForward(const TripId trip, const StopIndex index) noexcept {
-        AssertMsg(trip < labels[currentRound].size(), "Trip " << trip << " is out of bounds!");
+        Assert(trip < labels[currentRound].size(), "Trip " << trip << " is out of bounds!");
         const TripId routeEnd = data.firstTripOfRoute[data.routeOfTrip[trip] + 1];
         for (TripId i = trip; i < routeEnd; i++) {
             if (labels[currentRound][i] <= index) break;

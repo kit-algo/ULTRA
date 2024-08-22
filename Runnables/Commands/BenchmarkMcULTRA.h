@@ -312,7 +312,8 @@ public:
         const size_t n = getParameter<size_t>("Number of queries");
         const std::vector<VertexQuery> queries = generateRandomVertexQueries(ch.numVertices(), n);
 
-        IO::OFStream outputFile(getParameter("Output file"));
+        std::ofstream outputFile(getParameter("Output file"));
+        outputFile << std::setprecision(10);
         outputFile << "ArrivalSlack";
         for (const double tripSlack : tripSlacks) {
             const int slackAsInt = tripSlack * 100 - 100;

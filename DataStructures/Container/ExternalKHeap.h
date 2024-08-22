@@ -12,7 +12,7 @@ public:
     inline void setHeapPosition(const int p) noexcept {heapPosition = p;}
     inline bool isOnHeap() const noexcept {return heapPosition != -1;}
     inline bool hasSmallerKey(const ExternalKHeapElement* const) const noexcept {
-        AssertMsg(false, "ExternalKHeapElement keys are compared using a default implementation of hasSmallerKey (This method should be overwritten in a derived class)!");
+        Assert(false, "ExternalKHeapElement keys are compared using a default implementation of hasSmallerKey (This method should be overwritten in a derived class)!");
         return true;
     }
     ExternalKHeapElement() : heapPosition(-1) {}
@@ -37,11 +37,11 @@ public:
         initialize();
     }
 
-    inline int size() const {return numberOfElements;}
-    inline bool empty() const {return size() == 0;}
+    inline int size() const noexcept {return numberOfElements;}
+    inline bool empty() const noexcept {return size() == 0;}
 
-    inline ElementType* extractFront() {
-        Assert(!empty());
+    inline ElementType* extractFront() noexcept {
+        Assert(!empty(), "Trying to extract element from an empty heap!");
         ElementType* front = heap[0];
         front->setHeapPosition(-1);
         numberOfElements--;
@@ -53,10 +53,10 @@ public:
         heap.resize(numberOfElements);
         return front;
     }
-    inline ElementType* pop() {return extractFront();}
+    inline ElementType* pop() noexcept {return extractFront();}
 
-    inline void update(ElementType* const element) {
-        AssertMsg(heap.size() == static_cast<size_t>(numberOfElements), "Heap with " << numberOfElements << " elements has a size is " << heap.size() << "!");
+    inline void update(ElementType* const element) noexcept {
+        Assert(heap.size() == static_cast<size_t>(numberOfElements), "Heap with " << numberOfElements << " elements has a size is " << heap.size() << "!");
         if (element->getHeapPosition() == -1) {
             heap.emplace_back(element);
             element->setHeapPosition(numberOfElements);
@@ -72,34 +72,34 @@ public:
             }
         }
     }
-    inline void update(ElementType& element) {update(&element);}
-    inline void push(ElementType* const element) {update(element);}
-    inline void push(ElementType& element) {update(&element);}
+    inline void update(ElementType& element) noexcept {update(&element);}
+    inline void push(ElementType* const element) noexcept {update(element);}
+    inline void push(ElementType& element) noexcept {update(&element);}
 
-    inline void remove(ElementType* const element) {
-        Assert(element->getHeapPosition() != -1);
-        Assert(heap[element->getHeapPosition()] == element);
+    inline void remove(ElementType* const element) noexcept {
+        Assert(element->getHeapPosition() != -1, "Element is not on heap!");
+        Assert(heap[element->getHeapPosition()] == element, "Malformed heap!");
         siftDownHole(element->getHeapPosition());
     }
 
-    inline ElementType* front() const {
-        AssertMsg(!empty(), "An empty heap has no front!");
+    inline ElementType* front() const noexcept {
+        Assert(!empty(), "An empty heap has no front!");
         return heap[0];
     }
 
-    inline ElementType& min() const {
+    inline ElementType& min() const noexcept {
         return *front();
     }
 
-    inline void reserve(int size) {
+    inline void reserve(const int size) noexcept {
         heap.reserve(size);
     }
 
-    inline void reset() {
+    inline void reset() noexcept {
         initialize();
     }
 
-    inline void clear() {
+    inline void clear() noexcept {
         for (int i = 0; i < numberOfElements; ++i) {
             heap[i]->setHeapPosition(-1);
         }
@@ -107,12 +107,12 @@ public:
         heap.resize(0);
     }
 
-    inline bool contains(const ElementType* const element) const {
+    inline bool contains(const ElementType* const element) const noexcept {
         return element->getHeapPosition() != -1;
     }
 
     template<typename Range>
-    inline void build(Range& range) {
+    inline void build(const Range& range) noexcept {
         clear();
         for (ElementType& element : range) {
             element.setHeapPosition(heap.size());
@@ -129,15 +129,15 @@ public:
     }
 
 protected:
-    inline void initialize() {
+    inline void initialize() noexcept {
         numberOfElements = 0;
     }
 
-    inline int parent(const int i) const {return (i - 1) >> logK;}
-    inline int firstChild(const int i) const {return (i << logK) + 1;}
+    inline int parent(const int i) const noexcept {return (i - 1) >> logK;}
+    inline int firstChild(const int i) const noexcept {return (i << logK) + 1;}
 
-    inline void siftUp(const int i) {
-        Assert(i < numberOfElements);
+    inline void siftUp(const int i) noexcept {
+        Assert(i < numberOfElements, "Invalid element!");
         int currentIndex = i;
         while (currentIndex > 0) {
             int parentIndex = parent(currentIndex);
@@ -150,8 +150,8 @@ protected:
         }
     }
 
-    inline void siftDown(int i) {
-        Assert(i < numberOfElements);
+    inline void siftDown(int i) noexcept {
+        Assert(i < numberOfElements, "Invalid element!");
         while (true) {
             int minIndex = i;
             ElementType* minElement = heap[i];
@@ -172,8 +172,8 @@ protected:
         }
     }
 
-    inline void siftDownHole(int i) {
-        Assert(i < numberOfElements);
+    inline void siftDownHole(int i) noexcept {
+        Assert(i < numberOfElements, "Invalid element!");
         heap[i]->setHeapPosition(-1);
         while (true) {
             int childIndexLower = firstChild(i);
@@ -205,7 +205,7 @@ protected:
         }
     }
 
-    inline void swap(const int i, const int j) {
+    inline void swap(const int i, const int j) noexcept {
         heap[i]->setHeapPosition(j);
         heap[j]->setHeapPosition(i);
         ElementType* temp = heap[i];

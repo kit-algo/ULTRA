@@ -162,7 +162,7 @@ private:
                 const StopEventId originEvent(data.reverseStopEventGraph.get(ToVertex, shortcut));
                 const int travelTime = data.reverseStopEventGraph.get(TravelTime, shortcut);
                 //If shortcut is infeasible, we already handle it with the delayed origin search
-                AssertMsg(data.tripData.arrivalTime(originEvent) + travelTime <= data.tripData.departureTime(destinationEvent), "Shortcut is infeasible!");
+                Assert(data.tripData.arrivalTime(originEvent) + travelTime <= data.tripData.departureTime(destinationEvent), "Shortcut is infeasible!");
                 const TripId trip1 = data.tripData.tripOfStopEvent[originEvent];
                 const StopIndex originIndex = data.tripData.indexOfStopEvent[originEvent];
                 StopEventId sourceEvent = data.tripData.firstStopEventOfTrip[trip1];
@@ -186,7 +186,7 @@ private:
         for (const Edge shortcut : data.infeasibleShortcuts.edgesFrom(Vertex(originEvent))) {
             const StopEventId destinationEvent(data.infeasibleShortcuts.get(ToVertex, shortcut));
             const int travelTime = data.infeasibleShortcuts.get(TravelTime, shortcut);
-            AssertMsg(data.tripData.arrivalTime(originEvent) + travelTime > data.tripData.departureTime(destinationEvent), "Shortcut is not infeasible!");
+            Assert(data.tripData.arrivalTime(originEvent) + travelTime > data.tripData.departureTime(destinationEvent), "Shortcut is not infeasible!");
             const TripId trip2 = data.tripData.tripOfStopEvent[destinationEvent];
             const RouteId route2 = data.tripData.routeOfTrip[trip2];
             const StopIndex index2 = data.tripData.indexOfStopEvent[destinationEvent];
@@ -250,12 +250,12 @@ private:
     }
 
     inline std::vector<BackwardDijkstraLabel>& currentBackwardRound() noexcept {
-        AssertMsg(!backwardRounds.empty(), "Cannot return current round, because no round exists!");
+        Assert(!backwardRounds.empty(), "Cannot return current round, because no round exists!");
         return backwardRounds.back();
     }
 
     inline std::vector<BackwardDijkstraLabel>& previousBackwardRound() noexcept {
-        AssertMsg(backwardRounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
+        Assert(backwardRounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
         return backwardRounds[backwardRounds.size() - 2];
     }
 
@@ -277,9 +277,9 @@ private:
     inline void collectBackwardRoutes() noexcept {
         routesServingUpdatedStops.clear();
         for (const StopId stop : stopsUpdatedByTransfer) {
-            AssertMsg(data.reverseRaptorData.isStop(stop), "Stop " << stop << " is out of range!");
+            Assert(data.reverseRaptorData.isStop(stop), "Stop " << stop << " is out of range!");
             const int arrivalTime = previousBackwardRound()[stop].arrivalTime;
-            AssertMsg(arrivalTime < never, "Updated stop has arrival time = never!");
+            Assert(arrivalTime < never, "Updated stop has arrival time = never!");
             for (const RAPTOR::RouteSegment& route : data.reverseRaptorData.routesContainingStop(stop)) {
                 if (route.stopIndex + 1 == data.reverseRaptorData.numberOfStopsInRoute(route.routeId)) continue;
                 if (data.reverseRaptorData.lastTripOfRoute(route.routeId)[route.stopIndex].departureTime < arrivalTime) continue;
@@ -340,7 +340,7 @@ private:
     }
 
     inline int getLatestDepartureTime(const Vertex vertex) const noexcept {
-        AssertMsg(rounds.size() <= backwardRounds.size(), "Too many rounds!");
+        Assert(rounds.size() <= backwardRounds.size(), "Too many rounds!");
         return -backwardRounds[backwardRounds.size() - rounds.size()][vertex].arrivalTime;
     }
 
@@ -374,12 +374,12 @@ private:
     }
 
     inline Round& currentRound() noexcept {
-        AssertMsg(!rounds.empty(), "Cannot return current round, because no round exists!");
+        Assert(!rounds.empty(), "Cannot return current round, because no round exists!");
         return rounds.back();
     }
 
     inline Round& previousRound() noexcept {
-        AssertMsg(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
+        Assert(rounds.size() >= 2, "Cannot return previous round, because less than two rounds exist!");
         return rounds[rounds.size() - 2];
     }
 
@@ -395,9 +395,9 @@ private:
     inline void collectRoutes() noexcept {
         routesServingUpdatedStops.clear();
         for (const StopId stop : stopsUpdatedByTransfer) {
-            AssertMsg(data.raptorData.isStop(stop), "Stop " << stop << " is out of range!");
+            Assert(data.raptorData.isStop(stop), "Stop " << stop << " is out of range!");
             const int arrivalTime = previousRound()[stop].arrivalTime;
-            AssertMsg(arrivalTime < never, "Updated stop has arrival time = never!");
+            Assert(arrivalTime < never, "Updated stop has arrival time = never!");
             for (const RAPTOR::RouteSegment& route : data.raptorData.routesContainingStop(stop)) {
                 if (route.stopIndex + 1 == data.raptorData.numberOfStopsInRoute(route.routeId)) continue;
                 if (data.raptorData.lastTripOfRoute(route.routeId)[route.stopIndex].departureTime < arrivalTime) continue;

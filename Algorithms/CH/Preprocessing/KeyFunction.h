@@ -42,7 +42,7 @@ public:
         const int key = ((shortcutWeight * shortcutsAdded) / (inDegree + outDegree))
                       + ((levelWeight * data->level[vertex]))
                       + ((degreeWeight * inDegree * outDegree));
-        Assert(key >= 0);
+        Assert(key >= 0, "Key is negative!");
         return key;
     }
 
@@ -87,7 +87,7 @@ public:
     using Type = PermutationKey<WitnessSearch>;
 
 public:
-    PermutationKey() {Assert(false);}
+    PermutationKey() {Assert(false, "Default constructor not supported! Please supply a permutation!");}
     PermutationKey(const Permutation& permutation) :
         permutation(permutation) {
     }
@@ -99,7 +99,7 @@ public:
     template<typename T> inline void update(T&) noexcept {}
 
     inline void initialize(const Data* data, WitnessSearch*) noexcept {
-        AssertMsg(permutation.size() == data->numVertices, "Permutation of size " << permutation.size() << " cannot be used for a graph with " << data->numVertices << " vertices!");
+        Assert(permutation.size() == data->numVertices, "Permutation of size " << permutation.size() << " cannot be used for a graph with " << data->numVertices << " vertices!");
     }
 
 private:
@@ -111,7 +111,7 @@ template<typename WITNESS_SEARCH>
 class OrderKey : public PermutationKey<WITNESS_SEARCH> {
 
 public:
-    OrderKey() : PermutationKey<WITNESS_SEARCH>() {Assert(false);}
+    OrderKey() : PermutationKey<WITNESS_SEARCH>() {Assert(false, "Default constructor not supported! Please supply an order!");}
     OrderKey(const Order& order) : PermutationKey<WITNESS_SEARCH>(Permutation(Construct::Invert, order)) {}
     OrderKey(Order&& order) : PermutationKey<WITNESS_SEARCH>(Permutation(Construct::Invert, std::move(order))) {}
 

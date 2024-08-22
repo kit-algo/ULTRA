@@ -3,12 +3,12 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <type_traits>
 
 #include "DepthFirstSearch.h"
 
 #include "../Helpers/Types.h"
 #include "../Helpers/Assert.h"
-#include "../Helpers/Meta.h"
 
 template<typename GRAPH, bool DEBUG = true, bool IGNORE_REVERSE_EDGES = false>
 class StronglyConnectedComponents {
@@ -39,7 +39,7 @@ public:
         Vertex parent;
     };
 
-    using VertexLabel = Meta::IF<IgnoreReverseEdges, VertexLabelWithParent, VertexLabelWithoutParent>;
+    using VertexLabel = std::conditional_t<IgnoreReverseEdges, VertexLabelWithParent, VertexLabelWithoutParent>;
 
 public:
     StronglyConnectedComponents(const Graph& graph) :
@@ -49,7 +49,7 @@ public:
     }
 
     inline int getComponent(const Vertex vertex) const noexcept {
-        AssertMsg(vertex < component.size(), "vertex " << vertex << " is out of range (0, " << component.size() << ")!");
+        Assert(vertex < component.size(), "vertex " << vertex << " is out of range (0, " << component.size() << ")!");
         return component[vertex];
     }
 
@@ -68,8 +68,8 @@ public:
     inline std::vector<size_t> getComponentSizes() const noexcept {
         std::vector<size_t> sizes(componentCount, 0);
         for (const Vertex vertex : graph.vertices()) {
-            AssertMsg(vertex < component.size(), "vertex " << vertex << " is out of range (0, " << component.size() << ")!");
-            AssertMsg(component[vertex] >= 0 && size_t(component[vertex]) < sizes.size(), "Component of vertex " << vertex << " is " << component[vertex] << ", but should be less than " << sizes.size() << "!");
+            Assert(vertex < component.size(), "vertex " << vertex << " is out of range (0, " << component.size() << ")!");
+            Assert(component[vertex] >= 0 && size_t(component[vertex]) < sizes.size(), "Component of vertex " << vertex << " is " << component[vertex] << ", but should be less than " << sizes.size() << "!");
             sizes[component[vertex]]++;
         }
         return sizes;
@@ -206,7 +206,7 @@ private:
     }
 
     inline void push(const Vertex v) noexcept {
-        AssertMsg(!contains(v), "Vertex " << v << " is already contained in the stack!");
+        Assert(!contains(v), "Vertex " << v << " is already contained in the stack!");
         stack.push_back(v);
         label[v].onStack = true;
     }
@@ -216,7 +216,7 @@ private:
     }
 
     inline Vertex pop() noexcept {
-        AssertMsg(!stack.empty(), "pop() cannot be called on an empty stack!");
+        Assert(!stack.empty(), "pop() cannot be called on an empty stack!");
         Vertex v = stack.back();
         stack.pop_back();
         label[v].onStack = false;
