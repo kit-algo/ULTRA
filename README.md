@@ -1,6 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# ULTRA: UnLimited TRAnsfers for Multimodal Route Planning
+# ULTRA: UnLimited TRAnsfers for Efficient Multimodal Journey Planning
 
 ULTRA is a C++ framework for efficient journey planning in multimodal networks that combine public transit and non-schedule-based transfer modes (e.g., walking, cycling, e-scooter). It was developed at [KIT](https://www.kit.edu) in the [group of Prof. Dorothea Wagner](https://i11www.iti.kit.edu/). This repository contains code for the following publications: 
 
@@ -29,6 +29,11 @@ ULTRA is a C++ framework for efficient journey planning in multimodal networks t
   In: Proceedings of the 22nd Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'22), OpenAccess Series in Informatics, pages 14:1–14:15, 2022.
   [pdf](https://drops.dagstuhl.de/opus/volltexte/2022/17118/pdf/OASIcs-ATMOS-2022-14.pdf)
   
+* *ULTRA: Unlimited Transfers for Efficient Multimodal Journey Planning.*
+  Moritz Baum, Valentin Buchhold, Jonas Sauer, Dorothea Wagner, Tobias Zündorf.
+  In: Transportation Science, volume 57(6), pages 1536-1559, 2023.
+  [pdf](https://pubsonline.informs.org/doi/epdf/10.1287/trsc.2022.0198)
+
 * *Fast and Delay-Robust Multimodal Journey Planning.*
   Dominik Bez, Jonas Sauer.
   In: Proceedings of the 26th Workshop on Algorithm Engineering and Experiments (ALENEX'24), SIAM, pages 105–117, 2024.
