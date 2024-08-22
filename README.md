@@ -2,39 +2,55 @@
 
 # ULTRA: UnLimited TRAnsfers for Multimodal Route Planning
 
-ULTRA is a C++ framework for efficient journey planning in multimodal networks consisting of public transit and non-schedule-based transfer modes (e.g., walking, cycling, e-scooter). It was developed at [KIT](https://www.kit.edu) in the [group of Prof. Dorothea Wagner](https://i11www.iti.kit.edu/). This repository contains code for the following publications: 
+ULTRA is a C++ framework for efficient journey planning in multimodal networks that combine public transit and non-schedule-based transfer modes (e.g., walking, cycling, e-scooter). It was developed at [KIT](https://www.kit.edu) in the [group of Prof. Dorothea Wagner](https://i11www.iti.kit.edu/). This repository contains code for the following publications: 
 
-* *UnLimited TRAnsfers for Multi-Modal Route Planning: An Efficient Solution*
-  Moritz Baum, Valentin Buchhold, Jonas Sauer, Dorothea Wagner, Tobias Zündorf
-  In: Proceedings of the 27th Annual European Symposium on Algorithms (ESA'19), Leibniz International Proceedings in Informatics, pages 14:1–14:16, 2019
+* *UnLimited TRAnsfers for Multi-Modal Route Planning: An Efficient Solution.*
+  Moritz Baum, Valentin Buchhold, Jonas Sauer, Dorothea Wagner, Tobias Zündorf.
+  In: Proceedings of the 27th Annual European Symposium on Algorithms (ESA'19), Leibniz International Proceedings in Informatics, pages 14:1–14:16, 2019.
   [pdf](https://drops.dagstuhl.de/opus/volltexte/2019/11135/pdf/LIPIcs-ESA-2019-14.pdf) [arXiv](https://arxiv.org/abs/1906.04832)
 
-* *Integrating ULTRA and Trip-Based Routing*
-  Jonas Sauer, Dorothea Wagner, Tobias Zündorf
-  In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 4:1–4:15, 2020
+* *Integrating ULTRA and Trip-Based Routing.*
+  Jonas Sauer, Dorothea Wagner, Tobias Zündorf.
+  In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 4:1–4:15, 2020.
   [pdf](http://i11www.iti.kit.edu/extra/publications/swz-iultr-20.pdf)
 
-* *An Efficient Solution for One-to-Many Multi-Modal Journey Planning*
-  Jonas Sauer, Dorothea Wagner, Tobias Zündorf
-  In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 1:1–1:15, 2020
+* *An Efficient Solution for One-to-Many Multi-Modal Journey Planning.*
+  Jonas Sauer, Dorothea Wagner, Tobias Zündorf.
+  In: Proceedings of the 20th Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'20), OpenAccess Series in Informatics, pages 1:1–1:15, 2020.
   [pdf](https://i11www.iti.kit.edu/extra/publications/swz-aesom-20.pdf)
 
-* *Fast Multimodal Journey Planning for Three Criteria*
-  Moritz Potthoff, Jonas Sauer
-  In: Proceedings of the 24th Workshop on Algorithm Engineering and Experiments (ALENEX'22), SIAM, pages 145–157, 2022
+* *Fast Multimodal Journey Planning for Three Criteria.*
+  Moritz Potthoff, Jonas Sauer.
+  In: Proceedings of the 24th Workshop on Algorithm Engineering and Experiments (ALENEX'22), SIAM, pages 145–157, 2022.
   [pdf](https://epubs.siam.org/doi/epdf/10.1137/1.9781611977042.12) [arXiv](https://arxiv.org/abs/2110.12954)
 
-* *Efficient Algorithms for Fully Multimodal Journey Planning*
-  Moritz Potthoff, Jonas Sauer
-  In: Proceedings of the 22nd Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'22), OpenAccess Series in Informatics, pages 14:1–14:15, 2022
+* *Efficient Algorithms for Fully Multimodal Journey Planning.*
+  Moritz Potthoff, Jonas Sauer.
+  In: Proceedings of the 22nd Symposium on Algorithmic Approaches for Transportation Modelling, Optimization, and Systems (ATMOS'22), OpenAccess Series in Informatics, pages 14:1–14:15, 2022.
   [pdf](https://drops.dagstuhl.de/opus/volltexte/2022/17118/pdf/OASIcs-ATMOS-2022-14.pdf)
   
-* *Fast and Delay-Robust Multimodal Journey Planning*
-  Dominik Bez, Jonas Sauer
-  Accepted for publication at the 26th Workshop on Algorithm Engineering and Experiments (ALENEX'24)
+* *Fast and Delay-Robust Multimodal Journey Planning.*
+  Dominik Bez, Jonas Sauer.
+  In: Proceedings of the 26th Workshop on Algorithm Engineering and Experiments (ALENEX'24), SIAM, pages 105–117, 2024.
+  [pdf](https://epubs.siam.org/doi/epdf/10.1137/1.9781611977929.8) [arXiv](https://arxiv.org/abs/2310.20554)
+
+* *Closing the Performance Gap Between Public Transit and Multimodal Journey Planning.*
+  Jonas Sauer.
+  PhD thesis, 2024.
+  [pdf](https://publikationen.bibliothek.kit.edu/1000173225/154031997)
+
+## Compiling
+To compile all executables in release mode, run
+```bash
+mkdir -p cmake-build-release
+cd cmake-build-release
+cmake .. && cmake --build . --target All --config Release
+```
+
+Make sure you have OpenMP installed.
 
 ## Usage
-Most preprocessing steps and query algorithms are provided in the console application ``ULTRA``. You can compile it with the ``Makefile`` in the ``Runnables`` folder. Type ``make ULTRARelease -B`` to compile in release mode. The following commands are available:
+Most preprocessing steps and query algorithms are provided in the console application ``ULTRA``, which offers the following commands:
 
 * Contraction Hierarchies (CH) computation:
     - ``buildCH`` performs a regular CH precomputation. The output is used by the (Mc)ULTRA query algorithms for the Bucket-CH searches.
