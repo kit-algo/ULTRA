@@ -198,7 +198,17 @@ private:
             }
         }
         reachedRoutes.sort();
-        for (const RouteId route : reachedRoutes) {
+        auto& valuesToLoopOver = reachedRoutes.getValues();
+
+        for (size_t i = 0; i < valuesToLoopOver.size(); ++i) {
+            #ifdef ENABLE_PREFETCH
+            if (i + 4 < valuesToLoopOver.size()) {
+                __builtin_prefetch(&(routeLabels[valuesToLoopOver[i + 4]]));
+                __builtin_prefetch(&(data.firstTripOfRoute[valuesToLoopOver[i + 4]]));
+            }
+            #endif
+
+            const RouteId route = valuesToLoopOver[i];
             const RouteLabel& label = routeLabels[route];
             const StopIndex endIndex = label.end();
             const TripId firstTrip = data.firstTripOfRoute[route];
@@ -225,17 +235,31 @@ private:
             targetLabels.emplace_back(targetLabels.back());
             // Evaluate final transfers in order to check if the target is reachable
             for (size_t i = roundBegin; i < roundEnd; i++) {
+                #ifdef ENABLE_PREFETCH
+                if (i + 4 < roundEnd) {
+                    __builtin_prefetch(&(queue[i + 4]));
+                    __builtin_prefetch(&(data.arrivalEvents[queue[i + 4].begin]));
+                }
+                #endif
+
                 const TripLabel& label = queue[i];
                 profiler.countMetric(METRIC_SCANNED_TRIPS);
                 for (StopEventId j = label.begin; j < label.end; j++) {
                     profiler.countMetric(METRIC_SCANNED_STOPS);
-                    if (data.arrivalEvents[j].arrivalTime >= minArrivalTime) break;
+                    if (data.arrivalEvents[j].arrivalTime >= minArrivalTime) [[unlikely]] break;
                     const int timeToTarget = transferToTarget[data.arrivalEvents[j].stop];
                     if (timeToTarget != INFTY) addTargetLabel(data.arrivalEvents[j].arrivalTime + timeToTarget, i);
                 }
             }
             // Find the range of transfers for each trip
             for (size_t i = roundBegin; i < roundEnd; i++) {
+                #ifdef ENABLE_PREFETCH
+                if (i + 4 < roundEnd) {
+                    __builtin_prefetch(&(queue[i + 4]));
+                    __builtin_prefetch(&(data.arrivalEvents[queue[i + 4].begin]));
+                }
+                #endif
+
                 TripLabel& label = queue[i];
                 for (StopEventId j = label.begin; j < label.end; j++) {
                     if (data.arrivalEvents[j].arrivalTime >= minArrivalTime) label.end = j;
@@ -270,7 +294,7 @@ private:
     inline void enqueue(const Edge edge, const size_t parent) noexcept {
         profiler.countMetric(METRIC_ENQUEUES);
         const EdgeLabel& label = edgeLabels[edge];
-        if (reachedIndex.alreadyReached(label.trip, label.stopEvent - label.firstEvent)) return;
+        if (reachedIndex.alreadyReached(label.trip, label.stopEvent - label.firstEvent)) [[likely]] return;
         queue[queueSize] = TripLabel(label.stopEvent, StopEventId(label.firstEvent + reachedIndex(label.trip)), parent);
         queueSize++;
         Assert(queueSize <= queue.size(), "Queue is overfull!");

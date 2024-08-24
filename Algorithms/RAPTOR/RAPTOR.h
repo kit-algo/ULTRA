@@ -220,7 +220,17 @@ private:
     }
 
     inline void collectRoutesServingUpdatedStops() noexcept {
-        for (const StopId stop : stopsUpdatedByTransfer) {
+        auto& valuesToLoopOver = stopsUpdatedByTransfer.getValues();
+        for (size_t i = 0; i < valuesToLoopOver.size(); ++i) {
+
+            #ifdef ENABLE_PREFETCH
+            if (i + 4 < valuesToLoopOver.size()) {
+                __builtin_prefetch(&(previousRound()[valuesToLoopOver[i + 4]]));
+                __builtin_prefetch(&(data.routeSegments[data.firstRouteSegmentOfStop[valuesToLoopOver[i + 4]]]));
+            }
+            #endif
+
+            const StopId stop = valuesToLoopOver[i];
             Assert(data.isStop(stop), "Stop " << stop << " is out of range!");
             const int arrivalTime = previousRound()[stop].arrivalTime;
             Assert(arrivalTime < never, "Updated stop has arrival time = never!");
@@ -240,7 +250,19 @@ private:
 
     inline void scanRoutes() noexcept {
         stopsUpdatedByRoute.clear();
-        for (const RouteId route : routesServingUpdatedStops.getKeys()) {
+        auto& valuesToLoopOver = routesServingUpdatedStops.getKeys();
+
+        for (size_t i = 0; i < valuesToLoopOver.size(); ++i) {
+
+            #ifdef ENABLE_PREFETCH
+            if (i + 4 < valuesToLoopOver.size()) {
+                __builtin_prefetch(data.stopArrayOfRoute(valuesToLoopOver[i + 4]));
+                __builtin_prefetch(data.firstTripOfRoute(valuesToLoopOver[i + 4]));
+                __builtin_prefetch(data.lastTripOfRoute(valuesToLoopOver[i + 4]));
+            }
+            #endif
+
+            const RouteId route = valuesToLoopOver[i];
             profiler.countMetric(METRIC_ROUTES);
             StopIndex stopIndex = routesServingUpdatedStops[route];
             const size_t tripSize = data.numberOfStopsInRoute(route);
@@ -276,7 +298,17 @@ private:
     inline void relaxTransfers() noexcept {
         stopsUpdatedByTransfer.clear();
         routesServingUpdatedStops.clear();
-        for (const StopId stop : stopsUpdatedByRoute) {
+        
+        auto& valuesToLoopOver = stopsUpdatedByRoute.getValues();
+        for (size_t i = 0; i < valuesToLoopOver.size(); ++i) {
+
+            #ifdef ENABLE_PREFETCH
+            if (i + 4 < valuesToLoopOver.size()) {
+                __builtin_prefetch(SeparateRouteAndTransferEntries ? &previousRound()[valuesToLoopOver[i + 4]].arrivalTime : &currentRound()[valuesToLoopOver[i + 4]].arrivalTime);
+                data.transferGraph.prefetchBeginOut(valuesToLoopOver[i + 4]);
+            }
+            #endif
+
             const int earliestArrivalTime = SeparateRouteAndTransferEntries ? previousRound()[stop].arrivalTime : currentRound()[stop].arrivalTime;
             for (const Edge edge : data.transferGraph.edgesFrom(stop)) {
                 if constexpr (INITIAL_TRANSFERS && PreventDirectWalking) {
