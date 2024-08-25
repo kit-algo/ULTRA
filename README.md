@@ -49,7 +49,7 @@ To compile all executables in release mode, run
 ```bash
 mkdir -p cmake-build-release
 cd cmake-build-release
-cmake .. && cmake --build . --target All --config Release
+cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build . --target All --config Release
 ```
 
 Make sure you have OpenMP installed.
