@@ -62,10 +62,7 @@ namespace FileSystem {
     }
 
     inline std::string getParentDirectory(const std::string& fileName) noexcept {
-        if (fileName.size() < 2) return "";
-        size_t directoryEnd = fileName.find_last_of('/', fileName.size() - 2);
-        if (directoryEnd >= fileName.size()) return "";
-        return fileName.substr(0, directoryEnd);
+        return std::filesystem::path(fileName).parent_path();
     }
 
     inline std::string extendPath(const std::string& base, const std::string& file) noexcept {
@@ -94,7 +91,7 @@ namespace FileSystem {
     }
 
     inline const std::string& ensureDirectoryExists(const std::string& fileName) noexcept {
-        std::filesystem::create_directories(fileName);
+        std::filesystem::create_directories(getParentDirectory(fileName));
         return fileName;
     }
 
