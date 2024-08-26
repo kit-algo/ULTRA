@@ -8,6 +8,13 @@ set(CMAKE_CXX_FLAGS "-pipe -march=native -Wfatal-errors")
 set(CMAKE_CXX_FLAGS_DEBUG "-rdynamic -Werror -Wpedantic -pedantic-errors -Wall -Wextra -Wparentheses -D_GLIBCXX_DEBUG -g -fno-omit-frame-pointer -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-ffast-math -DNDEBUG -O3")
 
+# Add an option for enabling prefetch
+option(USE_PREFETCH "Enable prefetch optimization" OFF)
+
+if(USE_PREFETCH)
+    add_compile_definitions(ENABLE_PREFETCH)
+endif()
+
 #Libraries
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)

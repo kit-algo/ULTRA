@@ -166,7 +166,7 @@ private:
         for (ConnectionId i = begin; i < end; i++) {
             const Connection& connection = data.connections[i];
             runDijkstra(connection.departureTime);
-            if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) break;
+            if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) [[unlikely]] break;
             if (connectionIsReachable(connection, i)) {
                 profiler.countMetric(METRIC_CONNECTIONS);
                 arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
