@@ -524,7 +524,7 @@ public:
     inline void deserialize(IO::Deserialization& deserialize) {
         clear();
         deserialize(beginOut, vertexAttributes, edgeAttributes);
-        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(satisfiesInvariants(), "Invariants not satisfied!");
     }
 
     inline void serialize(const std::string& fileName) const {
@@ -534,7 +534,7 @@ public:
     inline void deserialize(const std::string& fileName) {
         clear();
         IO::deserialize(fileName, beginOut, vertexAttributes, edgeAttributes);
-        AssertMsg(satisfiesInvariants(), "Invariants not satisfied!");
+        Assert(satisfiesInvariants(), "Invariants not satisfied!");
     }
 
     inline void writeBinary(const std::string& fileName, const std::string& separator = ".") const noexcept {
