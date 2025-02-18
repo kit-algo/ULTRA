@@ -754,7 +754,7 @@ public:
         deserialize(vertexAttributes, edgeAttributes);
         for (const Vertex vertex : vertices())
             edgeCount += outDegree(vertex);
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Binary deserialization went wrong");
     }
 
     inline void serialize(const std::string& fileName) const {
@@ -766,7 +766,7 @@ public:
         IO::deserialize(fileName, vertexAttributes, edgeAttributes);
         for (const Vertex vertex : vertices())
             edgeCount += outDegree(vertex);
-        Assert(satisfiesInvariants());
+        Assert(satisfiesInvariants(), "Binary deserialization went wrong");
     }
 
     inline void writeBinary(const std::string& fileName, const std::string& separator = ".") const noexcept {
