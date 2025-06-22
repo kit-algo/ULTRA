@@ -61,7 +61,7 @@ protected:
     inline void readAgencies(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Agencies", [&](){
             int count = 0;
-            IO::CSVReader<3, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<3, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "agency_id", "agency_name", "agency_timezone");
             Agency agency;
             while (in.readRow(agency.agencyId, agency.name, agency.timezone)) {
@@ -75,7 +75,7 @@ protected:
     inline void readCalendars(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Calendars", [&](){
             int count = 0;
-            IO::CSVReader<10, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<10, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "service_id", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "start_date", "end_date");
             Calendar calendar;
             std::string startDate;
@@ -93,7 +93,7 @@ protected:
     inline void readCalendarDates(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Calendar Dates", [&](){
             int count = 0;
-            IO::CSVReader<3, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<3, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "service_id", "date", "exception_type");
             CalendarDate calendarDate;
             std::string date;
@@ -111,7 +111,7 @@ protected:
     inline void readFrequencies(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Frequencies", [&](){
             int count = 0;
-            IO::CSVReader<4, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<4, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "trip_id", "start_time", "end_time", "headway_secs");
             Frequency frequency;
             std::string startTime;
@@ -129,7 +129,7 @@ protected:
     inline void readRoutes(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Routes", [&](){
             int count = 0;
-            IO::CSVReader<7, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<7, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "route_id", "agency_id", "route_short_name", "route_long_name", "route_type", "route_color", "route_text_color");
             Route route;
             std::string shortName;
@@ -146,7 +146,7 @@ protected:
     inline void readStops(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Stops", [&](){
             int count = 0;
-            IO::CSVReader<4, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<4, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "stop_id", "stop_name", "stop_lat", "stop_lon");
             Stop stop;
             double latitude = 0.0;
@@ -163,7 +163,7 @@ protected:
     inline void readStopTimes(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Stop Times", [&](){
             int count = 0;
-            IO::CSVReader<5, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<5, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence");
             StopTime stopTime;
             std::string arrivalTime;
@@ -181,7 +181,7 @@ protected:
     inline void readTransfers(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Transfers", [&](){
             int count = 0;
-            IO::CSVReader<4, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<4, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "from_stop_id", "to_stop_id", "min_transfer_time", "transfer_type");
             Transfer transfer;
             int transferType = 0;
@@ -197,7 +197,7 @@ protected:
     inline void readTrips(const std::string& fileName, const bool verbose = true) {
         IO::readFile(fileName, "Trips", [&](){
             int count = 0;
-            IO::CSVReader<4, IO::TrimChars<>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
+            IO::CSVReader<4, IO::TrimChars<' ', '\n', '\r', '\t'>, IO::DoubleQuoteEscape<',','"'>> in(fileName);
             in.readHeader(ReadMode, "route_id", "service_id", "trip_id", "trip_short_name");
             Trip trip;
             while (in.readRow(trip.routeId, trip.serviceId, trip.tripId, trip.name)) {
