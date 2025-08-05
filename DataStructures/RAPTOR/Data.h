@@ -610,6 +610,13 @@ public:
         }
     }
 
+    // ---
+    inline void sortTransferGraphEdgesByTravelTime() noexcept {
+        transferGraph.sortEdges(TravelTime);
+    }
+
+    // ---
+
     inline void applyVertexPermutation(const Permutation& permutation, const bool permutateStops = true) noexcept {
         Permutation splitPermutation = permutation.splitAt(numberOfStops());
         if (!permutateStops) {

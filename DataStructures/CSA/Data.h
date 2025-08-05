@@ -117,6 +117,10 @@ public:
         std::stable_sort(connections.begin(), connections.end());
     }
 
+    inline void sortTransferGraphEdgesByTravelTime() noexcept {
+        transferGraph.sortEdges(TravelTime);
+    }
+
     inline void sortConnectionsDescending() noexcept {
         std::stable_sort(connections.begin(), connections.end(), [](const Connection& a, const Connection& b){
             return b < a;

@@ -16,18 +16,19 @@
 
 namespace RAPTOR {
 
-template<typename PROFILER = NoProfiler, bool PREVENT_DIRECT_WALKING = false, typename INITIAL_TRANSFERS = BucketCHInitialTransfers>
+template<typename PROFILER = NoProfiler, bool PREVENT_DIRECT_WALKING = false, int ENABLE_PRUNING = 0, typename INITIAL_TRANSFERS = BucketCHInitialTransfers>
 class ULTRARAPTOR {
 
 public:
     using Profiler = PROFILER;
     static constexpr bool PreventDirectWalking = PREVENT_DIRECT_WALKING;
+    static constexpr int EnablePruning = ENABLE_PRUNING;
     using InitialTransferType = INITIAL_TRANSFERS;
     using InitialTransferGraph = typename InitialTransferType::Graph;
     static constexpr bool SeparateRouteAndTransferEntries = PreventDirectWalking;
     static constexpr int RoundFactor = SeparateRouteAndTransferEntries ? 2 : 1;
     using ArrivalTime = EarliestArrivalTime<SeparateRouteAndTransferEntries>;
-    using Type = ULTRARAPTOR<Profiler, PreventDirectWalking, InitialTransferType>;
+    using Type = ULTRARAPTOR<Profiler, PreventDirectWalking, EnablePruning, InitialTransferType>;
     using SourceType = Vertex;
 
 private:
@@ -347,11 +348,19 @@ private:
         for (const StopId stop : stopsUpdatedByRoute) {
             const int earliestArrivalTime = SeparateRouteAndTransferEntries ? previousRound()[stop].arrivalTime : currentRound()[stop].arrivalTime;
             for (const Edge edge : data.transferGraph.edgesFrom(stop)) {
+
                 const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
                 if (toStop == targetStop) continue;
                 profiler.countMetric(METRIC_EDGES);
                 const int arrivalTime = earliestArrivalTime + data.transferGraph.get(TravelTime, edge);
                 Assert(data.isStop(data.transferGraph.get(ToVertex, edge)), "Graph contains edges to non stop vertices!");
+
+                if constexpr (EnablePruning == 1) {
+                    if (arrivalTime > currentRound()[targetStop].arrivalTime) {
+                        break;
+                    }
+                }
+
                 if (arrivalByTransfer(toStop, arrivalTime)) {
                     EarliestArrivalLabel& label = currentRound()[toStop];
                     label.parent = stop;

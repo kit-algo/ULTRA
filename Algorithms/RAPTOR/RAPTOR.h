@@ -13,19 +13,20 @@
 
 namespace RAPTOR {
 
-template<bool TARGET_PRUNING, typename PROFILER = NoProfiler, bool TRANSITIVE = true, bool USE_MIN_TRANSFER_TIMES = false, bool PREVENT_DIRECT_WALKING = false>
+template<bool TARGET_PRUNING, typename PROFILER = NoProfiler, int ENABLE_PRUNING = 0, bool TRANSITIVE = true, bool USE_MIN_TRANSFER_TIMES = false, bool PREVENT_DIRECT_WALKING = false>
 class RAPTOR {
 
 public:
     static constexpr bool TargetPruning = TARGET_PRUNING;
     using Profiler = PROFILER;
     static constexpr bool Transitive = TRANSITIVE;
+    static constexpr int EnablePruning = ENABLE_PRUNING;
     static constexpr bool UseMinTransferTimes = USE_MIN_TRANSFER_TIMES;
     static constexpr bool PreventDirectWalking = PREVENT_DIRECT_WALKING;
     static constexpr bool SeparateRouteAndTransferEntries = !Transitive | UseMinTransferTimes | PreventDirectWalking;
     static constexpr int RoundFactor = SeparateRouteAndTransferEntries ? 2 : 1;
     using ArrivalTime = EarliestArrivalTime<SeparateRouteAndTransferEntries>;
-    using Type = RAPTOR<TargetPruning, Profiler, Transitive, UseMinTransferTimes, PreventDirectWalking>;
+    using Type = RAPTOR<TargetPruning, Profiler, EnablePruning, Transitive, UseMinTransferTimes, PreventDirectWalking>;
     using InitialTransferGraph = TransferGraph;
     using SourceType = StopId;
 
@@ -287,6 +288,11 @@ private:
                 }
                 profiler.countMetric(METRIC_EDGES);
                 const int arrivalTime = earliestArrivalTime + data.transferGraph.get(TravelTime, edge);
+                if constexpr (EnablePruning == 1) {
+                    if (arrivalTime > currentRound()[targetStop].arrivalTime) {
+                        break;
+                    }
+                }
                 Assert(data.isStop(data.transferGraph.get(ToVertex, edge)), "Graph contains edges to non stop vertices!");
                 const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
                 if (arrivalByTransfer(toStop, arrivalTime)) {

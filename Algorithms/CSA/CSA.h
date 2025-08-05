@@ -17,13 +17,14 @@
 
 namespace CSA {
 
-template<bool PATH_RETRIEVAL = true, typename PROFILER = NoProfiler>
+template<bool PATH_RETRIEVAL = true,  int ENABLE_PRUNING = 0, typename PROFILER = NoProfiler>
 class CSA {
 
 public:
     constexpr static bool PathRetrieval = PATH_RETRIEVAL;
     using Profiler = PROFILER;
-    using Type = CSA<PathRetrieval, Profiler>;
+    constexpr static int EnablePruning = ENABLE_PRUNING;
+    using Type = CSA<PathRetrieval, EnablePruning, Profiler>;
     using TripFlag = std::conditional_t<PathRetrieval, ConnectionId, bool>;
 
 private:
@@ -180,6 +181,11 @@ private:
             profiler.countMetric(METRIC_EDGES);
             const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
             const int newArrivalTime = time + data.transferGraph.get(TravelTime, edge);
+            if constexpr (EnablePruning == 1) {
+                if (newArrivalTime > arrivalTime[targetStop]) {
+                    break;
+                }
+            }
             arrivalByTransfer(toStop, newArrivalTime, stop, edge);
         }
     }

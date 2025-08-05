@@ -6,7 +6,7 @@ reduceToMaximumConnectedComponent ../Networks/Switzerland/intermediate.binary ..
 reduceGraph ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
 makeOneHopTransfers ../Networks/Switzerland/intermediate.binary 86400 ../Networks/Switzerland/intermediate.binary true
 addGraph ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/OSM/graph ../Networks/Switzerland/intermediate.binary
-reduceToMaximumConnectedComponent ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
+reduceToMaximumConnectedComponent ../Networkys/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
 applyMaxTransferSpeed ../Networks/Switzerland/intermediate.binary 4.5 ../Networks/Switzerland/intermediate.binary
 reduceGraph ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/intermediate.binary
 intermediateToRAPTOR ../Networks/Switzerland/intermediate.binary ../Networks/Switzerland/raptor.binary
