@@ -780,19 +780,22 @@ public:
         std::ofstream file(fileName);
         Assert(file, "cannot open file: " << fileName);
         Assert(file.is_open(), "cannot open file: " << fileName);
-        file << "LineId,TripId,StopIndex,ArrivalTime,DepartureTime\n";
+        file << "LineId,TripId,StopIndex,StopId,ArrivalTime,DepartureTime\n";
         for (const RouteId route : routes()) {
+            const StopId* stops = stopArrayOfRoute(route); // Get the array of StopIds for the current route
             const StopEvent* stopEvents = firstTripOfRoute(route);
             const size_t tripLength = numberOfStopsInRoute(route);
             for (size_t i = 0; i < numberOfTripsInRoute(route); i++) {
                 for (size_t j = 0; j < tripLength; j++) {
                     const StopEvent& stopEvent = stopEvents[(i * tripLength) + j];
-                    file << route.value() << "," << i << "," << j << "," << stopEvent.arrivalTime << "," << stopEvent.departureTime << "\n";
+                    const StopId stopId = stops[j]; // Get the StopId corresponding to the StopIndex
+                    file << route.value() << "," << i << "," << j << "," << stopId.value() << "," << stopEvent.arrivalTime << "," << stopEvent.departureTime << "\n";
                 }
             }
         }
         file.close();
     }
+
 
     inline void writeFootpathCSV(const std::string& fileName) const noexcept {
         std::ofstream file(fileName);

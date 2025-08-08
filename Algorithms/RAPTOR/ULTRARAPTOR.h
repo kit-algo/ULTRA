@@ -356,7 +356,7 @@ private:
                 Assert(data.isStop(data.transferGraph.get(ToVertex, edge)), "Graph contains edges to non stop vertices!");
 
                 if constexpr (EnablePruning == 1) {
-                    if (arrivalTime > currentRound()[targetStop].arrivalTime) {
+                    if (arrivalTime > earliestArrival[targetStop].arrivalTime) {
                         break;
                     }
                 }

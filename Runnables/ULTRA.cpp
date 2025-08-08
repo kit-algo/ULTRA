@@ -43,6 +43,12 @@ int main(int argc, char** argv) {
     new RunHLRAPTORQueries(shell);
     new RunULTRARAPTORQueries(shell);
     new CheckULTRARAPTORPruning(shell);
+    new CheckULTRACSAPruning(shell);
+    new CheckRAPTORPruning(shell);
+    new TestTransitiveRAPTORQueries(shell);
+    new CompareCSAandRAPTOR(shell);
+    new TestTransitiveCSAQueries(shell);
+    new CheckCSAPruning(shell);
     new RunTransitiveTBQueries(shell);
     new RunULTRATBQueries(shell);
 

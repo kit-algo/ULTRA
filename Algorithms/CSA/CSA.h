@@ -136,6 +136,11 @@ private:
             const Connection& connection = data.connections[i];
             if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) break;
             if (connectionIsReachable(connection, i)) {
+                if constexpr (EnablePruning == 1) {
+                    if (connection.arrivalTime > arrivalTime[targetStop]) {
+                        continue;
+                    }
+                }
                 profiler.countMetric(METRIC_CONNECTIONS);
                 arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
             }

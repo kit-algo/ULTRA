@@ -30,6 +30,10 @@ public:
     using InitialTransferGraph = TransferGraph;
     using SourceType = StopId;
 
+    inline Journey getJourney() const noexcept {
+        return getEarliestJourney(targetStop);
+    }
+
 private:
     struct EarliestArrivalLabel {
         EarliestArrivalLabel() : arrivalTime(never), parentDepartureTime(never), parent(noStop), usesRoute(false), routeId(noRouteId) {}
@@ -289,7 +293,7 @@ private:
                 profiler.countMetric(METRIC_EDGES);
                 const int arrivalTime = earliestArrivalTime + data.transferGraph.get(TravelTime, edge);
                 if constexpr (EnablePruning == 1) {
-                    if (arrivalTime > currentRound()[targetStop].arrivalTime) {
+                    if (arrivalTime > earliestArrival[targetStop].arrivalTime) {
                         break;
                     }
                 }
