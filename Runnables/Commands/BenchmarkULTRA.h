@@ -353,7 +353,7 @@ public:
 
         std::cout << "Running query from stop " << sourceStop << " to stop " << targetStop << " at time " << startTime << std::endl;
 
-        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 1, true, false, false> algorithm(raptorData);
+        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 0, true, false, false> algorithm(raptorData);
         algorithm.run(sourceStop, startTime, targetStop);
 
         // Corrected line: calling the existing getEarliestJourney function
@@ -428,7 +428,7 @@ private:
     void runComparison(const RAPTOR::Data& raptorData, const CSA::Data& csaData, const std::vector<StopQuery>& queries) const noexcept {
         const bool targetPruning = true;
 
-        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 1, true, false, false> raptorAlgorithm(raptorData);
+        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 0, true, false, false> raptorAlgorithm(raptorData);
         CSA::CSA<true, 0, CSA::AggregateProfiler> csaAlgorithm(csaData);
 
         size_t mismatches = 0;

@@ -79,6 +79,8 @@ public:
     inline void run(const StopId source, const int departureTime, const StopId target = noStop, const size_t maxRounds = INFTY) noexcept {
         profiler.start();
         profiler.startExtraRound(EXTRA_ROUND_CLEAR);
+
+
         clear();
         profiler.doneRound();
 
