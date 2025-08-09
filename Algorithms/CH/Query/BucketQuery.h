@@ -212,7 +212,6 @@ private:
         }
     }
 
-
 private:
     BaseQuery baseQuery;
 
@@ -227,7 +226,5 @@ private:
     Timer timer;
 
 };
-
-
 
 }
