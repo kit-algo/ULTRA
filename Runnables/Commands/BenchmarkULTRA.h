@@ -27,104 +27,30 @@ using namespace Shell;
 #include "../../DataStructures/TripBased/Data.h"
 
 class RunTransitiveCSAQueries : public ParameterizedCommand {
+
 public:
     RunTransitiveCSAQueries(BasicShell& shell) :
         ParameterizedCommand(shell, "runTransitiveCSAQueries", "Runs the given number of random transitive CSA queries.") {
         addParameter("CSA input file");
         addParameter("Number of queries");
-        addParameter("Pruning rule (0 or 1)");
         addParameter("Target pruning?");
     }
 
     virtual void execute() noexcept {
         CSA::Data csaData = CSA::Data::FromBinary(getParameter("CSA input file"));
         csaData.sortConnectionsAscending();
-        csaData.sortTransferGraphEdgesByTravelTime();
         csaData.printInfo();
+        CSA::CSA<true, CSA::AggregateProfiler> algorithm(csaData);
 
         const size_t n = getParameter<size_t>("Number of queries");
-        const int pruningRule = getParameter<int>("Pruning rule (0 or 1)");
+        const std::vector<StopQuery> queries = generateRandomStopQueries(csaData.numberOfStops(), n);
+
         const bool targetPruning = getParameter<bool>("Target pruning?");
-        const std::vector<StopQuery> queries = generateRandomStopQueries(csaData.numberOfStops(), n);
 
-        if (pruningRule == 1) {
-            CSA::CSA<true, CSA::AggregateProfiler> algorithm(csaData);
-
-            for (const StopQuery& query : queries) {
-                algorithm.run(query.source, query.departureTime, targetPruning ? query.target : noStop);
-            }
-            algorithm.getProfiler().printStatistics();
-        } else {
-            CSA::CSA_prune<true, CSA::AggregateProfiler> algorithm(csaData);
-
-            for (const StopQuery& query : queries) {
-                algorithm.run(query.source, query.departureTime, targetPruning ? query.target : noStop);
-            }
-            algorithm.getProfiler().printStatistics();
-        }
-    }
-};
-
-class CheckCSAPruning : public ParameterizedCommand {
-
-public:
-    CheckCSAPruning(BasicShell& shell) :
-        ParameterizedCommand(shell, "checkCSAPruning", "Checks if pruning rules yield the same results as no pruning for CSA.") {
-        addParameter("CSA input file");
-        addParameter("Number of queries");
-        addParameter("Precompute directed transitive graph?");
-    }
-
-    virtual void execute() noexcept {
-        CSA::Data csaData = CSA::Data::FromBinary(getParameter("CSA input file"));
-        csaData.sortConnectionsAscending();
-        csaData.printInfo();
-
-        const size_t n = getParameter<size_t>("Number of queries");
-        const std::vector<StopQuery> queries = generateRandomStopQueries(csaData.numberOfStops(), n);
-
-        // RETRIEVE THE NEW PARAMETER'S VALUE
-        const bool precomputeTransitive = getParameter<bool>("Precompute directed transitive graph?");
-
-        // CONDITIONAL PRECOMPUTATION
-        if (precomputeTransitive) {
-            std::cout << "--- Precomputing directed transitive stop graph... ---" << std::endl;
-            csaData.makeDirectedTransitiveStopGraph(true); // 'true' enables verbose output
-            std::cout << "--- Done. ---" << std::endl;
-        }
-
-        std::vector<int> results_no_pruning;
-        std::vector<int> results_pruning_1;
-
-        // Run with pruning rule 0 (no pruning)
-        std::cout << "--- Running queries with No Pruning (Rule 0) ---" << std::endl;
-        CSA::CSA<false, CSA::AggregateProfiler> algo_no_pruning(csaData);
         for (const StopQuery& query : queries) {
-            algo_no_pruning.run(query.source, query.departureTime, query.target);
-            results_no_pruning.push_back(algo_no_pruning.getEarliestArrivalTime(query.target));
+            algorithm.run(query.source, query.departureTime, targetPruning ? query.target : noStop);
         }
-        std::cout << "--- Statistics for No Pruning (Rule 0) ---" << std::endl;
-        algo_no_pruning.getProfiler().printStatistics();
-
-        // Run with pruning rule 1
-        std::cout << "\n--- Running queries with Pruning Rule 1 ---" << std::endl;
-        csaData.sortTransferGraphEdgesByTravelTime();
-        CSA::CSA_prune<false, CSA::AggregateProfiler> algo_pruning_1(csaData);
-        for (const StopQuery& query : queries) {
-            algo_pruning_1.run(query.source, query.departureTime, query.target);
-            results_pruning_1.push_back(algo_pruning_1.getEarliestArrivalTime(query.target));
-        }
-        std::cout << "--- Statistics for Pruning Rule 1 ---" << std::endl;
-        algo_pruning_1.getProfiler().printStatistics();
-
-        // Compare the results
-        bool pruning_is_correct = (results_no_pruning == results_pruning_1);
-
-        if (pruning_is_correct) {
-            std::cout << "\nPruning rule 1 yields the same results as no pruning." << std::endl;
-        } else {
-            std::cout << "\nPruning rule 1 failed comparison." << std::endl;
-        }
+        algorithm.getProfiler().printStatistics();
     }
 };
 
@@ -183,7 +109,6 @@ public:
         algorithm.getProfiler().printStatistics();
     }
 };
-
 class RunULTRACSAQueries : public ParameterizedCommand {
 
 public:
@@ -192,89 +117,22 @@ public:
         addParameter("CSA input file");
         addParameter("CH data");
         addParameter("Number of queries");
-        addParameter("Pruning rule (0 or 1)");
     }
 
     virtual void execute() noexcept {
         CSA::Data csaData = CSA::Data::FromBinary(getParameter("CSA input file"));
         csaData.sortConnectionsAscending();
-        csaData.sortTransferGraphEdgesByTravelTime(); // Call to sort the transfer graph edges
         csaData.printInfo();
         CH::CH ch(getParameter("CH data"));
+        CSA::ULTRACSA<true, CSA::AggregateProfiler> algorithm(csaData, ch);
 
         const size_t n = getParameter<size_t>("Number of queries");
-        const int pruningRule = getParameter<int>("Pruning rule (0 or 1)");
         const std::vector<VertexQuery> queries = generateRandomVertexQueries(ch.numVertices(), n);
-
-        if (pruningRule == 1) {
-            executeWithPruning<1>(csaData, ch, queries);
-        } else {
-            executeWithPruning<0>(csaData, ch, queries);
-        }
-    }
-
-private:
-    template<int ENABLE_PRUNING>
-    void executeWithPruning(const CSA::Data& csaData, const CH::CH& ch, const std::vector<VertexQuery>& queries) {
-        CSA::ULTRACSA<true, ENABLE_PRUNING, CSA::AggregateProfiler> algorithm(csaData, ch);
 
         for (const VertexQuery& query : queries) {
             algorithm.run(query.source, query.departureTime, query.target);
         }
         algorithm.getProfiler().printStatistics();
-    }
-};
-
-
-class CheckULTRACSAPruning : public ParameterizedCommand {
-
-public:
-    CheckULTRACSAPruning(BasicShell& shell) :
-        ParameterizedCommand(shell, "checkULTRACSAPruning", "Checks if pruning rules yield the same results as no pruning for ULTRACSA.") {
-        addParameter("CSA input file");
-        addParameter("CH data");
-        addParameter("Number of queries");
-    }
-
-    virtual void execute() noexcept {
-        CSA::Data csaData = CSA::Data::FromBinary(getParameter("CSA input file"));
-        csaData.sortConnectionsAscending();
-        csaData.printInfo();
-        CH::CH ch(getParameter("CH data"));
-
-        const size_t n = getParameter<size_t>("Number of queries");
-        const std::vector<VertexQuery> queries = generateRandomVertexQueries(ch.numVertices(), n);
-
-        std::vector<int> results_no_pruning;
-        std::vector<int> results_pruning;
-
-        // Run with pruning rule 0 (no pruning)
-        CSA::ULTRACSA<false, 0, CSA::AggregateProfiler> algo_no_pruning(csaData, ch);
-        for (const VertexQuery& query : queries) {
-            algo_no_pruning.run(query.source, query.departureTime, query.target);
-            results_no_pruning.push_back(algo_no_pruning.getEarliestArrivalTime(query.target));
-        }
-        std::cout << "--- Statistics for No Pruning (Rule 0) ---" << std::endl;
-        algo_no_pruning.getProfiler().printStatistics();
-
-        // Run with pruning rule 1
-        csaData.sortTransferGraphEdgesByTravelTime(); // Call to sort the transfer graph edges
-        CSA::ULTRACSA<false, 1, CSA::AggregateProfiler> algo_pruning(csaData, ch);
-        for (const VertexQuery& query : queries) {
-            algo_pruning.run(query.source, query.departureTime, query.target);
-            results_pruning.push_back(algo_pruning.getEarliestArrivalTime(query.target));
-        }
-        std::cout << "--- Statistics for Pruning Rule 1 ---" << std::endl;
-        algo_pruning.getProfiler().printStatistics();
-
-        // Compare the results
-        bool pruning_is_correct = (results_no_pruning == results_pruning);
-
-        if (pruning_is_correct) {
-            std::cout << "Pruning rule 1 yields the same results as no pruning." << std::endl;
-        } else {
-            std::cout << "Pruning rule 1 failed comparison." << std::endl;
-        }
     }
 };
 
@@ -391,70 +249,6 @@ public:
 
         const CSA::Journey journey = algorithm.getJourney(targetStop);
         std::cout << "Journey: " << journey << std::endl;
-    }
-};
-
-class CompareCSAandRAPTOR : public ParameterizedCommand {
-
-public:
-    CompareCSAandRAPTOR(BasicShell& shell) :
-        ParameterizedCommand(shell, "compareCSAandRAPTOR", "Compares journeys from CSA and RAPTOR for random queries.") {
-        addParameter("RAPTOR input file");
-        addParameter("CSA input file");
-        addParameter("Number of queries");
-    }
-
-    virtual void execute() noexcept {
-        // Load data for both algorithms
-        RAPTOR::Data raptorData = RAPTOR::Data::FromBinary(getParameter("RAPTOR input file"));
-        raptorData.useImplicitDepartureBufferTimes();
-        raptorData.printInfo();
-
-        CSA::Data csaData = CSA::Data::FromBinary(getParameter("CSA input file"));
-        csaData.sortConnectionsAscending();
-        csaData.printInfo();
-
-        const size_t n = getParameter<size_t>("Number of queries");
-        const std::vector<StopQuery> queries = generateRandomStopQueries(raptorData.numberOfStops(), n);
-
-        runComparison(raptorData, csaData, queries);
-    }
-
-private:
-
-    // Function to run the queries and compare the results
-    void runComparison(const RAPTOR::Data& raptorData, const CSA::Data& csaData, const std::vector<StopQuery>& queries) const noexcept {
-        const bool targetPruning = true;
-
-        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, true, false, false> raptorAlgorithm(raptorData);
-        CSA::CSA<true, CSA::AggregateProfiler> csaAlgorithm(csaData);
-
-        size_t mismatches = 0;
-
-        for (size_t i = 0; i < queries.size(); i++) {
-            const auto& query = queries[i];
-
-            // Run RAPTOR and get the arrival time
-            raptorAlgorithm.run(query.source, query.departureTime, query.target);
-            const int raptorArrivalTime = raptorAlgorithm.getEarliestArrivalTime(query.target);
-
-            // Run CSA and get the arrival time
-            csaAlgorithm.run(query.source, query.departureTime, targetPruning ? query.target : noStop);
-            const int csaArrivalTime = csaAlgorithm.getEarliestArrivalTime(query.target);
-
-            // Compare the arrival times
-            if (raptorArrivalTime != csaArrivalTime) {
-                mismatches++;
-                std::cout << "Mismatch found for query #" << i + 1 << ":" << std::endl;
-                std::cout << "  Source: " << query.source << ", Target: " << query.target << ", Time: " << query.departureTime << std::endl;
-                std::cout << "--- RAPTOR Arrival Time ---" << std::endl;
-                std::cout << raptorArrivalTime << std::endl;
-                std::cout << "--- CSA Arrival Time ---" << std::endl;
-                std::cout << csaArrivalTime << std::endl;
-                std::cout << "-----------------------------------" << std::endl;
-            }
-        }
-        std::cout << "\nTotal queries: " << queries.size() << ", Total mismatches: " << mismatches << std::endl;
     }
 };
 

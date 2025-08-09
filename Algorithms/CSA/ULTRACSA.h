@@ -20,15 +20,14 @@
 
 namespace CSA {
 
-template<bool PATH_RETRIEVAL = true, int ENABLE_PRUNING = 0, typename PROFILER = NoProfiler>
+template<bool PATH_RETRIEVAL = true, typename PROFILER = NoProfiler>
 class ULTRACSA {
 
 public:
     using InitialTransferGraph = CHGraph;
     constexpr static bool PathRetrieval = PATH_RETRIEVAL;
-    constexpr static int EnablePruning = ENABLE_PRUNING;
     using Profiler = PROFILER;
-    using Type = ULTRACSA<PathRetrieval, EnablePruning, Profiler>;
+    using Type = ULTRACSA<PathRetrieval, Profiler>;
     using TripFlag = std::conditional_t<PathRetrieval, ConnectionId, bool>;
 
 private:
@@ -155,11 +154,6 @@ private:
             const Connection& connection = data.connections[i];
             if (targetStop != noStop && connection.departureTime > arrivalTime[targetStop]) break;
             if (connectionIsReachable(connection, i)) {
-                if constexpr (EnablePruning == 1) {
-                    if (connection.arrivalTime > arrivalTime[targetStop]) {
-                        continue;
-                    }
-                }
                 profiler.countMetric(METRIC_CONNECTIONS);
                 arrivalByTrip(connection.arrivalStopId, connection.arrivalTime, connection.tripId);
             }
@@ -202,11 +196,6 @@ private:
             profiler.countMetric(METRIC_EDGES);
             const StopId toStop = StopId(data.transferGraph.get(ToVertex, edge));
             const int newArrivalTime = time + data.transferGraph.get(TravelTime, edge);
-            if constexpr (EnablePruning == 1) {
-                if (newArrivalTime > arrivalTime[targetStop]) {
-                    break;
-                }
-            }
             arrivalByTransfer(toStop, newArrivalTime, stop, edge);
         }
 
