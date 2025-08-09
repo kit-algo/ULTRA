@@ -27,7 +27,6 @@ using namespace Shell;
 #include "../../DataStructures/TripBased/Data.h"
 
 class RunTransitiveCSAQueries : public ParameterizedCommand {
-
 public:
     RunTransitiveCSAQueries(BasicShell& shell) :
         ParameterizedCommand(shell, "runTransitiveCSAQueries", "Runs the given number of random transitive CSA queries.") {
@@ -49,21 +48,20 @@ public:
         const std::vector<StopQuery> queries = generateRandomStopQueries(csaData.numberOfStops(), n);
 
         if (pruningRule == 1) {
-            executeWithPruning<1>(csaData, queries, targetPruning);
+            CSA::CSA<true, CSA::AggregateProfiler> algorithm(csaData);
+
+            for (const StopQuery& query : queries) {
+                algorithm.run(query.source, query.departureTime, targetPruning ? query.target : noStop);
+            }
+            algorithm.getProfiler().printStatistics();
         } else {
-            executeWithPruning<0>(csaData, queries, targetPruning);
-        }
-    }
+            CSA::CSA_prune<true, CSA::AggregateProfiler> algorithm(csaData);
 
-private:
-    template<int ENABLE_PRUNING>
-    void executeWithPruning(const CSA::Data& csaData, const std::vector<StopQuery>& queries, const bool targetPruning) {
-        CSA::CSA<true, ENABLE_PRUNING, CSA::AggregateProfiler> algorithm(csaData);
-
-        for (const StopQuery& query : queries) {
-            algorithm.run(query.source, query.departureTime, targetPruning ? query.target : noStop);
+            for (const StopQuery& query : queries) {
+                algorithm.run(query.source, query.departureTime, targetPruning ? query.target : noStop);
+            }
+            algorithm.getProfiler().printStatistics();
         }
-        algorithm.getProfiler().printStatistics();
     }
 };
 
@@ -100,7 +98,7 @@ public:
 
         // Run with pruning rule 0 (no pruning)
         std::cout << "--- Running queries with No Pruning (Rule 0) ---" << std::endl;
-        CSA::CSA<false, 0, CSA::AggregateProfiler> algo_no_pruning(csaData);
+        CSA::CSA<false, CSA::AggregateProfiler> algo_no_pruning(csaData);
         for (const StopQuery& query : queries) {
             algo_no_pruning.run(query.source, query.departureTime, query.target);
             results_no_pruning.push_back(algo_no_pruning.getEarliestArrivalTime(query.target));
@@ -111,7 +109,7 @@ public:
         // Run with pruning rule 1
         std::cout << "\n--- Running queries with Pruning Rule 1 ---" << std::endl;
         csaData.sortTransferGraphEdgesByTravelTime();
-        CSA::CSA<false, 1, CSA::AggregateProfiler> algo_pruning_1(csaData);
+        CSA::CSA_prune<false, CSA::AggregateProfiler> algo_pruning_1(csaData);
         for (const StopQuery& query : queries) {
             algo_pruning_1.run(query.source, query.departureTime, query.target);
             results_pruning_1.push_back(algo_pruning_1.getEarliestArrivalTime(query.target));
@@ -306,7 +304,7 @@ public:
         // as the `ENABLE_PRUNING` template parameter must be a compile-time constant.
         if (pruningRule == 1) {
             // Instantiate with TARGET_PRUNING=true and ENABLE_PRUNING=1
-            RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 1, true, false, false> algorithm(raptorData);
+            RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, true, false, false> algorithm(raptorData);
 
             double numJourneys = 0;
             for (const StopQuery& query : queries) {
@@ -317,7 +315,7 @@ public:
             std::cout << "Avg. journeys: " << String::prettyDouble(numJourneys / n) << std::endl;
         } else {
             // Instantiate with TARGET_PRUNING=true and ENABLE_PRUNING=0 (default)
-            RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 0, true, false, false> algorithm(raptorData);
+            RAPTOR::RAPTOR_prune<true, RAPTOR::AggregateProfiler, true, false, false> algorithm(raptorData);
 
             double numJourneys = 0;
             for (const StopQuery& query : queries) {
@@ -353,7 +351,7 @@ public:
 
         std::cout << "Running query from stop " << sourceStop << " to stop " << targetStop << " at time " << startTime << std::endl;
 
-        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 0, true, false, false> algorithm(raptorData);
+        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, true, false, false> algorithm(raptorData);
         algorithm.run(sourceStop, startTime, targetStop);
 
         // Corrected line: calling the existing getEarliestJourney function
@@ -385,7 +383,7 @@ public:
 
         std::cout << "Running query from stop " << sourceStop << " to stop " << targetStop << " at time " << startTime << std::endl;
 
-        CSA::CSA<true, 0, CSA::AggregateProfiler> algorithm(csaData);
+        CSA::CSA<true, CSA::AggregateProfiler> algorithm(csaData);
         algorithm.run(sourceStop, startTime, targetStop);
 
         const int arrivalTime = algorithm.getEarliestArrivalTime(targetStop);
@@ -428,8 +426,8 @@ private:
     void runComparison(const RAPTOR::Data& raptorData, const CSA::Data& csaData, const std::vector<StopQuery>& queries) const noexcept {
         const bool targetPruning = true;
 
-        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 0, true, false, false> raptorAlgorithm(raptorData);
-        CSA::CSA<true, 0, CSA::AggregateProfiler> csaAlgorithm(csaData);
+        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, true, false, false> raptorAlgorithm(raptorData);
+        CSA::CSA<true, CSA::AggregateProfiler> csaAlgorithm(csaData);
 
         size_t mismatches = 0;
 
@@ -482,7 +480,7 @@ public:
 
         // Run with pruning rule 0 (no pruning)
         std::cout << "--- Running with No Pruning (Rule 0) ---" << std::endl;
-        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 0, true, false, false> algo_no_pruning(raptorData);
+        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, true, false, false> algo_no_pruning(raptorData);
         for (const StopQuery& query : queries) {
             algo_no_pruning.run(query.source, query.departureTime, query.target);
             results_no_pruning.push_back(algo_no_pruning.getEarliestArrivalTime(query.target));
@@ -494,7 +492,7 @@ public:
         std::cout << "\n--- Running with Pruning Rule 1 ---" << std::endl;
         // The transfer graph must be sorted for pruning rule 1 to be effective
         raptorData.sortTransferGraphEdgesByTravelTime();
-        RAPTOR::RAPTOR<true, RAPTOR::AggregateProfiler, 1, true, false, false> algo_pruning_1(raptorData);
+        RAPTOR::RAPTOR_prune<true, RAPTOR::AggregateProfiler, true, false, false> algo_pruning_1(raptorData);
         for (const StopQuery& query : queries) {
             algo_pruning_1.run(query.source, query.departureTime, query.target);
             results_pruning_1.push_back(algo_pruning_1.getEarliestArrivalTime(query.target));
@@ -615,12 +613,12 @@ public:
 
         switch (pruningRule) {
             case 0: {
-                RAPTOR::ULTRARAPTOR<RAPTOR::AggregateProfiler, false, 0> algorithm(raptorData, ch);
+                RAPTOR::ULTRARAPTOR<RAPTOR::AggregateProfiler, false> algorithm(raptorData, ch);
                 runAndProfile(algorithm);
                 break;
             }
             case 1: {
-                RAPTOR::ULTRARAPTOR<RAPTOR::AggregateProfiler, false, 1> algorithm(raptorData, ch);
+                RAPTOR::ULTRARAPTOR_prune<RAPTOR::AggregateProfiler, false> algorithm(raptorData, ch);
                 runAndProfile(algorithm);
                 break;
             }
@@ -655,7 +653,7 @@ public:
         std::vector<int> results_pruning_2;
 
         // Run with pruning rule 0 (no pruning)
-        RAPTOR::ULTRARAPTOR<RAPTOR::AggregateProfiler, false, 0> algo_no_pruning(raptorData, ch);
+        RAPTOR::ULTRARAPTOR<RAPTOR::AggregateProfiler, false> algo_no_pruning(raptorData, ch);
         for (const VertexQuery& query : queries) {
             algo_no_pruning.run(query.source, query.departureTime, query.target);
             results_no_pruning.push_back(algo_no_pruning.getEarliestArrivalTime());
@@ -666,7 +664,7 @@ public:
 
         // Run with pruning rule 1
         raptorData.sortTransferGraphEdgesByTravelTime();
-        RAPTOR::ULTRARAPTOR<RAPTOR::AggregateProfiler, false, 1> algo_pruning_1(raptorData, ch);
+        RAPTOR::ULTRARAPTOR_prune<RAPTOR::AggregateProfiler, false> algo_pruning_1(raptorData, ch);
         for (const VertexQuery& query : queries) {
             algo_pruning_1.run(query.source, query.departureTime, query.target);
             results_pruning_1.push_back(algo_pruning_1.getEarliestArrivalTime());
@@ -706,7 +704,6 @@ public:
             algorithm.run(query.source, query.departureTime, query.target);
             numJourneys += algorithm.getJourneys().size();
         }
-        std::cout << "3";
         algorithm.getProfiler().printStatistics();
         std::cout << "Avg. journeys: " << String::prettyDouble(numJourneys/n) << std::endl;
     }
@@ -740,7 +737,6 @@ public:
 };
 
 class RunULTRATBQueries : public ParameterizedCommand {
-
 public:
     RunULTRATBQueries(BasicShell& shell) :
         ParameterizedCommand(shell, "runULTRATBQueries", "Runs the given number of random ULTRA-TB queries.") {
