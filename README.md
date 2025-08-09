@@ -166,13 +166,3 @@ The application ``DelayExperiments`` provides commands for evaluating Delay-ULTR
 * ``MeasureDelayULTRAQueryCoverage`` measures the result quality of TB using Delay-ULTRA shortcuts.
 * ``MeasureHypotheticalDelayULTRAQueryCoverage`` measures the result quality of TB using Delay-ULTRA shortcuts, assuming that updates can be performed instantly.
 * ``MeasureDelayULTRAQueryPerformance`` measures the query performance of TB using Delay-ULTRA shortcuts.
-  colima start --arch x86_64 --cpu 16 --memory 128 --disk 500
-```terminal
-colima delete
-colima start --arch x86_64 --cpu 64 --memory 110 --disk 500
-colima ssh
-sudo apt-get update
-sudo apt-get install cmake build-essential
-sudo apt-get install libnuma-dev
-cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build . --target All --config Release
-```
