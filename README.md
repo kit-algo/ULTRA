@@ -97,7 +97,7 @@ Most preprocessing steps and query algorithms are provided in the console applic
 | ``runUBMHydRAQueries``                  | UBM-HydRA       | Unlimited  | Vertex-to-vertex | Arrival time, number of trips, transfer time (restricted) |
 
 ## Networks
-We use custom data formats for loading the public transit network and the transfer graph: The Intermediate format allows for easy network manipulation, while the RAPTOR format is required by the preprocessing and all query algorithms except for CSA, which uses its own format. The Switzerland and London networks used in our experiments are available at [https://i11www.iti.kit.edu/PublicTransitData/ULTRA/](https://i11www.iti.kit.edu/PublicTransitData/ULTRA/) in the required formats. Unfortunately, we cannot provide the Germany and Stuttgart networks because they are proprietary.
+We use custom data formats for loading the public transit network and the transfer graph: The Intermediate format allows for easy network manipulation, while the RAPTOR format is required by the preprocessing and all query algorithms except for CSA, which uses its own format. The Switzerland and London networks used in our experiments are available at [https://i11www.iti.kit.edu/extra/PublicTransitData/ULTRA/](https://i11www.iti.kit.edu/extra/PublicTransitData/ULTRA/) in the required formats. Unfortunately, we cannot provide the Germany and Stuttgart networks because they are proprietary.
 
 The ``Network`` application provides commands for manipulating the network data and for converting public transit data to our custom format. It includes the following commands:
 * ``parseGTFS`` converts GFTS data in CSV format to a binary format.
