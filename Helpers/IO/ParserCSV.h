@@ -178,7 +178,11 @@ public:
     }
 
     void setFileName(const char* fileName) {
-        strncpy(this->fileName, fileName, Error::MAX_FILE_NAME_LENGTH);
+// https://stackoverflow.com/a/50198710
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+        std::strncpy(this->fileName, fileName, Error::MAX_FILE_NAME_LENGTH);
+#pragma GCC diagnostic pop
         this->fileName[Error::MAX_FILE_NAME_LENGTH] = '\0';
     }
 
@@ -260,7 +264,11 @@ struct WithColumnName {
     WithColumnName() {std::memset(columnName, 0, MAX_COLUMN_NAME_LENGTH + 1);}
 
     void setColumnName(const char* columnName) {
+// https://stackoverflow.com/a/50198710
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
         std::strncpy(this->columnName, columnName, MAX_COLUMN_NAME_LENGTH);
+#pragma GCC diagnostic pop
         this->columnName[MAX_COLUMN_NAME_LENGTH] = '\0';
     }
 
@@ -272,7 +280,11 @@ struct WithColumnContent {
     WithColumnContent() {std::memset(columnContent, 0, MAX_COLUMN_CONTENT_LENGTH + 1);}
 
     void setColumnContent(const char*columnContent) {
+// https://stackoverflow.com/a/50198710
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
         std::strncpy(this->columnContent, columnContent, MAX_COLUMN_CONTENT_LENGTH);
+#pragma GCC diagnostic pop
         this->columnContent[MAX_COLUMN_CONTENT_LENGTH] = '\0';
     }
 

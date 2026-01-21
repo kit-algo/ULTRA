@@ -111,6 +111,12 @@ public:
 
     inline void reduceTransfers(const TripId trip) noexcept {
         timestamp++;
+
+        if (timestamp == 0) {
+            labels.clear();
+            labels.resize(data.numberOfStops());
+        }
+
         const StopId* stops = data.stopArrayOfTrip(trip);
         for (StopIndex i = StopIndex(data.numberOfStopsInTrip(trip) - 1); i > 0; i--) {
             const int arrivalTime = data.getStopEvent(trip, i).arrivalTime;
